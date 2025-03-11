@@ -1,0 +1,121 @@
+# Copyright (C) 2025 Poly Plugins
+# This file is distributed under the GPL3.
+msgid ""
+msgstr ""
+"Project-Id-Version: Speedy Search 1.0.0\n"
+"Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/speedy-search\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"POT-Creation-Date: 2025-03-11T05:24:42+00:00\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"X-Generator: WP-CLI 2.10.0\n"
+"X-Domain: speedy-search\n"
+
+#. Plugin Name of the plugin
+#: wp-content\plugins\speedy-search\speedy-search.php
+#: includes/classes/Backend/Admin.php:60
+msgid "Speedy Search"
+msgstr ""
+
+#. Plugin URI of the plugin
+#: wp-content\plugins\speedy-search\speedy-search.php
+msgid "https://www.polyplugins.com/contact/"
+msgstr ""
+
+#. Description of the plugin
+#: wp-content\plugins\speedy-search\speedy-search.php
+msgid "A fast, lightweight search plugin powered by TNTSearch, indexing posts for instant, accurate results."
+msgstr ""
+
+#. Author of the plugin
+#: wp-content\plugins\speedy-search\speedy-search.php
+msgid "Poly Plugins"
+msgstr ""
+
+#. Author URI of the plugin
+#: wp-content\plugins\speedy-search\speedy-search.php
+msgid "https://www.polyplugins.com"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:60
+msgid "Instant Search"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:80
+msgid "Speedy Search is currently indexing."
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:96
+msgid "Speedy Search requires the following extensions:"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:135
+msgid "Enabled?"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:143
+msgid "Selector"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:151
+msgid "Batch"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:159
+msgid "Result Limit"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:175
+msgid "Yes"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:189
+msgid "Enter your selector that you want to add the instant search to. Ex: #search"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:203
+msgid "How many posts should be indexed per minute?"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:217
+msgid "How many posts would you like to show?"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:234
+msgid "Speedy Search Settings"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:244
+msgid "General"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:250
+msgid "Posts"
+msgstr ""
+
+#: js/backend/settings.js:49
+msgid "No roles Found"
+msgstr ""
+
+#: js/backend/settings.js:89
+msgid "Select a Background Image"
+msgstr ""
+
+#: js/backend/settings.js:91
+msgid "Use This Image"
+msgstr ""
+
+#: js/frontend/main.js:39
+msgid "Searching..."
+msgstr ""
+
+#: js/frontend/main.js:49
+msgid "No results found."
+msgstr ""
+
+#: js/frontend/main.js:70
+msgid "Error loading results."
+msgstr ""

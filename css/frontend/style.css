@@ -1,0 +1,13 @@
+.instant-search-results {
+  max-height: 400px;
+  overflow: overlay;
+  margin-top: 15px;
+  padding-right: 5px;
+}
+
+.instant-search-results .instant-search-result {
+  background-color: #f2f2f2;
+  border-radius: 5px;
+  padding: 7px;
+  margin-bottom: 10px;
+}

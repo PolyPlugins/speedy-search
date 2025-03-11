@@ -1,0 +1,13 @@
+{
+  "autoload": {
+      "psr-4": {
+          "PolyPlugins\\Speedy_Search\\": "includes/classes/"
+      }
+  },
+  "scripts": {
+    "autoload": "composer dump-autoload"
+  },
+  "require": {
+    "teamtnt/tntsearch": "^4.4"
+  }
+}
