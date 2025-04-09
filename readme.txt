@@ -34,6 +34,7 @@ Speedy Search is a powerful and lightweight search plugin that enhances your sit
 
 * Add support for WooCommerce
 * Add support for pages
+* Add integration with Admin Instant Search
 
 == GDPR ==
 
@@ -64,5 +65,6 @@ By default it will index 10 posts per minute.
 
 == Screenshots ==
 
-1. Preview
+1. General Settings
+2. Post Settings
 
