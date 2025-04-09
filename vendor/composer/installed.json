@@ -137,6 +137,6 @@
             "install-path": "../teamtnt/tntsearch"
         }
     ],
-    "dev": true,
+    "dev": false,
     "dev-package-names": []
 }

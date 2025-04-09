@@ -43,13 +43,23 @@ class API {
    */
   public function get_posts(WP_REST_Request $request) {
 		$get_result_limit = Utils::get_option('result_limit');
-		$result_limit = $get_result_limit ? $get_result_limit : 10;
-    $search_query = $request->get_param('search');
+		$result_limit     = $get_result_limit ? $get_result_limit : 10;
+    $search_query     = $request->get_param('search');
 
     if (empty($search_query)) {
       return new WP_REST_Response(array(
         'error' => 'Search query is required.'
       ), 400);
+    }
+
+    // Generate a unique cache key for this search
+    $cache_key = 'speedy_search_' . md5($search_query);
+
+    // Check if results exist in WordPress Object Cache
+    $cached_results = wp_cache_get($cache_key);
+
+    if ($cached_results !== false) {
+      return new WP_REST_Response($cached_results, 200);
     }
 
     // Get TNTSearch instance
@@ -66,26 +76,31 @@ class API {
     }
 
     // Fetch all posts in a single query
-    $posts = get_posts(array(
-      'post_type'      => 'post',
-      'post__in'       => $results['ids'],
-      'orderby'        => 'post__in', // Maintain order from TNTSearch
-      'posts_per_page' => count($results['ids']),
-    ));
+    if (!$cached_results) {
+      $posts = get_posts(array(
+        'post_type'      => 'post',
+        'post__in'       => $results['ids'],
+        'orderby'        => 'post__in', // Maintain order from TNTSearch
+        'posts_per_page' => count($results['ids']),
+      ));
 
-    $posts_data = array();
+      $posts_data = array();
 
-    foreach ($posts as $post) {
-      $posts_data[] = array(
-        'id'        => $post->ID,
-        'title'     => get_the_title($post->ID),
-        'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
-        'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
-        'permalink' => get_permalink($post->ID)
-      );
+      foreach ($posts as $post) {
+        $posts_data[] = array(
+          'id'        => $post->ID,
+          'title'     => get_the_title($post->ID),
+          'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
+          'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'permalink' => get_permalink($post->ID)
+        );
+      }
+
+      wp_cache_set($cache_key, $posts_data, '', 600);
+      $cached_results = wp_cache_get($cache_key);
+
+      return new WP_REST_Response($posts_data, 200);
     }
-
-    return new WP_REST_Response($posts_data, 200);
   }
 
 }
