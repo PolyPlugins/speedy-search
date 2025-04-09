@@ -20,7 +20,7 @@ Speedy Search is a powerful and lightweight search plugin that enhances your sit
 * Background sync to index posts
 * Ability to adjust the batch size for the initial index so smaller servers don't get overloaded
 * Limit the number of results displayed
-* Adds `/wp-json/instant-search-for-wordpress/v1/posts` endpoint to get array of post ids
+* Adds `/wp-json/speedy-search/v1/posts` endpoint to get array of post ids
 
 ## Road Map
 
