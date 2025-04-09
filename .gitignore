@@ -1,6 +1,5 @@
 # Exclude hidden files
 .git
-.distignore
 
 # Exclude development and build files
 node_modules/
