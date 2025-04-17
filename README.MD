@@ -1,10 +1,5 @@
-# Speedy Search
-
-**Tested up to**: 6.7  
-**Stable tag**: 1.0.0  
-**Requires PHP**: 7.4
-
-## Description
+![Speedy Search Banner](.wordpress-org/banner-1880x609.png)
+## About
 
 Speedy Search is a powerful and lightweight search plugin that enhances your site’s search functionality with lightning-fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for instant, accurate, and efficient searching. Say goodbye to slow searches—this plugin ensures a seamless user experience with real-time suggestions and improved relevancy. Perfect for blogs, news sites, and content-heavy websites.
 
@@ -38,6 +33,11 @@ This plugin collects and stores certain data on your server to ensure proper fun
 
 * Storing plugin settings
 * Remembering which notices have been dismissed
+
+## Screenshots
+
+![General Settings](.wordpress-org/screenshot-1.png)
+![Post Settings](.wordpress-org/screenshot-2.png)
 
 ## Installation
 
