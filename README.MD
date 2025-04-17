@@ -36,8 +36,8 @@ This plugin collects and stores certain data on your server to ensure proper fun
 
 ## Screenshots
 
-![General Settings](.wordpress-org/screenshot-1.png)
-![Post Settings](.wordpress-org/screenshot-2.png)
+![General Settings](.wordpress-org/screenshot-1.jpg)
+![Post Settings](.wordpress-org/screenshot-2.jpg)
 
 ## Installation
 
