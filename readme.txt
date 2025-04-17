@@ -1,7 +1,7 @@
 === Speedy Search ===
 Contributors: polyplugins
 Tags: instant search, search, wp, speedy search, woocommerce
-Tested up to: 6.7
+Tested up to: 6.8
 Stable tag: 1.0.0
 Requires PHP: 7.4
 License: GPLv3
