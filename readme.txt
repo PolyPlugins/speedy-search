@@ -17,6 +17,7 @@ Speedy Search is a powerful and lightweight search plugin that enhances your sit
 == Currently Supports ==
 
 * Instantly Searching WordPress Posts
+* Advanced repo search for finding plugins and themes. [Demo](https://www.polyplugins.com/repo-search/)
 
 
 == Features ==
