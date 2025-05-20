@@ -50,6 +50,17 @@ class Enqueue {
       $this->enqueue_scripts();
       $this->enqueue_wordpress();
     }
+
+    if ($hook_suffix === 'plugins_page_repo-advanced-search') {
+      $repo_enabled = Utils::get_option('repo_enabled');
+
+      if (!$repo_enabled) {
+        return;
+      }
+      
+      $this->enqueue_repo_search_styles();
+      $this->enqueue_repo_search_scripts();
+    }
   }
   
   /**
@@ -72,6 +83,28 @@ class Enqueue {
   private function enqueue_scripts() {
     wp_enqueue_script('speedy-search-settings', plugins_url('/js/backend/settings.js', $this->plugin), array('jquery', 'wp-color-picker', 'wp-i18n'), $this->version, true);
     wp_set_script_translations('speedy-search-settings', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+    wp_enqueue_script('bootstrap', plugins_url('/js/bootstrap.min.js', $this->plugin), array('jquery', 'wp-color-picker'), $this->version, true);
+    wp_enqueue_script('select2', plugins_url('/js/backend/select2.min.js', $this->plugin), array('jquery'), $this->version, true);
+  }
+  
+  /**
+   * Enqueue styles
+   *
+   * @return void
+   */
+  private function enqueue_repo_search_styles() {
+    wp_enqueue_style('speedy-search-settings', plugins_url('/css/backend/repo.css', $this->plugin), array(), $this->version);
+    wp_enqueue_style('bootstrap', plugins_url('/css/backend/bootstrap-wrapper.min.css', $this->plugin), array(), $this->version);
+    wp_enqueue_style('bootstrap-icons', plugins_url('/css/bootstrap-icons.min.css', $this->plugin), array(), $this->version);
+  }
+  
+  /**
+   * Enqueue scripts
+   *
+   * @return void
+   */
+  private function enqueue_repo_search_scripts() {
+    wp_enqueue_script('speedy-search-settings', plugins_url('/js/backend/repo.js', $this->plugin), array('jquery', 'wp-color-picker', 'wp-i18n'), $this->version, true);
     wp_enqueue_script('bootstrap', plugins_url('/js/bootstrap.min.js', $this->plugin), array('jquery', 'wp-color-picker'), $this->version, true);
     wp_enqueue_script('select2', plugins_url('/js/backend/select2.min.js', $this->plugin), array('jquery'), $this->version, true);
   }

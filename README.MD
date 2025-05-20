@@ -51,3 +51,11 @@ This plugin collects and stores certain data on your server to ensure proper fun
 ### How long will it take to index?
 
 By default, it will index 10 posts per minute.
+
+## Changelog
+
+### 1.0.1
+- Added: Repo Advanced Search
+
+### 1.0.0
+- Initial Release

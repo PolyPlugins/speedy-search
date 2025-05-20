@@ -47,6 +47,13 @@ class Admin {
 		add_action('admin_menu', array($this, 'add_admin_menu'));
 		add_action('admin_init', array($this, 'settings_init'));
     add_filter('plugin_action_links_' . plugin_basename($this->plugin), array($this, 'add_setting_link'));
+
+    
+    $repo_enabled = Utils::get_option('repo_enabled');
+
+    if ($repo_enabled) {
+		  add_action('admin_menu', array($this, 'advanced_repo_search'));
+    }
   }
 
 	/**
@@ -57,7 +64,7 @@ class Admin {
 	public function add_admin_menu() {
     add_action('admin_notices', array($this, 'maybe_show_indexing_notice'));
     add_action('admin_notices', array($this, 'maybe_show_missing_extensions_notice'));
-		add_submenu_page('options-general.php', __('Speedy Search', 'speedy-search'), __('Instant Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
+		add_submenu_page('options-general.php', __('Speedy Search', 'speedy-search'), __('Speedy Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
 	}
   
   /**
@@ -128,6 +135,13 @@ class Admin {
       null,
       'speedy_search_posts_polyplugins'
     );
+
+    add_settings_section(
+      'speedy_search_repo_section_polyplugins',
+      '',
+      null,
+      'speedy_search_repo_polyplugins'
+    );
     
     // Add a setting under general section
 		add_settings_field(
@@ -160,6 +174,14 @@ class Admin {
 			array($this, 'result_limit_render'),
 			'speedy_search_posts_polyplugins',
 			'speedy_search_posts_section_polyplugins'
+		);
+
+		add_settings_field(
+			'repo_enabled',                             
+			__('Enabled?', 'speedy-search'),
+			array($this, 'repo_enabled_render'),
+			'speedy_search_repo_polyplugins',
+			'speedy_search_repo_section_polyplugins'
 		);
 	}
 
@@ -217,6 +239,21 @@ class Admin {
     <p><strong><?php esc_html_e('How many posts would you like to show?', 'speedy-search'); ?></strong></p>
 	  <?php
 	}
+
+  /**
+	 * Render Repo Enabled Field
+	 *
+	 * @return void
+	 */
+	public function repo_enabled_render() {
+		$option = Utils::get_option('repo_enabled');
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[repo_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p>This adds an advanced search under the plugin menu. This does collect data on your searches and IP address. Please see our <a href="https://www.polyplugins.com/privacy-policy/" target="_blank">Privacy Policy</a> for more information.</p>
+		<?php
+	}
 	
 	/**
 	 * Render options page
@@ -250,6 +287,12 @@ class Admin {
                     <?php esc_html_e('Posts', 'speedy-search'); ?>
                   </a>
                 </li>
+                <li>
+                  <a href="javascript:void(0);" data-section="repo">
+                    <i class="bi bi-plug-fill"></i>
+                    <?php esc_html_e('Repo', 'speedy-search'); ?>
+                  </a>
+                </li>
               </ul>
             </div>
             <div class="tabs col-12 col-md-6 col-xl-6">
@@ -262,6 +305,12 @@ class Admin {
               <div class="tab posts" style="display: none;">
                 <?php
                 do_settings_sections('speedy_search_posts_polyplugins');
+                ?>
+              </div>
+
+              <div class="tab repo" style="display: none;">
+                <?php
+                do_settings_sections('speedy_search_repo_polyplugins');
                 ?>
               </div>
             
@@ -313,6 +362,12 @@ class Admin {
 			$sanitary_values['posts']['result_limit'] = sanitize_text_field($input['posts']['result_limit']);
 		}
 
+    if (isset($input['repo_enabled']) && $input['repo_enabled']) {
+      $sanitary_values['repo_enabled'] = $input['repo_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['repo_enabled'] = false;
+    }
+
     return $sanitary_values;
   }
   
@@ -326,5 +381,21 @@ class Admin {
     array_unshift($links, $settings_link);
     return $links;
   }
+
+  public function advanced_repo_search() {
+    add_submenu_page(
+      'plugins.php',
+      'Advanced Search',
+      'Advanced Search',
+      'manage_options',
+      'repo-advanced-search',
+      array($this, 'repo_advanced_search_page')
+    );
+  }
+
+  public function repo_advanced_search_page() {
+    include plugin_dir_path($this->plugin) . 'templates/repo-advanced-search.php';
+  }
+
 
 }
