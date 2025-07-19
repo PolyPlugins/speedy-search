@@ -1,7 +1,6 @@
 # 1.1.0
 [ ] Add shortcode search injection
 [ ] Add a link to MU plugin that enhances speed even further
-[ ] Add version update to db and give a notice with changes
 [ ] Test EDD
 [ ] Add handling for visibility
 [ ] Plugin Check
@@ -20,9 +19,11 @@
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
 
 # Completed
-[X] Add handling for updating the indexes on create, edit, delete
-[X] Add ability to delete index
-[X] Add caching
 [X] Add support for WooCommerce
 [X] Add support for EDD
 [X] Add support for pages
+[X] Add handling for updating the indexes on create, edit, delete
+[X] Add ability to reindex
+[X] Add version to db to handle future update logic
+[X] Give a notice with changelog
+[X] Add caching
