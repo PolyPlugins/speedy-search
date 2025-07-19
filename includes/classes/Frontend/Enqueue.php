@@ -64,15 +64,17 @@ class Enqueue {
    * @return void
    */
   private function enqueue_scripts() {
-    $posts_index                   = Utils::get_index('posts');
-    $pages_index                   = Utils::get_index('pages');
-    $products_index                = Utils::get_index('products');
-    $is_posts_indexing_complete    = isset($posts_index['complete']) ? true : false;
-    $is_pages_indexing_complete    = isset($pages_index['complete']) ? true : false;
-    $is_products_indexing_complete = isset($products_index['complete']) ? true : false;
+    $posts_index                    = Utils::get_index('posts');
+    $pages_index                    = Utils::get_index('pages');
+    $products_index                 = Utils::get_index('products');
+    $downloads_index                = Utils::get_index('downloads');
+    $is_posts_indexing_complete     = isset($posts_index['complete']) ? true : false;
+    $is_pages_indexing_complete     = isset($pages_index['complete']) ? true : false;
+    $is_products_indexing_complete  = isset($products_index['complete']) ? true : false;
+    $is_downloads_indexing_complete = isset($downloads_index['complete']) ? true : false;
     
     // Fallback to default search when indexing
-    if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete) {
+    if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete || $is_downloads_indexing_complete) {
       wp_enqueue_script('snappy-search', plugins_url('/js/frontend/selector.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
       wp_localize_script(
         'snappy-search',

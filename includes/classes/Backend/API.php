@@ -39,6 +39,21 @@ class API {
       );
     }
 
+    $downloads         = Utils::get_option('downloads');
+    $downloads_enabled = isset($downloads['enabled']) ? $downloads['enabled'] : 0;
+
+    if ($downloads_enabled && class_exists('Easy_Digital_Downloads')) {
+      register_rest_route(
+        'speedy-search/v1',
+        '/downloads/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_downloads'),
+          'permission_callback' => '__return_true',
+        )
+      );
+    }
+
     $posts         = Utils::get_option('posts');
     $posts_enabled = isset($posts['enabled']) ? $posts['enabled'] : 1;
 
@@ -207,7 +222,7 @@ class API {
   }
   
   /**
-   * Get posts
+   * Get products
    *
    * @param  mixed $request
    * @return void
@@ -262,6 +277,77 @@ class API {
           'id'        => $post->ID,
           'title'     => get_the_title($post->ID),
           'price'     => get_post_meta($post->ID, '_price'),
+          'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
+          'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'permalink' => get_permalink($post->ID)
+        );
+      }
+
+      wp_cache_set($cache_key, $posts_data, '', 600);
+      $cached_results = wp_cache_get($cache_key);
+
+      return new WP_REST_Response($posts_data, 200);
+    }
+  }
+  
+  /**
+   * Get downloads
+   *
+   * @param  mixed $request
+   * @return void
+   */
+  public function get_downloads(WP_REST_Request $request) {
+		$options          = Utils::get_option('downloads');
+		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
+    $search_query     = $request->get_param('search');
+
+    if (empty($search_query)) {
+      return new WP_REST_Response(array(
+        'error' => 'Search query is required.'
+      ), 400);
+    }
+
+    // Generate a unique cache key for this search
+    $cache_key = 'speedy_search_' . md5($search_query);
+
+    // Check if results exist in WordPress Object Cache
+    $cached_results = wp_cache_get($cache_key);
+
+    if ($cached_results !== false) {
+      return new WP_REST_Response($cached_results, 200);
+    }
+
+    // Get TNTSearch instance
+    $tnt = TNTSearch::get_instance()->tnt();
+    
+    $tnt->selectIndex('downloads.sqlite');
+    $tnt->fuzziness = true;
+
+    // Perform the search
+    $results = $tnt->search($search_query, $result_limit); // Limit to 10 results
+
+    if (empty($results['ids'])) {
+      return new WP_REST_Response([], 200); // No results found
+    }
+
+    // Fetch all posts in a single query
+    if (!$cached_results) {
+      $posts = get_posts(array(
+        'post_type'      => 'download',
+        'post__in'       => $results['ids'],
+        'orderby'        => 'post__in', // Maintain order from TNTSearch
+        'posts_per_page' => count($results['ids']),
+      ));
+
+      $posts_data = array();
+
+      foreach ($posts as $post) {
+        $price = edd_get_download_price($post->ID);
+
+        $posts_data[] = array(
+          'id'        => $post->ID,
+          'title'     => get_the_title($post->ID),
+          'price'     => is_array($price) ? sanitize_text_field(implode(', ', $price)) : sanitize_text_field($price),
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
           'permalink' => get_permalink($post->ID)

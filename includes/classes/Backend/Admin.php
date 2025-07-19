@@ -154,6 +154,13 @@ class Admin {
     );
 
     add_settings_section(
+      'speedy_search_downloads_section_polyplugins',
+      '',
+      null,
+      'speedy_search_downloads_polyplugins'
+    );
+
+    add_settings_section(
       'speedy_search_repo_section_polyplugins',
       '',
       null,
@@ -263,6 +270,30 @@ class Admin {
 			array($this, 'products_result_limit_render'),
 			'speedy_search_products_polyplugins',
 			'speedy_search_products_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'downloads_enabled',
+			__('Enabled?', 'speedy-search'),
+			array($this, 'downloads_enabled_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
+		);
+
+		add_settings_field(
+			'downloads_batch',
+		  __('Batch', 'speedy-search'),
+			array($this, 'downloads_batch_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'downloads_result_limit',
+			__('Result Limit', 'speedy-search'),
+			array($this, 'downloads_result_limit_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
 		);
 
 		add_settings_field(
@@ -460,6 +491,50 @@ class Admin {
 	}
 
   /**
+	 * Render Enabled Field
+	 *
+	 * @return void
+	 */
+	public function downloads_enabled_render() {
+		$options = Utils::get_option('downloads');
+    $option  = isset($options['enabled']) ? $options['enabled'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[downloads][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Index and show downloads in the search?', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Downloads Batch Field
+	 *
+	 * @return void
+	 */
+	public function downloads_batch_render() {
+		$options = Utils::get_option('downloads');
+    $option  = isset($options['batch']) ? $options['batch'] : 20;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[downloads][batch]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many downloads should be indexed per minute?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Downloads Batch Field
+	 *
+	 * @return void
+	 */
+	public function downloads_result_limit_render() {
+		$options = Utils::get_option('downloads');
+    $option  = isset($options['result_limit']) ? $options['result_limit'] : 10;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[downloads][result_limit]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many downloads would you like to show?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
 	 * Render Repo Enabled Field
 	 *
 	 * @return void
@@ -520,6 +595,14 @@ class Admin {
                     </a>
                   </li>
                 <?php endif; ?>
+                <?php if (class_exists('Easy_Digital_Downloads')) : ?>
+                  <li>
+                    <a href="javascript:void(0);" data-section="products">
+                      <i class="bi bi-file-earmark-arrow-down-fill"></i>
+                      <?php esc_html_e('Downloads', 'speedy-search'); ?>
+                    </a>
+                  </li>
+                <?php endif; ?>
                 <li>
                   <a href="javascript:void(0);" data-section="repo">
                     <i class="bi bi-plug-fill"></i>
@@ -551,6 +634,14 @@ class Admin {
                 <div class="tab products" style="display: none;">
                   <?php
                   do_settings_sections('speedy_search_products_polyplugins');
+                  ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if (class_exists('Easy_Digital_Downloads')) : ?>
+                <div class="tab downloads" style="display: none;">
+                  <?php
+                  do_settings_sections('speedy_search_downloads_polyplugins');
                   ?>
                 </div>
               <?php endif; ?>
@@ -649,6 +740,20 @@ class Admin {
 
     if (isset($input['products']['result_limit']) && is_numeric($input['products']['result_limit'])) {
 			$sanitary_values['products']['result_limit'] = sanitize_text_field($input['products']['result_limit']);
+		}
+
+    if (isset($input['downloads']['enabled']) && $input['downloads']['enabled']) {
+      $sanitary_values['downloads']['enabled'] = $input['downloads']['enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['downloads']['enabled'] = false;
+    }
+
+    if (isset($input['downloads']['batch']) && is_numeric($input['downloads']['batch'])) {
+			$sanitary_values['downloads']['batch'] = sanitize_text_field($input['downloads']['batch']);
+		}
+
+    if (isset($input['downloads']['result_limit']) && is_numeric($input['downloads']['result_limit'])) {
+			$sanitary_values['downloads']['result_limit'] = sanitize_text_field($input['downloads']['result_limit']);
 		}
 
     if (isset($input['repo_enabled']) && $input['repo_enabled']) {

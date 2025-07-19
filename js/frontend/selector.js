@@ -1,12 +1,13 @@
 const { __, _x, _n, _nx } = wp.i18n;
 
-let selector         = snappy_search_object.options.selector;
-let characters       = snappy_search_object.options.characters;
-let typing_delay     = snappy_search_object.options.typing_delay;
-let posts_enabled    = snappy_search_object.options.posts.enabled;
-let pages_enabled    = snappy_search_object.options.pages.enabled;
-let products_enabled = snappy_search_object.options.products.enabled;
-let currency         = snappy_search_object.currency;
+let selector          = snappy_search_object.options.selector;
+let characters        = snappy_search_object.options.characters;
+let typing_delay      = snappy_search_object.options.typing_delay;
+let posts_enabled     = snappy_search_object.options.posts.enabled;
+let pages_enabled     = snappy_search_object.options.pages.enabled;
+let products_enabled  = snappy_search_object.options.products.enabled;
+let downloads_enabled = snappy_search_object.options.downloads.enabled;
+let currency          = snappy_search_object.currency;
 
 jQuery(document).ready(function ($) {
   if (!selector) return;
@@ -199,6 +200,10 @@ jQuery(document).ready(function ($) {
 
     if (products_enabled) {
       types.push({ type: 'products', label: __('Products', 'speedy-search') });
+    }
+
+    if (downloads_enabled) {
+      types.push({ type: 'downloads', label: __('Downloads', 'speedy-search') });
     }
 
     if (posts_enabled) {
