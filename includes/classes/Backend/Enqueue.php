@@ -45,6 +45,8 @@ class Enqueue {
    * @return void
    */
   public function enqueue($hook_suffix) {
+    $this->enqueue_dismiss_notices();
+
     if ($hook_suffix === 'settings_page_speedy-search') {
       $this->enqueue_styles();
       $this->enqueue_scripts();
@@ -61,6 +63,23 @@ class Enqueue {
       $this->enqueue_repo_search_styles();
       $this->enqueue_repo_search_scripts();
     }
+  }
+  
+  /**
+   * Enqueue scripts
+   *
+   * @return void
+   */
+  private function enqueue_dismiss_notices() {
+    wp_enqueue_script('speedy-search-dismiss-notices', plugins_url('/js/backend/dismiss-notices.js', $this->plugin), array('jquery', 'wp-color-picker', 'wp-i18n'), $this->version, true);
+    wp_localize_script(
+      'speedy-search-dismiss-notices',
+      'speedy_search_object',
+      array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('speedy_search_dismiss_notice_nonce')
+      )
+    );
   }
   
   /**
