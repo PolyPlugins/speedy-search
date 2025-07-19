@@ -73,7 +73,7 @@ class Enqueue {
     
     // Fallback to default search when indexing
     if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete) {
-      wp_enqueue_script('speedy-search', plugins_url('/js/frontend/main.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
+      wp_enqueue_script('speedy-search', plugins_url('/js/frontend/selector.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
       wp_localize_script(
         'speedy-search',
         'speedy_search_object',
