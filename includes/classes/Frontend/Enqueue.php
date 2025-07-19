@@ -73,16 +73,16 @@ class Enqueue {
     
     // Fallback to default search when indexing
     if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete) {
-      wp_enqueue_script('speedy-search', plugins_url('/js/frontend/selector.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
+      wp_enqueue_script('snappy-search', plugins_url('/js/frontend/selector.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
       wp_localize_script(
-        'speedy-search',
-        'speedy_search_object',
+        'snappy-search',
+        'snappy_search_object',
         array(
           'options'  => get_option('speedy_search_settings_polyplugins'),
           'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
         )
       );
-      wp_set_script_translations('speedy-search', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+      wp_set_script_translations('snappy-search', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
     }
   }
   

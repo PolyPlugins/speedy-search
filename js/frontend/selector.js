@@ -1,12 +1,12 @@
 const { __, _x, _n, _nx } = wp.i18n;
 
-let selector = speedy_search_object.options.selector;
-let characters = speedy_search_object.options.characters;
-let typing_delay = speedy_search_object.options.typing_delay;
-let posts_enabled = speedy_search_object.options.posts.enabled;
-let pages_enabled = speedy_search_object.options.pages.enabled;
-let products_enabled = speedy_search_object.options.products.enabled;
-let currency = speedy_search_object.currency;
+let selector         = snappy_search_object.options.selector;
+let characters       = snappy_search_object.options.characters;
+let typing_delay     = snappy_search_object.options.typing_delay;
+let posts_enabled    = snappy_search_object.options.posts.enabled;
+let pages_enabled    = snappy_search_object.options.pages.enabled;
+let products_enabled = snappy_search_object.options.products.enabled;
+let currency         = snappy_search_object.currency;
 
 jQuery(document).ready(function ($) {
   if (!selector) return;
