@@ -1,7 +1,7 @@
-![Speedy Search Banner](.wordpress-org/banner-1880x609.png)
+![Snappy Search Banner](.wordpress-org/banner-1880x609.png)
 ## About
 
-Speedy Search is a powerful and lightweight search plugin that enhances your site’s search functionality with lightning-fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for instant, accurate, and efficient searching. Say goodbye to slow searches—this plugin ensures a seamless user experience with real-time suggestions and improved relevancy. Perfect for blogs, news sites, and content-heavy websites.
+Snappy Search is a powerful and lightweight search plugin that enhances your site’s search functionality with lightning-fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for instant, accurate, and efficient searching. Say goodbye to slow searches—this plugin ensures a seamless user experience with real-time suggestions and improved relevancy. Perfect for blogs, news sites, and content-heavy websites.
 
 ## Currently Supports
 

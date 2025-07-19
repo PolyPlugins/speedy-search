@@ -1,7 +1,12 @@
+# 1.2.0
+[ ] Add handling for updating the indexes on create, edit, delete
+[ ] Add shortcode search injection
+[ ] Add support for EDD
+[ ] Add ability to delete index and clear complete attribute
+
 # General
 [ ] Add scroll to load more results
-[ ] Look into caching
-[ ] Add ability to delete index and clear complete attribute
 [ ] Add advanced search
-[ ] Add support for WooCommerce
-[ ] Add support for pages
+[X] Add caching
+[X] Add support for WooCommerce
+[X] Add support for pages

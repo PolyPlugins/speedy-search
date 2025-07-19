@@ -2,7 +2,7 @@
 # This file is distributed under the GPL3.
 msgid ""
 msgstr ""
-"Project-Id-Version: Speedy Search 1.0.0\n"
+"Project-Id-Version: Snappy Search 1.0.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/speedy-search\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,7 +17,7 @@ msgstr ""
 #. Plugin Name of the plugin
 #: wp-content\plugins\speedy-search\speedy-search.php
 #: includes/classes/Backend/Admin.php:60
-msgid "Speedy Search"
+msgid "Snappy Search"
 msgstr ""
 
 #. Plugin URI of the plugin
@@ -45,11 +45,11 @@ msgid "Instant Search"
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:80
-msgid "Speedy Search is currently indexing."
+msgid "Snappy Search is currently indexing."
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:96
-msgid "Speedy Search requires the following extensions:"
+msgid "Snappy Search requires the following extensions:"
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:135
@@ -85,7 +85,7 @@ msgid "How many posts would you like to show?"
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:234
-msgid "Speedy Search Settings"
+msgid "Snappy Search Settings"
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:244

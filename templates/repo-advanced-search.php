@@ -30,7 +30,7 @@
         </div>
 
         <div class="text-center mt-4">
-          Powered by <a href="https://wordpress.org/plugins/speedy-search/" target="_blank">Speedy Search</a>
+          Powered by <a href="https://wordpress.org/plugins/speedy-search/" target="_blank">Snappy Search</a>
         </div>
       </div>
       <div class="col-12 col-md-9 search-container">

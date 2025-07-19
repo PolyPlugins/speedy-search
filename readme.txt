@@ -1,8 +1,8 @@
-=== Speedy Search ===
+=== Snappy Search ===
 Contributors: polyplugins
-Tags: instant search, search, wp, speedy search, woocommerce
+Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.0.1
+Stable tag: 1.1.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -11,7 +11,7 @@ A fast, lightweight search plugin powered by TNTSearch, indexing posts for insta
 
 
 == Description ==
-Speedy Search is a powerful and lightweight search plugin that enhances your site’s search functionality with lightning-fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for instant, accurate, and efficient searching. Say goodbye to slow searches—this plugin ensures a seamless user experience with real-time suggestions and improved relevancy. Perfect for blogs, news sites, and content-heavy websites.
+Snappy Search is a powerful and lightweight search plugin that enhances your site’s search functionality with lightning-fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for instant, accurate, and efficient searching. Say goodbye to slow searches—this plugin ensures a seamless user experience with real-time suggestions and improved relevancy. Perfect for blogs, news sites, and content-heavy websites.
 
 
 == Currently Supports ==

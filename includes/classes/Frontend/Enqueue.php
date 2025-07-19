@@ -64,15 +64,26 @@ class Enqueue {
    * @return void
    */
   private function enqueue_scripts() {
-    wp_enqueue_script('speedy-search', plugins_url('/js/frontend/main.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
-    wp_localize_script(
-      'speedy-search',
-      'speedy_search_object',
-      array(
-        'selector' => Utils::get_option('selector'),
-      )
-    );
-    wp_set_script_translations('speedy-search', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+    $posts_index                   = Utils::get_index('posts');
+    $pages_index                   = Utils::get_index('pages');
+    $products_index                = Utils::get_index('products');
+    $is_posts_indexing_complete    = isset($posts_index['complete']) ? true : false;
+    $is_pages_indexing_complete    = isset($pages_index['complete']) ? true : false;
+    $is_products_indexing_complete = isset($products_index['complete']) ? true : false;
+    
+    // Fallback to default search when indexing
+    if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete) {
+      wp_enqueue_script('speedy-search', plugins_url('/js/frontend/main.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
+      wp_localize_script(
+        'speedy-search',
+        'speedy_search_object',
+        array(
+          'options'  => get_option('speedy_search_settings_polyplugins'),
+          'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
+        )
+      );
+      wp_set_script_translations('speedy-search', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+    }
   }
   
 }
