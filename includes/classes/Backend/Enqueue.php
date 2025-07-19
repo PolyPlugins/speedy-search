@@ -73,6 +73,7 @@ class Enqueue {
     wp_enqueue_style('bootstrap', plugins_url('/css/backend/bootstrap-wrapper.min.css', $this->plugin), array(), $this->version);
     wp_enqueue_style('bootstrap-icons', plugins_url('/css/bootstrap-icons.min.css', $this->plugin), array(), $this->version);
     wp_enqueue_style('select2', plugins_url('/css/backend/select2.min.css', $this->plugin), array(), $this->version);
+    wp_enqueue_style('sweetalert2', plugins_url('/css/backend/sweetalert2.min.css', $this->plugin), array(), $this->version);
   }
   
   /**
@@ -82,9 +83,18 @@ class Enqueue {
    */
   private function enqueue_scripts() {
     wp_enqueue_script('speedy-search-settings', plugins_url('/js/backend/settings.js', $this->plugin), array('jquery', 'wp-color-picker', 'wp-i18n'), $this->version, true);
+    wp_localize_script(
+      'speedy-search-settings',
+      'snappy_search_object',
+      array(
+        'ajax_url' => admin_url('admin-ajax.php'),
+        'nonce'    => wp_create_nonce('speedy_search_reindex_nonce')
+      )
+    );
     wp_set_script_translations('speedy-search-settings', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
     wp_enqueue_script('bootstrap', plugins_url('/js/bootstrap.min.js', $this->plugin), array('jquery', 'wp-color-picker'), $this->version, true);
     wp_enqueue_script('select2', plugins_url('/js/backend/select2.min.js', $this->plugin), array('jquery'), $this->version, true);
+    wp_enqueue_script('sweetalert2', plugins_url('/js/backend/sweetalert2.all.min.js', $this->plugin), array('jquery'), $this->version, true);
   }
   
   /**

@@ -80,6 +80,57 @@ class Utils {
 
     update_option('speedy_search_indexes_polyplugins', $options);
   }
+
+  /**
+   * Delete an index file
+   *
+   * @param  string $index_path The path to the index file
+   * @param  string $filename   The index filename (e.g., 'posts.sqlite')
+   * @return bool               True if deleted, false otherwise
+   */
+  public static function delete_index($index_path, $filename) {
+    $path = rtrim($index_path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
+
+    if (file_exists($path)) {
+      return unlink($path);
+    }
+
+    return false;
+  }
+  
+  /**
+   * Send success json
+   *
+   * @param  string $message The message to send
+   * @param  int    $code    The status code
+   * @return void
+   */
+  public static function send_success($message, $code = 200) {
+    $message = $message ? sanitize_text_field($message) : __('Success', 'projectplot');
+    $code    = is_numeric($code) ? (int) $code : 200;
+
+    wp_send_json_success(array(
+      'message' => sanitize_text_field($message),
+      'status' => $code
+    ), $code);
+  }
+  
+  /**
+   * Send error json
+   *
+   * @param  mixed $message
+   * @param  mixed $code
+   * @return void
+   */
+  public static function send_error($message, $code = 400) {
+    $message = $message ? sanitize_text_field($message) : __('Error', 'projectplot');
+    $code    = is_numeric($code) ? (int) $code : 400;
+
+    wp_send_json_error(array(
+      'message' => sanitize_text_field($message),
+      'status' => $code
+    ), $code);
+  }
   
   /**
    * Checks for any missing extensions

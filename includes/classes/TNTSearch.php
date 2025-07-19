@@ -89,6 +89,15 @@ class TNTSearch {
     
     return $index_path_exists;
   }
+
+  /**
+   * Get index path
+   *
+   * @return string $index_path the index path
+   */
+  public function get_index_path() {
+    return $this->index_path;
+  }
   
   /**
    * Create index path

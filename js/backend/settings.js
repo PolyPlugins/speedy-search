@@ -2,6 +2,9 @@ jQuery(document).ready(function ($) {
 
   const { __, _x, _n, _nx } = wp.i18n;
 
+  let ajax_url = snappy_search_object.ajax_url;
+  let nonce    = snappy_search_object.nonce;
+
   initTabs();
   initSelect2();
   initColorPicker();
@@ -11,6 +14,49 @@ jQuery(document).ready(function ($) {
   function initTabs() {
     $(".nav-links li a").on("click", function() {
       let selected = $(this).data('section');
+
+      if (selected === 'reindex') {
+        Swal.fire({
+          title: "Reindex?",
+          text: __("This will delete all indexes and rebuild them. Are you sure you want to do this?", 'speedy-search'),
+          showDenyButton: false,
+          showCancelButton: true,
+          confirmButtonText: __("Reindex", 'speedy-search'),
+          confirmButtonColor: "#46BEA4",
+          showLoaderOnConfirm: true,
+          preConfirm: () => {
+            return $.ajax({
+              url: ajax_url,
+              type: 'POST',
+              dataType: 'json',
+              data: {
+                action: 'speedy_search_reindex_all',
+                nonce: nonce
+              },
+              success: function (response) {
+                Swal.fire({
+                  title: __("Success", 'speedy-search'),
+                  text: __("Reindexing had begun!", 'speedy-search'),
+                  icon: "success",
+                  confirmButtonColor: "#46BEA4",
+                });
+              },
+              error: function (xhr, status, error) {
+                Swal.fire({
+                  title: __("Error", 'speedy-search'),
+                  text: __("Reindexing failed to start!", 'speedy-search'),
+                  icon: "error",
+                  confirmButtonColor: "#46BEA4",
+                });
+
+                console.error(__("Error: ", 'speedy-search'), error);
+              }
+            });
+          }
+        });
+
+        return;
+      }
 
       $(".nav-links li a").each(function() {
         let section = $(this).data('section');

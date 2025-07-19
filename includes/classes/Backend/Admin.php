@@ -609,6 +609,12 @@ class Admin {
                     <?php esc_html_e('Repo', 'speedy-search'); ?>
                   </a>
                 </li>
+                <li>
+                  <a href="javascript:void(0);" data-section="reindex">
+                    <i class="bi bi-database-fill"></i>
+                    <?php esc_html_e('Reindex', 'speedy-search'); ?>
+                  </a>
+                </li>
               </ul>
             </div>
             <div class="tabs col-12 col-md-6 col-xl-6">
