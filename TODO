@@ -1,8 +1,9 @@
-# 1.2.0
+# 1.1.0
 [ ] Add handling for updating the indexes on create, edit, delete
 [ ] Add shortcode search injection
 [ ] Add support for EDD
 [ ] Add ability to delete index and clear complete attribute
+[ ] Add a link to MU plugin that enhances speed even further
 
 # General
 [ ] Add scroll to load more results
