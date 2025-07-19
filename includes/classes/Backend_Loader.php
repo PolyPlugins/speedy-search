@@ -6,6 +6,7 @@ use PolyPlugins\Speedy_Search\Backend\Admin;
 use PolyPlugins\Speedy_Search\Backend\API;
 use PolyPlugins\Speedy_Search\Backend\Background_Worker;
 use PolyPlugins\Speedy_Search\Backend\Enqueue;
+use PolyPlugins\Speedy_Search\Backend\Index_Updater;
 use PolyPlugins\Speedy_Search\Backend\Reindexer;
 
 class Backend_Loader {
@@ -52,6 +53,7 @@ class Backend_Loader {
     $this->load_admin();
     $this->load_api();
     $this->load_background_worker();
+    $this->load_index_updater();
     $this->load_reindexer();
   }
   
@@ -92,6 +94,16 @@ class Backend_Loader {
    */
   public function load_background_worker() {
     $admin = new Background_Worker($this->plugin, $this->version, $this->plugin_dir_url);
+    $admin->init();
+  }
+  
+  /**
+   * Load Index Updater
+   *
+   * @return void
+   */
+  public function load_index_updater() {
+    $admin = new Index_Updater($this->plugin, $this->version, $this->plugin_dir_url);
     $admin->init();
   }
   
