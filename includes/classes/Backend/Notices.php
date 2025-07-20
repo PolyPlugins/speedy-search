@@ -29,12 +29,14 @@ class Notices {
       return;
     }
     
-    if ($_GET['page'] != 'speedy-search') {
+    $screen = get_current_screen();
+
+    if ($screen->id != 'settings_page_speedy-search') {
       if ($this->version == '1.1.0') {
         ?>
         <div class="notice notice-success is-dismissible speedy-search">
-          <p><?php _e('Speedy Search is now Snappy Search. We have change a lot including adding support for WooCommerce, EDD, and Pages. Indexes are also now updated when content is added, removed, or updated. We also added the ability to trigger reindexes and reverting the search to default when indexing. Try out the new features by visiting Snappy Search Settings.', 'speedy-search'); ?></p>
-          <a href="options-general.php?page=speedy-search"><?php _e('Try new features', 'speedy-search'); ?></a>
+          <p><?php echo esc_html__('Speedy Search is now Snappy Search. We have change a lot including adding support for WooCommerce, EDD, and Pages. Indexes are also now updated when content is added, removed, or updated. We also added the ability to trigger reindexes and reverting the search to default when indexing. Try out the new features by visiting Snappy Search Settings.', 'speedy-search'); ?></p>
+          <a href="options-general.php?page=speedy-search"><?php echo esc_html__('Try new features', 'speedy-search'); ?></a>
         </div>
         <?php
       }
@@ -42,7 +44,7 @@ class Notices {
   }
 
   public function dismiss_notice() {
-    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'speedy_search_dismiss_notice_nonce')) {
+    if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'speedy_search_dismiss_notice_nonce')) {
       Utils::send_error('Invalid session', 403);
     }
 

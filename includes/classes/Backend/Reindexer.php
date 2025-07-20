@@ -57,7 +57,7 @@ class Reindexer {
   }
 
   public function reindex_all() {
-    if (!isset($_POST['nonce']) || !wp_verify_nonce($_POST['nonce'], 'speedy_search_reindex_nonce')) {
+    if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'speedy_search_reindex_nonce')) {
       Utils::send_error('Invalid session', 403);
     }
 

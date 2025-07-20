@@ -106,7 +106,7 @@ class Utils {
    * @return void
    */
   public static function send_success($message, $code = 200) {
-    $message = $message ? sanitize_text_field($message) : __('Success', 'projectplot');
+    $message = $message ? sanitize_text_field($message) : __('Success', 'speedy-search');
     $code    = is_numeric($code) ? (int) $code : 200;
 
     wp_send_json_success(array(
@@ -123,7 +123,7 @@ class Utils {
    * @return void
    */
   public static function send_error($message, $code = 400) {
-    $message = $message ? sanitize_text_field($message) : __('Error', 'projectplot');
+    $message = $message ? sanitize_text_field($message) : __('Error', 'speedy-search');
     $code    = is_numeric($code) ? (int) $code : 400;
 
     wp_send_json_error(array(

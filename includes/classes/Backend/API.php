@@ -94,7 +94,8 @@ class API {
   public function get_posts(WP_REST_Request $request) {
 		$options          = Utils::get_option('posts');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
-    $search_query     = $request->get_param('search');
+    $get_search_query = $request->get_param('search');
+    $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
     if (empty($search_query)) {
       return new WP_REST_Response(array(
@@ -162,7 +163,8 @@ class API {
   public function get_pages(WP_REST_Request $request) {
 		$options          = Utils::get_option('pages');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
-    $search_query     = $request->get_param('search');
+    $get_search_query = $request->get_param('search');
+    $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
     if (empty($search_query)) {
       return new WP_REST_Response(array(
@@ -230,7 +232,8 @@ class API {
   public function get_products(WP_REST_Request $request) {
 		$options          = Utils::get_option('products');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
-    $search_query     = $request->get_param('search');
+    $get_search_query = $request->get_param('search');
+    $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
     if (empty($search_query)) {
       return new WP_REST_Response(array(
@@ -299,7 +302,8 @@ class API {
   public function get_downloads(WP_REST_Request $request) {
 		$options          = Utils::get_option('downloads');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
-    $search_query     = $request->get_param('search');
+    $get_search_query = $request->get_param('search');
+    $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
     if (empty($search_query)) {
       return new WP_REST_Response(array(
