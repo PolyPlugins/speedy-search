@@ -37,8 +37,12 @@ This plugin collects and stores certain data on your server to ensure proper fun
 
 ## Screenshots
 
-![General Settings](.wordpress-org/screenshot-1.jpg)
-![Post Settings](.wordpress-org/screenshot-2.jpg)
+![Demo](.wordpress-org/screenshot-1.jpg)
+![General Settings](.wordpress-org/screenshot-2.jpg)
+![Posts Settings](.wordpress-org/screenshot-3.jpg)
+![Pages Settings](.wordpress-org/screenshot-4.jpg)
+![Products Settings](.wordpress-org/screenshot-5.jpg)
+![Repo Settings](.wordpress-org/screenshot-6.jpg)
 
 ## Installation
 
@@ -54,6 +58,19 @@ This plugin collects and stores certain data on your server to ensure proper fun
 By default, it will index 10 posts per minute.
 
 ## Changelog
+
+### 1.1.0
+- Added: Support for WooCommerce Products
+- Added: Support for Easy Digital Downloads
+- Added: Support for Pages
+- Added: Shortcode [snappy_search_polyplugins] to inject a Snappy Search form anywhere
+- Added: Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
+- Added: Reindex button to settings
+- Added: Characters and Typing Delay options under General settings
+- Added: Enabled option under various index types
+- Added: Tab navigation to search if showing more than one index
+- Updated: Name to Snappy Search
+- Bugfix: Cron jobs may not register during activation
 
 ### 1.0.1
 - Added: Repo Advanced Search

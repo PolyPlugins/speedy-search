@@ -66,11 +66,28 @@ By default it will index 10 posts per minute.
 
 == Screenshots ==
 
-1. General Settings
-2. Post Settings
+1. Demo
+2. General Settings
+3. Post Settings
+4. Pages Settings
+5. Products Settings
+6. Repo Settings
 
 
 == Changelog ==
+
+= 1.1.0 =
+* Added: Support for WooCommerce Products
+* Added: Support for Easy Digital Downloads
+* Added: Support for Pages
+* Added: Shortcode [snappy_search_polyplugins] to inject a Snappy Search form anywhere
+* Added: Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
+* Added: Reindex button to settings
+* Added: Characters and Typing Delay options under General settings
+* Added: Enabled option under various index types
+* Added: Tab navigation to search if showing more than one index
+* Updated: Name to Snappy Search
+* Bugfix: Cron jobs may not register during activation
 
 = 1.0.1 =
 * Added: Repo Advanced Search
