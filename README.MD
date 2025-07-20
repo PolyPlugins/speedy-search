@@ -5,23 +5,33 @@ Snappy Search is a powerful and lightweight search plugin that enhances your sit
 
 ## Currently Supports
 
+* Instantly Searching WooCommerce products
+* Instantly Searching Easy Digital Downloads downloads
 * Instantly Searching WordPress Posts
+* Instantly Searching WordPress Pages
 * Advanced repo search for finding plugins and themes. [Demo](https://www.polyplugins.com/repo-search/)
 
 ## Features
 
-* Adds a dropdown by defined selector to search form to show results
 * Search through all posts fast without requiring multiple page loads
-* Builds an index of all posts
-* Background sync to index posts
+* Set how many characters to trigger the AJAX search
+* Set a typing delay before an AJAX request is made
+* Tab selection between various indexes if more than one is enabled
+* Adds a dropdown by defined selector to search form to show results
+* Shortcode [snappy_search_polyplugins] to inject a Snappy Search form anywhere
+* Can build indexes for products, downloads, posts, and pages
+* Background sync for indexes
+* Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
 * Ability to adjust the batch size for the initial index so smaller servers don't get overloaded
 * Limit the number of results displayed
-* Adds `/wp-json/speedy-search/v1/posts` endpoint to get array of post ids
+* Reindexer button
+* Adds /wp-json/speedy-search/v1/products endpoint to get array of post id's (Requires WooCommerce)
+* Adds /wp-json/speedy-search/v1/downloads endpoint to get array of post id's (Requires EDD)
+* Adds /wp-json/speedy-search/v1/posts endpoint to get array of post id's
+* Adds /wp-json/speedy-search/v1/pages endpoint to get array of post id's
 
 ## Road Map
 
-* Add support for WooCommerce
-* Add support for pages
 * Add integration with Admin Instant Search
 
 ## GDPR
