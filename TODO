@@ -2,7 +2,6 @@
 [ ] Add shortcode search injection
 [ ] Add a link to MU plugin that enhances speed even further
 [ ] Test EDD
-[ ] Add handling for visibility
 [ ] Plugin Check
 [ ] Add demo to Poly Plugins
 [ ] Update screenshots
@@ -27,3 +26,4 @@
 [X] Add version to db to handle future update logic
 [X] Give a notice with changelog
 [X] Add caching
+[X] Add handling for visibility

@@ -139,7 +139,18 @@ class Index_Updater {
 
     // If going from any status TO publish — add/update index
     if ($new_status === 'publish') {
-      $this->update_index($post->ID, $post, true);
+      // If type is product
+      if (get_post_type($post->ID) === 'product') {
+        $product = wc_get_product($post->ID);
+        $visibility = $product->get_catalog_visibility();
+
+        // If product does not have search visibility remove it
+        if ($visibility === 'hidden' || $visibility === 'catalog') {
+          $this->remove_from_index($post->ID);
+        }
+      } else {
+        $this->update_index($post->ID, $post, true);
+      }
     }
 
     // If going FROM publish TO any other status — remove from index

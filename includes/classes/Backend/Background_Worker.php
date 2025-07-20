@@ -205,7 +205,15 @@ class Background_Worker {
         while ($query->have_posts()) {
           $query->the_post();
 
-          $post_id = get_the_ID();
+          $post_id    = get_the_ID();
+          $product    = wc_get_product($post_id);
+          $visibility = $product->get_catalog_visibility();
+
+          // If product does not have search visibility remove it
+          if ($visibility === 'hidden' || $visibility === 'catalog') {
+            continue;
+          }
+
           $title   = get_the_title();
           $content = get_the_content();
           $sku     = get_post_meta($post_id, '_sku', true);
