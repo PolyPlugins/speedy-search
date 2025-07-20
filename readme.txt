@@ -1,8 +1,8 @@
-=== Speedy Search ===
+=== Snappy Search ===
 Contributors: polyplugins
-Tags: instant search, search, wp, speedy search, woocommerce
+Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -11,29 +11,40 @@ A fast, lightweight search plugin powered by TNTSearch, indexing posts for insta
 
 
 == Description ==
-Speedy Search is a powerful and lightweight search plugin that enhances your site’s search functionality with lightning-fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for instant, accurate, and efficient searching. Say goodbye to slow searches—this plugin ensures a seamless user experience with real-time suggestions and improved relevancy. Perfect for blogs, news sites, and content-heavy websites.
+Snappy Search is a powerful and lightweight search plugin that enhances your site’s search functionality with lightning-fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for instant, accurate, and efficient searching. Say goodbye to slow searches—this plugin ensures a seamless user experience with real-time suggestions and improved relevancy. Perfect for blogs, news sites, and content-heavy websites.
 
 
 == Currently Supports ==
 
+* Instantly Searching WooCommerce products
+* Instantly Searching Easy Digital Downloads downloads
 * Instantly Searching WordPress Posts
+* Instantly Searching WordPress Pages
+* Advanced repo search for finding plugins and themes. [Demo](https://www.polyplugins.com/repo-search/)
 
 
 == Features ==
 
-* Adds a dropdown by defined selector to search form to show results
 * Search through all posts fast without requiring multiple page loads
-* Builds an index of all posts
-* Background sync to index posts
+* Set how many characters to trigger the AJAX search
+* Set a typing delay before an AJAX request is made
+* Tab selection between various indexes if more than one is enabled
+* Adds a dropdown by defined selector to search form to show results
+* Shortcode [snappy_search_polyplugins] to inject a Snappy Search form anywhere
+* Can build indexes for products, downloads, posts, and pages
+* Background sync for indexes
+* Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
 * Ability to adjust the batch size for the initial index so smaller servers don't get overloaded
 * Limit the number of results displayed
+* Reindexer button
+* Adds /wp-json/speedy-search/v1/products endpoint to get array of post id's (Requires WooCommerce)
+* Adds /wp-json/speedy-search/v1/downloads endpoint to get array of post id's (Requires EDD)
 * Adds /wp-json/speedy-search/v1/posts endpoint to get array of post id's
+* Adds /wp-json/speedy-search/v1/pages endpoint to get array of post id's
 
 
 == Road Map: ==
 
-* Add support for WooCommerce
-* Add support for pages
 * Add integration with Admin Instant Search
 
 == GDPR ==
@@ -65,6 +76,31 @@ By default it will index 10 posts per minute.
 
 == Screenshots ==
 
-1. General Settings
-2. Post Settings
+1. Demo
+2. General Settings
+3. Post Settings
+4. Pages Settings
+5. Products Settings
+6. Repo Settings
 
+
+== Changelog ==
+
+= 1.1.0 =
+* Added: Support for WooCommerce Products
+* Added: Support for Easy Digital Downloads
+* Added: Support for Pages
+* Added: Shortcode [snappy_search_polyplugins] to inject a Snappy Search form anywhere
+* Added: Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
+* Added: Reindex button to settings
+* Added: Characters and Typing Delay options under General settings
+* Added: Enabled option under various index types
+* Added: Tab navigation to search if showing more than one index
+* Updated: Name to Snappy Search
+* Bugfix: Cron jobs may not register during activation
+
+= 1.0.1 =
+* Added: Repo Advanced Search
+
+= 1.0.0 =
+* Initial Release

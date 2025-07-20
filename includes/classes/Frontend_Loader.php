@@ -3,6 +3,7 @@
 namespace PolyPlugins\Speedy_Search;
 
 use PolyPlugins\Speedy_Search\Frontend\Enqueue;
+use PolyPlugins\Speedy_Search\Frontend\Shortcode;
 use PolyPlugins\Speedy_Search\Frontend\UI;
 
 class Frontend_Loader {
@@ -47,6 +48,7 @@ class Frontend_Loader {
   public function init() {
     $this->load_enqueue();
     $this->load_ui();
+    $this->load_shortcode();
   }
   
   /**
@@ -66,6 +68,16 @@ class Frontend_Loader {
    */
   public function load_ui() {
     $gui = new UI($this->plugin, $this->version, $this->plugin_dir_url);
+    $gui->init();
+  }
+  
+  /**
+   * Load Shortcode
+   *
+   * @return void
+   */
+  public function load_shortcode() {
+    $gui = new Shortcode($this->plugin, $this->version, $this->plugin_dir_url);
     $gui->init();
   }
 

@@ -1,0 +1,77 @@
+#wpcontent {
+  background-color: #fff;
+}
+
+.page_title_single {
+  text-align: center;
+  margin: 10px 0;
+}
+
+.search-container input {
+  margin-bottom: 0!important;
+  background-color: #49BFA4!important;
+  color: #fff!important;
+}
+
+.filter-heading {
+  padding: 11px 20px;
+  background-color: #E9ECF6;
+  border-radius: 2px;
+}
+
+.repo-image {
+  height: 60px!important;
+  width: 60px!important;
+}
+
+.card-url {
+  color: #333;
+  text-decoration: none;
+}
+
+.card.loading {
+  background-color: #eae8e8!important;
+  position: relative!important;
+  overflow: hidden!important;
+}
+
+.card.loading .repo-image-container {
+  visibility: hidden!important;
+}
+
+.card.loading .card-content {
+  visibility: hidden!important;
+}
+
+.card.loading .card-title {
+  visibility: hidden!important;
+}
+
+.card.loading .rating {
+  visibility: hidden!important;
+}
+
+.card.loading .text-muted {
+  visibility: hidden!important;
+}
+
+.card.loading::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -150px;
+  width: 100px;
+  height: 100%;
+  background: linear-gradient(to right, transparent 0%, rgba(255,255,255,0.2) 50%, transparent 100%);
+  animation: shimmer 1.5s infinite;
+  z-index: 10;
+}
+
+@keyframes shimmer {
+  0% {
+    left: -150px;
+  }
+  100% {
+    left: 100%;
+  }
+}

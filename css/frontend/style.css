@@ -11,3 +11,67 @@
   padding: 7px;
   margin-bottom: 10px;
 }
+
+.instant-search-tabs {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 10px;
+  display: flex;
+  gap: 10px;
+  border-bottom: 1px solid #ccc;
+  margin-top: 20px;
+}
+
+.instant-search-tabs .tab {
+  padding: 6px 12px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-bottom: none;
+  background: #f9f9f9;
+  border-radius: 4px 4px 0 0;
+}
+
+.instant-search-tabs .tab.active {
+  background: #fff;
+  font-weight: bold;
+}
+
+.instant-search-section {
+  display: none;
+}
+
+.instant-search-section:first-of-type {
+  display: block;
+}
+
+/**
+ * Shortcode
+ */
+.speedy-search-container .instant-search-wrapper {
+  width: 100%;
+  position: absolute;
+  top: 40px;
+  background-color: #fff;
+}
+
+.speedy-search-container .snappy-search-form {
+  position: relative;
+}
+
+.speedy-search-container .snappy-search-close {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  display: none;
+}
+
+.speedy-search-container .snappy-search-input:focus + .snappy-search-close,
+.speedy-search-container .snappy-search-input:not(:placeholder-shown) + .snappy-search-close {
+  display: inline;
+}

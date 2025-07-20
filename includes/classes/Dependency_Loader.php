@@ -44,6 +44,7 @@ class Dependency_Loader {
   public function init() {
     $this->load_frontend();
     $this->load_backend();
+    $this->load_updater();
   }
   
   /**
@@ -63,6 +64,16 @@ class Dependency_Loader {
    */
   public function load_backend() {
     $backend_loader = new Backend_Loader($this->plugin, $this->version, $this->plugin_dir_url);
+    $backend_loader->init();
+  }
+  
+  /**
+   * Load Updater
+   *
+   * @return void
+   */
+  public function load_updater() {
+    $backend_loader = new Updater($this->plugin, $this->version, $this->plugin_dir_url);
     $backend_loader->init();
   }
 

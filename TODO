@@ -1,7 +1,22 @@
 # General
+[ ] Add better handling for indexing fallback
 [ ] Add scroll to load more results
-[ ] Look into caching
-[ ] Add ability to delete index and clear complete attribute
 [ ] Add advanced search
-[ ] Add support for WooCommerce
-[ ] Add support for pages
+[ ] Add template so webmasters can customize the search further
+[ ] Add logging
+[ ] Update TNTSearch version
+
+# Brainstorm
+[ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
+
+# Completed
+[X] Add support for WooCommerce
+[X] Add support for EDD
+[X] Add support for pages
+[X] Add handling for updating the indexes on create, edit, delete
+[X] Add ability to reindex
+[X] Add version to db to handle future update logic
+[X] Give a notice with changelog
+[X] Add caching
+[X] Add handling for visibility
+[X] Add shortcode search injection

@@ -1,9 +1,9 @@
 <?php
 
 /**
- * Plugin Name: Speedy Search
+ * Plugin Name: Snappy Search
  * Description: A fast, lightweight search plugin powered by TNTSearch, indexing posts for instant, accurate results.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * Author: Poly Plugins
@@ -84,8 +84,8 @@ class Speedy_Search
    */
   public static function activation()
   {
-    if (!wp_next_scheduled('background_worker')) {
-      wp_schedule_event(time(), 'every_minute', 'background_worker');
+    if (!wp_next_scheduled('speedy_search_background_worker')) {
+      wp_schedule_event(time(), 'every_minute', 'speedy_search_background_worker');
     }
 
     // Set default options on activation
@@ -102,7 +102,7 @@ class Speedy_Search
    * @return void
    */
   public static function deactivation() {
-    wp_clear_scheduled_hook('background_worker');
+    wp_clear_scheduled_hook('speedy_search_background_worker');
   }
 
   /**

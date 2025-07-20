@@ -47,6 +47,12 @@ class Admin {
 		add_action('admin_menu', array($this, 'add_admin_menu'));
 		add_action('admin_init', array($this, 'settings_init'));
     add_filter('plugin_action_links_' . plugin_basename($this->plugin), array($this, 'add_setting_link'));
+    
+    $repo_enabled = Utils::get_option('repo_enabled');
+
+    if ($repo_enabled) {
+		  add_action('admin_menu', array($this, 'advanced_repo_search'));
+    }
   }
 
 	/**
@@ -57,7 +63,7 @@ class Admin {
 	public function add_admin_menu() {
     add_action('admin_notices', array($this, 'maybe_show_indexing_notice'));
     add_action('admin_notices', array($this, 'maybe_show_missing_extensions_notice'));
-		add_submenu_page('options-general.php', __('Speedy Search', 'speedy-search'), __('Instant Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
+		add_submenu_page('options-general.php', __('Snappy Search', 'speedy-search'), __('Snappy Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
 	}
   
   /**
@@ -72,12 +78,16 @@ class Admin {
       return;
     }
 
-    $posts_index          = Utils::get_index('posts');
-    $is_indexing_complete = isset($posts_index['complete']) ? true : false;
+    $posts_index                   = Utils::get_index('posts');
+    $pages_index                   = Utils::get_index('pages');
+    $products_index                = Utils::get_index('products');
+    $is_posts_indexing_complete    = isset($posts_index['complete']) ? true : false;
+    $is_pages_indexing_complete    = isset($pages_index['complete']) ? true : false;
+    $is_products_indexing_complete = isset($products_index['complete']) ? true : false;
     ?>
-    <?php if (!$is_indexing_complete) : ?>
+    <?php if (!$is_posts_indexing_complete || !$is_pages_indexing_complete || !$is_products_indexing_complete) : ?>
       <div class="notice notice-warning">
-        <p><?php esc_html_e('Speedy Search is currently indexing.', 'speedy-search'); ?></p>
+        <p><?php esc_html_e('Snappy Search is currently indexing.', 'speedy-search'); ?></p>
       </div>
     <?php endif; ?>
     <?php
@@ -93,7 +103,7 @@ class Admin {
     ?>
     <?php if ($is_missing_extensions) : ?>
       <div class="notice notice-error">
-        <p><?php esc_html_e('Speedy Search requires the following extensions:', 'speedy-search'); ?></p>
+        <p><?php esc_html_e('Snappy Search requires the following extensions:', 'speedy-search'); ?></p>
         <?php foreach($is_missing_extensions as $missing_extension) : ?>
           <li><?php echo esc_html($missing_extension); ?></li>
         <?php endforeach; ?>
@@ -128,6 +138,34 @@ class Admin {
       null,
       'speedy_search_posts_polyplugins'
     );
+
+    add_settings_section(
+      'speedy_search_pages_section_polyplugins',
+      '',
+      null,
+      'speedy_search_pages_polyplugins'
+    );
+
+    add_settings_section(
+      'speedy_search_products_section_polyplugins',
+      '',
+      null,
+      'speedy_search_products_polyplugins'
+    );
+
+    add_settings_section(
+      'speedy_search_downloads_section_polyplugins',
+      '',
+      null,
+      'speedy_search_downloads_polyplugins'
+    );
+
+    add_settings_section(
+      'speedy_search_repo_section_polyplugins',
+      '',
+      null,
+      'speedy_search_repo_polyplugins'
+    );
     
     // Add a setting under general section
 		add_settings_field(
@@ -139,11 +177,35 @@ class Admin {
 		);
 
 		add_settings_field(
+			'characters',
+		  __('Characters', 'speedy-search'),
+			array($this, 'characters_render'),
+			'speedy_search_general_polyplugins',
+			'speedy_search_general_section_polyplugins'
+		);
+
+		add_settings_field(
+			'typing_delay',
+		  __('Typing Delay', 'speedy-search'),
+			array($this, 'typing_delay_render'),
+			'speedy_search_general_polyplugins',
+			'speedy_search_general_section_polyplugins'
+		);
+
+		add_settings_field(
 			'selector',
 			__('Selector', 'speedy-search'),
 			array($this, 'selector_render'),
 			'speedy_search_general_polyplugins',
 			'speedy_search_general_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'posts_enabled',
+			__('Enabled?', 'speedy-search'),
+			array($this, 'posts_enabled_render'),
+			'speedy_search_posts_polyplugins',
+			'speedy_search_posts_section_polyplugins'
 		);
 
 		add_settings_field(
@@ -160,6 +222,86 @@ class Admin {
 			array($this, 'result_limit_render'),
 			'speedy_search_posts_polyplugins',
 			'speedy_search_posts_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'pages_enabled',
+			__('Enabled?', 'speedy-search'),
+			array($this, 'pages_enabled_render'),
+			'speedy_search_pages_polyplugins',
+			'speedy_search_pages_section_polyplugins'
+		);
+
+		add_settings_field(
+			'pages_batch',
+		  __('Batch', 'speedy-search'),
+			array($this, 'pages_batch_render'),
+			'speedy_search_pages_polyplugins',
+			'speedy_search_pages_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'pages_result_limit',
+			__('Result Limit', 'speedy-search'),
+			array($this, 'pages_result_limit_render'),
+			'speedy_search_pages_polyplugins',
+			'speedy_search_pages_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'products_enabled',
+			__('Enabled?', 'speedy-search'),
+			array($this, 'products_enabled_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
+			'products_batch',
+		  __('Batch', 'speedy-search'),
+			array($this, 'products_batch_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'products_result_limit',
+			__('Result Limit', 'speedy-search'),
+			array($this, 'products_result_limit_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'downloads_enabled',
+			__('Enabled?', 'speedy-search'),
+			array($this, 'downloads_enabled_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
+		);
+
+		add_settings_field(
+			'downloads_batch',
+		  __('Batch', 'speedy-search'),
+			array($this, 'downloads_batch_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'downloads_result_limit',
+			__('Result Limit', 'speedy-search'),
+			array($this, 'downloads_result_limit_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
+		);
+
+		add_settings_field(
+			'repo_enabled',                             
+			__('Enabled?', 'speedy-search'),
+			array($this, 'repo_enabled_render'),
+			'speedy_search_repo_polyplugins',
+			'speedy_search_repo_section_polyplugins'
 		);
 	}
 
@@ -178,6 +320,32 @@ class Admin {
 	}
 
   /**
+	 * Render Characters Field
+	 *
+	 * @return void
+	 */
+	public function characters_render() {
+		$option = Utils::get_option('characters') ?: 4;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[characters]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many characters to trigger Snappy Search?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Typing Delay Field
+	 *
+	 * @return void
+	 */
+	public function typing_delay_render() {
+		$option = Utils::get_option('typing_delay') ?: 300;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[typing_delay]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many milliseconds between inputs until a search is fired?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
 	 * Render Posts Batch Field
 	 *
 	 * @return void
@@ -186,8 +354,24 @@ class Admin {
 		$option = Utils::get_option('selector');
     ?>
     <input type="text" name="speedy_search_settings_polyplugins[selector]" value="<?php echo esc_html($option); ?>">
-    <p><strong><?php esc_html_e('Enter your selector that you want to add the instant search to. Ex: #search', 'speedy-search'); ?></strong></p>
+    <p><strong><?php esc_html_e('Enter your selector that you want to add the instant search to. Ex: #search', 'speedy-search'); ?><br /><br /><?php esc_html_e('Leave blank if you are using the [snappy_search_polyplugins] shortcode.', 'speedy-search'); ?></strong></p>
 	  <?php
+	}
+
+  /**
+	 * Render Enabled Field
+	 *
+	 * @return void
+	 */
+	public function posts_enabled_render() {
+		$options = Utils::get_option('posts');
+    $option  = isset($options['enabled']) ? $options['enabled'] : 1;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[posts][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Index and show posts in the search?', 'speedy-search'); ?></strong></p>
+		<?php
 	}
 
   /**
@@ -217,6 +401,153 @@ class Admin {
     <p><strong><?php esc_html_e('How many posts would you like to show?', 'speedy-search'); ?></strong></p>
 	  <?php
 	}
+
+  /**
+	 * Render Enabled Field
+	 *
+	 * @return void
+	 */
+	public function pages_enabled_render() {
+		$options = Utils::get_option('pages');
+    $option  = isset($options['enabled']) ? $options['enabled'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[pages][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Index and show pages in the search?', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Pages Batch Field
+	 *
+	 * @return void
+	 */
+	public function pages_batch_render() {
+		$options = Utils::get_option('pages');
+    $option  = isset($options['batch']) ? $options['batch'] : 20;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[pages][batch]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many pages should be indexed per minute?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Pages Batch Field
+	 *
+	 * @return void
+	 */
+	public function pages_result_limit_render() {
+		$options = Utils::get_option('pages');
+    $option  = isset($options['result_limit']) ? $options['result_limit'] : 10;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[pages][result_limit]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many pages would you like to show?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Enabled Field
+	 *
+	 * @return void
+	 */
+	public function products_enabled_render() {
+		$options = Utils::get_option('products');
+    $option  = isset($options['enabled']) ? $options['enabled'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Index and show products in the search?', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Products Batch Field
+	 *
+	 * @return void
+	 */
+	public function products_batch_render() {
+		$options = Utils::get_option('products');
+    $option  = isset($options['batch']) ? $options['batch'] : 20;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[products][batch]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many products should be indexed per minute?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Products Batch Field
+	 *
+	 * @return void
+	 */
+	public function products_result_limit_render() {
+		$options = Utils::get_option('products');
+    $option  = isset($options['result_limit']) ? $options['result_limit'] : 10;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[products][result_limit]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many products would you like to show?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Enabled Field
+	 *
+	 * @return void
+	 */
+	public function downloads_enabled_render() {
+		$options = Utils::get_option('downloads');
+    $option  = isset($options['enabled']) ? $options['enabled'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[downloads][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Index and show downloads in the search?', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Downloads Batch Field
+	 *
+	 * @return void
+	 */
+	public function downloads_batch_render() {
+		$options = Utils::get_option('downloads');
+    $option  = isset($options['batch']) ? $options['batch'] : 20;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[downloads][batch]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many downloads should be indexed per minute?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Downloads Batch Field
+	 *
+	 * @return void
+	 */
+	public function downloads_result_limit_render() {
+		$options = Utils::get_option('downloads');
+    $option  = isset($options['result_limit']) ? $options['result_limit'] : 10;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[downloads][result_limit]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many downloads would you like to show?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Repo Enabled Field
+	 *
+	 * @return void
+	 */
+	public function repo_enabled_render() {
+		$option = Utils::get_option('repo_enabled');
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[repo_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p>This adds an advanced search under the plugin menu. This does collect data on your searches and IP address. Please see our <a href="https://www.polyplugins.com/privacy-policy/" target="_blank">Privacy Policy</a> for more information.</p>
+		<?php
+	}
 	
 	/**
 	 * Render options page
@@ -231,7 +562,7 @@ class Admin {
           <div class="row">
             <div class="col-3"></div>
             <div class="col-6">
-              <h1><?php esc_html_e('Speedy Search Settings', 'speedy-search'); ?></h1>
+              <h1><?php esc_html_e('Snappy Search Settings', 'speedy-search'); ?></h1>
             </div>
             <div class="col-3"></div>
           </div>
@@ -250,6 +581,40 @@ class Admin {
                     <?php esc_html_e('Posts', 'speedy-search'); ?>
                   </a>
                 </li>
+                <li>
+                  <a href="javascript:void(0);" data-section="pages">
+                    <i class="bi bi-file-earmark-fill"></i>
+                    <?php esc_html_e('Pages', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <?php if (class_exists('WooCommerce')) : ?>
+                  <li>
+                    <a href="javascript:void(0);" data-section="products">
+                      <i class="bi bi-bag-fill"></i>
+                      <?php esc_html_e('Products', 'speedy-search'); ?>
+                    </a>
+                  </li>
+                <?php endif; ?>
+                <?php if (class_exists('Easy_Digital_Downloads')) : ?>
+                  <li>
+                    <a href="javascript:void(0);" data-section="downloads">
+                      <i class="bi bi-file-earmark-arrow-down-fill"></i>
+                      <?php esc_html_e('Downloads', 'speedy-search'); ?>
+                    </a>
+                  </li>
+                <?php endif; ?>
+                <li>
+                  <a href="javascript:void(0);" data-section="repo">
+                    <i class="bi bi-plug-fill"></i>
+                    <?php esc_html_e('Repo', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <li>
+                  <a href="javascript:void(0);" data-section="reindex">
+                    <i class="bi bi-database-fill"></i>
+                    <?php esc_html_e('Reindex', 'speedy-search'); ?>
+                  </a>
+                </li>
               </ul>
             </div>
             <div class="tabs col-12 col-md-6 col-xl-6">
@@ -262,6 +627,34 @@ class Admin {
               <div class="tab posts" style="display: none;">
                 <?php
                 do_settings_sections('speedy_search_posts_polyplugins');
+                ?>
+              </div>
+
+              <div class="tab pages" style="display: none;">
+                <?php
+                do_settings_sections('speedy_search_pages_polyplugins');
+                ?>
+              </div>
+
+              <?php if (class_exists('WooCommerce')) : ?>
+                <div class="tab products" style="display: none;">
+                  <?php
+                  do_settings_sections('speedy_search_products_polyplugins');
+                  ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if (class_exists('Easy_Digital_Downloads')) : ?>
+                <div class="tab downloads" style="display: none;">
+                  <?php
+                  do_settings_sections('speedy_search_downloads_polyplugins');
+                  ?>
+                </div>
+              <?php endif; ?>
+
+              <div class="tab repo" style="display: none;">
+                <?php
+                do_settings_sections('speedy_search_repo_polyplugins');
                 ?>
               </div>
             
@@ -301,9 +694,23 @@ class Admin {
       $sanitary_values['enabled'] = false;
     }
 
+    if (isset($input['characters']) && is_numeric($input['characters'])) {
+			$sanitary_values['characters'] = sanitize_text_field($input['characters']);
+		}
+
+    if (isset($input['typing_delay']) && is_numeric($input['typing_delay'])) {
+			$sanitary_values['typing_delay'] = sanitize_text_field($input['typing_delay']);
+		}
+
     if (isset($input['selector']) && $input['selector']) {
 			$sanitary_values['selector'] = sanitize_text_field($input['selector']);
 		}
+
+    if (isset($input['posts']['enabled']) && $input['posts']['enabled']) {
+      $sanitary_values['posts']['enabled'] = $input['posts']['enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['posts']['enabled'] = false;
+    }
 
     if (isset($input['posts']['batch']) && is_numeric($input['posts']['batch'])) {
 			$sanitary_values['posts']['batch'] = sanitize_text_field($input['posts']['batch']);
@@ -312,6 +719,54 @@ class Admin {
     if (isset($input['posts']['result_limit']) && is_numeric($input['posts']['result_limit'])) {
 			$sanitary_values['posts']['result_limit'] = sanitize_text_field($input['posts']['result_limit']);
 		}
+
+    if (isset($input['pages']['enabled']) && $input['pages']['enabled']) {
+      $sanitary_values['pages']['enabled'] = $input['pages']['enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['pages']['enabled'] = false;
+    }
+
+    if (isset($input['pages']['batch']) && is_numeric($input['pages']['batch'])) {
+			$sanitary_values['pages']['batch'] = sanitize_text_field($input['pages']['batch']);
+		}
+
+    if (isset($input['pages']['result_limit']) && is_numeric($input['pages']['result_limit'])) {
+			$sanitary_values['pages']['result_limit'] = sanitize_text_field($input['pages']['result_limit']);
+		}
+
+    if (isset($input['products']['enabled']) && $input['products']['enabled']) {
+      $sanitary_values['products']['enabled'] = $input['products']['enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['enabled'] = false;
+    }
+
+    if (isset($input['products']['batch']) && is_numeric($input['products']['batch'])) {
+			$sanitary_values['products']['batch'] = sanitize_text_field($input['products']['batch']);
+		}
+
+    if (isset($input['products']['result_limit']) && is_numeric($input['products']['result_limit'])) {
+			$sanitary_values['products']['result_limit'] = sanitize_text_field($input['products']['result_limit']);
+		}
+
+    if (isset($input['downloads']['enabled']) && $input['downloads']['enabled']) {
+      $sanitary_values['downloads']['enabled'] = $input['downloads']['enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['downloads']['enabled'] = false;
+    }
+
+    if (isset($input['downloads']['batch']) && is_numeric($input['downloads']['batch'])) {
+			$sanitary_values['downloads']['batch'] = sanitize_text_field($input['downloads']['batch']);
+		}
+
+    if (isset($input['downloads']['result_limit']) && is_numeric($input['downloads']['result_limit'])) {
+			$sanitary_values['downloads']['result_limit'] = sanitize_text_field($input['downloads']['result_limit']);
+		}
+
+    if (isset($input['repo_enabled']) && $input['repo_enabled']) {
+      $sanitary_values['repo_enabled'] = $input['repo_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['repo_enabled'] = false;
+    }
 
     return $sanitary_values;
   }
@@ -326,5 +781,21 @@ class Admin {
     array_unshift($links, $settings_link);
     return $links;
   }
+
+  public function advanced_repo_search() {
+    add_submenu_page(
+      'plugins.php',
+      'Advanced Search',
+      'Advanced Search',
+      'manage_options',
+      'repo-advanced-search',
+      array($this, 'repo_advanced_search_page')
+    );
+  }
+
+  public function repo_advanced_search_page() {
+    include plugin_dir_path($this->plugin) . 'templates/repo-advanced-search.php';
+  }
+
 
 }
