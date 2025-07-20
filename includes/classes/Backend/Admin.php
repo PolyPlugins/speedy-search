@@ -597,7 +597,7 @@ class Admin {
                 <?php endif; ?>
                 <?php if (class_exists('Easy_Digital_Downloads')) : ?>
                   <li>
-                    <a href="javascript:void(0);" data-section="products">
+                    <a href="javascript:void(0);" data-section="downloads">
                       <i class="bi bi-file-earmark-arrow-down-fill"></i>
                       <?php esc_html_e('Downloads', 'speedy-search'); ?>
                     </a>

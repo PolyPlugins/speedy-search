@@ -22,7 +22,8 @@ class Background_Worker {
   }
 
   public function init() {
-    add_action('background_worker', array($this, 'background_worker'));
+    add_action('speedy_search_background_worker', array($this, 'background_worker'));
+    add_action('cron_schedules', array($this, 'add_cron_schedules'));
   }
 
   public function background_worker() {
@@ -63,6 +64,17 @@ class Background_Worker {
         $this->maybe_index_downloads();
       }
     }
+  }
+
+  public function add_cron_schedules($schedules) {
+    if (!isset($schedules['every_minute'])) {
+      $schedules['every_minute'] = array(
+        'interval' => 60,
+        'display'  => __('Every Minute', 'speedy-search')
+      );
+    }
+    
+    return $schedules;
   }
 
   public function maybe_index_posts() {

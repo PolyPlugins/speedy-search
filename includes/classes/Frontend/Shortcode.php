@@ -52,7 +52,7 @@ class Shortcode {
 
     ob_start();
     ?>
-    <div class="speedy-search-container" style="background-color: #ccc;">
+    <div class="speedy-search-container">
       <form role="search" method="get" class="snappy-search-form" action="<?php echo esc_url(home_url('/')); ?>">
         <input type="text" class="snappy-search-input" placeholder="<?php echo esc_attr($atts['placeholder']); ?>" autocomplete="off" name="s">
         <button type="button" class="snappy-search-close" aria-label="Close Search">×</button>

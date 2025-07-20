@@ -27,7 +27,7 @@ class API {
     $products         = Utils::get_option('products');
     $products_enabled = isset($products['enabled']) ? $products['enabled'] : 0;
 
-    if ($products_enabled && class_exists('WooCommerce')) {
+    if ($products_enabled) {
       register_rest_route(
         'speedy-search/v1',
         '/products/',
@@ -42,7 +42,7 @@ class API {
     $downloads         = Utils::get_option('downloads');
     $downloads_enabled = isset($downloads['enabled']) ? $downloads['enabled'] : 0;
 
-    if ($downloads_enabled && class_exists('Easy_Digital_Downloads')) {
+    if ($downloads_enabled) {
       register_rest_route(
         'speedy-search/v1',
         '/downloads/',
@@ -346,7 +346,7 @@ class API {
       $posts_data = array();
 
       foreach ($posts as $post) {
-        $price = edd_get_download_price($post->ID);
+        $price = get_post_meta($post->ID, 'edd_price', true);
 
         $posts_data[] = array(
           'id'        => $post->ID,
