@@ -1,5 +1,4 @@
 # 1.1.0
-[ ] Add shortcode search injection
 [ ] Add a link to MU plugin that enhances speed even further
 [ ] Test EDD
 [ ] Plugin Check
@@ -27,3 +26,4 @@
 [X] Give a notice with changelog
 [X] Add caching
 [X] Add handling for visibility
+[X] Add shortcode search injection

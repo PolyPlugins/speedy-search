@@ -64,6 +64,8 @@ class Enqueue {
    * @return void
    */
   private function enqueue_scripts() {
+    $options                        = get_option('speedy_search_settings_polyplugins');
+    $selector                       = isset($options['selector']) ? $options['selector'] : '';
     $posts_index                    = Utils::get_index('posts');
     $pages_index                    = Utils::get_index('pages');
     $products_index                 = Utils::get_index('products');
@@ -73,18 +75,34 @@ class Enqueue {
     $is_products_indexing_complete  = isset($products_index['complete']) ? true : false;
     $is_downloads_indexing_complete = isset($downloads_index['complete']) ? true : false;
     
-    // Fallback to default search when indexing
-    if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete || $is_downloads_indexing_complete) {
-      wp_enqueue_script('snappy-search', plugins_url('/js/frontend/selector.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
-      wp_localize_script(
-        'snappy-search',
-        'snappy_search_object',
-        array(
-          'options'  => get_option('speedy_search_settings_polyplugins'),
-          'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
-        )
-      );
-      wp_set_script_translations('snappy-search', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+    if ($selector) {
+      // Fallback to default search when indexing
+      if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete || $is_downloads_indexing_complete) {
+        wp_enqueue_script('snappy-search-selector', plugins_url('/js/frontend/selector.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
+        wp_localize_script(
+          'snappy-search-selector',
+          'snappy_search_object',
+          array(
+            'options'  => $options,
+            'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
+          )
+        );
+        wp_set_script_translations('snappy-search-selector', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+      }
+    } else {
+      // Fallback to default search when indexing
+      if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete || $is_downloads_indexing_complete) {
+        wp_enqueue_script('snappy-search-shortcode', plugins_url('/js/frontend/shortcode.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
+        wp_localize_script(
+          'snappy-search-shortcode',
+          'snappy_search_object',
+          array(
+            'options'  => $options,
+            'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
+          )
+        );
+        wp_set_script_translations('snappy-search-shortcode', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+      }
     }
   }
   

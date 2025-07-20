@@ -354,7 +354,7 @@ class Admin {
 		$option = Utils::get_option('selector');
     ?>
     <input type="text" name="speedy_search_settings_polyplugins[selector]" value="<?php echo esc_html($option); ?>">
-    <p><strong><?php esc_html_e('Enter your selector that you want to add the instant search to. Ex: #search', 'speedy-search'); ?></strong></p>
+    <p><strong><?php esc_html_e('Enter your selector that you want to add the instant search to. Ex: #search', 'speedy-search'); ?><br /><br /><?php esc_html_e('Leave blank if you are using the [snappy_search_polyplugins] shortcode.', 'speedy-search'); ?></strong></p>
 	  <?php
 	}
 
