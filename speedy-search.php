@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Snappy Search
  * Description: A fast, lightweight search plugin powered by TNTSearch, indexing posts for instant, accurate results.
- * Version: 1.1.0
+ * Version: 1.2.0
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * Author: Poly Plugins
@@ -20,8 +20,8 @@ if (!defined('ABSPATH')) exit;
 
 require plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
 
-register_activation_hook(__FILE__, array(__NAMESPACE__ . '\Speedy_Search', 'activation'));
-register_deactivation_hook(__FILE__, array(__NAMESPACE__ . '\Speedy_Search', 'deactivation'));
+register_activation_hook(__FILE__, array(__NAMESPACE__ . '\Activation', 'init'));
+register_deactivation_hook(__FILE__, array(__NAMESPACE__ . '\Deactivation', 'init'));
 
 class Speedy_Search
 {
@@ -75,34 +75,6 @@ class Speedy_Search
   public function load_dependencies() {
     $dependency_loader = new Dependency_Loader($this->plugin, $this->version, $this->plugin_dir_url);
     $dependency_loader->init();
-  }
- 
-  /**
-   * Activation
-   *
-   * @return void
-   */
-  public static function activation()
-  {
-    if (!wp_next_scheduled('speedy_search_background_worker')) {
-      wp_schedule_event(time(), 'every_minute', 'speedy_search_background_worker');
-    }
-
-    // Set default options on activation
-    $default_options = array(
-      'enabled' => false,
-    );
-
-    add_option('speedy_search_settings_polyplugins', $default_options);
-  }
-    
-  /**
-   * Deactivation
-   *
-   * @return void
-   */
-  public static function deactivation() {
-    wp_clear_scheduled_hook('speedy_search_background_worker');
   }
 
   /**
