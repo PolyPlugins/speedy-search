@@ -92,7 +92,7 @@ jQuery(document).ready(function ($) {
 
   function fetchResults(query, endpoint, label) {
     $.ajax({
-      url: "/wp-json/speedy-search/v1/" + endpoint + "/",
+      url: "/wp-json/speedy-search/v1/" + endpoint + "s/",
       data: { search: query },
       dataType: "json",
       success: function (data) {
@@ -199,19 +199,19 @@ jQuery(document).ready(function ($) {
     let types = [];
 
     if (products_enabled) {
-      types.push({ type: 'products', label: __('Products', 'speedy-search') });
+      types.push({ type: 'product', label: __('Products', 'speedy-search') });
     }
 
     if (downloads_enabled) {
-      types.push({ type: 'downloads', label: __('Downloads', 'speedy-search') });
+      types.push({ type: 'download', label: __('Downloads', 'speedy-search') });
     }
 
     if (posts_enabled) {
-      types.push({ type: 'posts', label: __('Posts', 'speedy-search') });
+      types.push({ type: 'post', label: __('Posts', 'speedy-search') });
     }
     
     if (pages_enabled) {
-      types.push({ type: 'pages', label: __('Pages', 'speedy-search') });
+      types.push({ type: 'page', label: __('Pages', 'speedy-search') });
     }
 
     return types;

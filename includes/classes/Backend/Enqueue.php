@@ -71,7 +71,7 @@ class Enqueue {
    * @return void
    */
   private function enqueue_dismiss_notices() {
-    wp_enqueue_script('speedy-search-dismiss-notices', plugins_url('/js/backend/dismiss-notices.js', $this->plugin), array('jquery', 'wp-color-picker', 'wp-i18n'), $this->version, true);
+    wp_enqueue_script('speedy-search-dismiss-notices', plugins_url('/js/backend/dismiss-notices.js', $this->plugin), array('jquery'), $this->version, true);
     wp_localize_script(
       'speedy-search-dismiss-notices',
       'speedy_search_object',

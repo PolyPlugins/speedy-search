@@ -133,6 +133,19 @@ class Utils {
   }
   
   /**
+   * Get allowed post types
+   *
+   * @return array $allowed_post_types The allowed post types
+   */
+  public static function get_allowed_post_types() {
+    $allowed_post_types = array(
+      'post', 'page', 'product', 'download'
+    );
+
+    return $allowed_post_types;
+  }
+  
+  /**
    * Checks for any missing extensions
    *
    * @return mixed $is_missing_extension Array of missing extensions or false

@@ -41,11 +41,47 @@ class Updater {
   }
 
   public function maybe_update() {
-    $version = get_option('speedy_search_version_polyplugins');
+    $stored_version = get_option('speedy_search_version_polyplugins');
 
-    if (!$version) {
+    if (!$stored_version) {
+      $stored_version = $this->version;
+
       update_option('speedy_search_version_polyplugins', $this->version);
     }
+
+    if (version_compare($stored_version, '1.2.0', '<')) {
+      $stored_version = '1.2.0';
+
+      $this->update_to_120();
+
+      update_option('speedy_search_version_polyplugins', $stored_version);
+    }
+  }
+
+  private function update_to_120() {
+    global $wpdb;
+
+    $table_name      = $wpdb->prefix . 'ss_term_logs';
+    $charset_collate = $wpdb->get_charset_collate();
+
+    $sql = "
+      CREATE TABLE IF NOT EXISTS $table_name (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        term VARCHAR(255) NOT NULL,
+        post_type VARCHAR(20) NOT NULL,
+        result_count BIGINT UNSIGNED NOT NULL,
+        searched_at DATETIME DEFAULT '0000-00-00 00:00:00' NOT NULL,
+        PRIMARY KEY  (id),
+        KEY term (term),
+        KEY post_type (post_type),
+        KEY result_count (result_count),
+        KEY searched_at (searched_at)
+      ) $charset_collate;
+    ";
+
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+
+    dbDelta($sql);
   }
 
 }
