@@ -103,6 +103,12 @@ class API {
       ), 400);
     }
 
+    if (strlen($search_query) > 100) {
+      return new WP_REST_Response(array(
+        'error' => 'Too many characters in search query.'
+      ), 400);
+    }
+
     // Generate a unique cache key for this search
     $cache_key = 'speedy_search_' . md5($search_query);
 
@@ -169,6 +175,12 @@ class API {
     if (empty($search_query)) {
       return new WP_REST_Response(array(
         'error' => 'Search query is required.'
+      ), 400);
+    }
+
+    if (strlen($search_query) > 100) {
+      return new WP_REST_Response(array(
+        'error' => 'Too many characters in search query.'
       ), 400);
     }
 
@@ -241,6 +253,12 @@ class API {
       ), 400);
     }
 
+    if (strlen($search_query) > 100) {
+      return new WP_REST_Response(array(
+        'error' => 'Too many characters in search query.'
+      ), 400);
+    }
+
     // Generate a unique cache key for this search
     $cache_key = 'speedy_search_' . md5($search_query);
 
@@ -308,6 +326,12 @@ class API {
     if (empty($search_query)) {
       return new WP_REST_Response(array(
         'error' => 'Search query is required.'
+      ), 400);
+    }
+
+    if (strlen($search_query) > 100) {
+      return new WP_REST_Response(array(
+        'error' => 'Too many characters in search query.'
       ), 400);
     }
 
