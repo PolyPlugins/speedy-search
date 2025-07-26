@@ -133,6 +133,13 @@ class Admin {
     );
 
     add_settings_section(
+      'speedy_search_popular_section_polyplugins',
+      '',
+      null,
+      'speedy_search_popular_polyplugins'
+    );
+
+    add_settings_section(
       'speedy_search_posts_section_polyplugins',
       '',
       null,
@@ -185,6 +192,14 @@ class Admin {
 		);
 
 		add_settings_field(
+			'max_characters',
+		  __('Max Characters', 'speedy-search'),
+			array($this, 'max_characters_render'),
+			'speedy_search_general_polyplugins',
+			'speedy_search_general_section_polyplugins'
+		);
+
+		add_settings_field(
 			'typing_delay',
 		  __('Typing Delay', 'speedy-search'),
 			array($this, 'typing_delay_render'),
@@ -198,6 +213,38 @@ class Admin {
 			array($this, 'selector_render'),
 			'speedy_search_general_polyplugins',
 			'speedy_search_general_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'popular_enabled',
+			__('Enabled?', 'speedy-search'),
+			array($this, 'popular_enabled_render'),
+			'speedy_search_popular_polyplugins',
+			'speedy_search_popular_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'popular_tracking_delay',
+			__('Tracking Delay', 'speedy-search'),
+			array($this, 'popular_tracking_delay_render'),
+			'speedy_search_popular_polyplugins',
+			'speedy_search_popular_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'popular_characters',
+			__('Characters', 'speedy-search'),
+			array($this, 'popular_characters_render'),
+			'speedy_search_popular_polyplugins',
+			'speedy_search_popular_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'popular_blacklist',
+			__('Blacklisted Words', 'speedy-search'),
+			array($this, 'popular_blacklist_render'),
+			'speedy_search_popular_polyplugins',
+			'speedy_search_popular_section_polyplugins'
 		);
     
 		add_settings_field(
@@ -333,6 +380,19 @@ class Admin {
 	}
 
   /**
+	 * Render Characters Field
+	 *
+	 * @return void
+	 */
+	public function max_characters_render() {
+		$option = Utils::get_option('max_characters') ?: 100;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[max_characters]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('Maximum number of characters allowed to be searched?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
 	 * Render Typing Delay Field
 	 *
 	 * @return void
@@ -340,7 +400,7 @@ class Admin {
 	public function typing_delay_render() {
 		$option = Utils::get_option('typing_delay') ?: 300;
     ?>
-    <input type="number" name="speedy_search_settings_polyplugins[typing_delay]" value="<?php echo esc_html($option); ?>">
+    <input type="number" name="speedy_search_settings_polyplugins[typing_delay]" id="typing_delay" value="<?php echo esc_html($option); ?>">
     <p><strong><?php esc_html_e('How many milliseconds between inputs until a search is fired?', 'speedy-search'); ?></strong></p>
 	  <?php
 	}
@@ -355,6 +415,64 @@ class Admin {
     ?>
     <input type="text" name="speedy_search_settings_polyplugins[selector]" value="<?php echo esc_html($option); ?>">
     <p><strong><?php esc_html_e('Enter your selector that you want to add the instant search to. Ex: #search', 'speedy-search'); ?><br /><br /><?php esc_html_e('Leave blank if you are using the [snappy_search_polyplugins] shortcode.', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Enabled Field
+	 *
+	 * @return void
+	 */
+	public function popular_enabled_render() {
+		$options = Utils::get_option('popular');
+    $option  = isset($options['enabled']) ? $options['enabled'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[popular][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Enabling this will track searches and display popular search terms. This will track what users are searching, but it is not tied to individual users. Before you enable, please make sure you are in compliance with data protection regulations.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Popular Tracking Delay
+	 *
+	 * @return void
+	 */
+	public function popular_tracking_delay_render() {
+		$options = Utils::get_option('popular');
+    $option  = isset($options['delay']) && is_numeric($options['delay']) ? $options['delay'] : 3000;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[popular][delay]" id="tracking_delay" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('How many milliseconds after a user is done typing, until the search is tracked?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Characters
+	 *
+	 * @return void
+	 */
+	public function popular_characters_render() {
+		$options = Utils::get_option('popular');
+    $option  = isset($options['characters']) && is_numeric($options['characters']) ? $options['characters'] : 3;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[popular][characters]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('Number of characters required for the search term to be tracked.', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Blacklist Field
+	 *
+	 * @return void
+	 */
+	public function popular_blacklist_render() {
+		$options = Utils::get_option('popular');
+    $option  = isset($options['blacklist']) ? $options['blacklist'] : '';
+    ?>
+    <textarea type="text" name="speedy_search_settings_polyplugins[popular][blacklist]" rows="5"><?php echo esc_html($option); ?></textarea>
+    <p><strong><?php esc_html_e("By default, Snappy Search only shows popular search terms that return results. To block specific terms from appearing, enter them here as a comma separated list.", 'speedy-search'); ?></p>
 	  <?php
 	}
 
@@ -576,6 +694,12 @@ class Admin {
                   </a>
                 </li>
                 <li>
+                  <a href="javascript:void(0);" data-section="popular">
+                    <i class="bi bi-fire"></i>
+                    <?php esc_html_e('Popular', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <li>
                   <a href="javascript:void(0);" data-section="posts">
                     <i class="bi bi-pencil"></i>
                     <?php esc_html_e('Posts', 'speedy-search'); ?>
@@ -621,6 +745,12 @@ class Admin {
               <div class="tab general">
                 <?php
                 do_settings_sections('speedy_search_general_polyplugins');
+                ?>
+              </div>
+
+              <div class="tab popular" style="display: none;">
+                <?php
+                do_settings_sections('speedy_search_popular_polyplugins');
                 ?>
               </div>
 
@@ -698,12 +828,34 @@ class Admin {
 			$sanitary_values['characters'] = sanitize_text_field($input['characters']);
 		}
 
+    if (isset($input['max_characters']) && is_numeric($input['max_characters'])) {
+			$sanitary_values['max_characters'] = sanitize_text_field($input['max_characters']);
+		}
+
     if (isset($input['typing_delay']) && is_numeric($input['typing_delay'])) {
 			$sanitary_values['typing_delay'] = sanitize_text_field($input['typing_delay']);
 		}
 
     if (isset($input['selector']) && $input['selector']) {
 			$sanitary_values['selector'] = sanitize_text_field($input['selector']);
+		}
+
+    if (isset($input['popular']['enabled']) && $input['popular']['enabled']) {
+      $sanitary_values['popular']['enabled'] = $input['popular']['enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['popular']['enabled'] = false;
+    }
+
+    if (isset($input['popular']['delay']) && is_numeric($input['popular']['delay'])) {
+			$sanitary_values['popular']['delay'] = sanitize_text_field($input['popular']['delay']);
+		}
+
+    if (isset($input['popular']['characters']) && is_numeric($input['popular']['characters'])) {
+			$sanitary_values['popular']['characters'] = sanitize_text_field($input['popular']['characters']);
+		}
+
+    if (isset($input['popular']['blacklist']) && $input['popular']['blacklist']) {
+			$sanitary_values['popular']['blacklist'] = sanitize_text_field($input['popular']['blacklist']);
 		}
 
     if (isset($input['posts']['enabled']) && $input['posts']['enabled']) {

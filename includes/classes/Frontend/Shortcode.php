@@ -42,6 +42,7 @@ class Shortcode {
    * @return void
    */
   public function init() {
+    add_shortcode('speedy_search_polyplugins', array($this, 'snappy_search_shortcode_render'));
     add_shortcode('snappy_search_polyplugins', array($this, 'snappy_search_shortcode_render'));
   }
 

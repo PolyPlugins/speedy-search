@@ -25,10 +25,10 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 * Ability to adjust the batch size for the initial index so smaller servers don't get overloaded
 * Limit the number of results displayed
 * Reindexer button
-* Adds /wp-json/speedy-search/v1/products endpoint to get array of post id's (Requires WooCommerce)
-* Adds /wp-json/speedy-search/v1/downloads endpoint to get array of post id's (Requires EDD)
-* Adds /wp-json/speedy-search/v1/posts endpoint to get array of post id's
-* Adds /wp-json/speedy-search/v1/pages endpoint to get array of post id's
+* Adds /wp-json/snappy-search/v1/products endpoint to get array of post id's (Requires WooCommerce)
+* Adds /wp-json/snappy-search/v1/downloads endpoint to get array of post id's (Requires EDD)
+* Adds /wp-json/snappy-search/v1/posts endpoint to get array of post id's
+* Adds /wp-json/snappy-search/v1/pages endpoint to get array of post id's
 
 ## Road Map
 

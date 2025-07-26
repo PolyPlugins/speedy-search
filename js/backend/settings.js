@@ -10,9 +10,16 @@ jQuery(document).ready(function ($) {
   initColorPicker();
   initRangeSlider();
   initMediaUploader();
+  initSubmit();
 
   function initTabs() {
     $(".nav-links li a").on("click", function() {
+      let is_validated = initValidation();
+
+      if (!is_validated) {
+        return;
+      }
+
       let selected = $(this).data('section');
 
       if (selected === 'reindex') {
@@ -164,6 +171,40 @@ jQuery(document).ready(function ($) {
       // Hide the "Remove" button
       $(this).hide();
     });
+  }
+
+  function initSubmit() {
+    $(document).on("click", '#submit', function(e) {
+      let is_validated = initValidation();
+
+      if (!is_validated) {
+        e.preventDefault();
+      }
+    })
+  }
+
+  function initValidation() {
+    $tracking_delay = $("#tracking_delay").val();
+    $typing_delay   = $("#typing_delay").val();
+
+    if ($tracking_delay < $typing_delay) {
+      Swal.fire({
+        title: __("Error", 'speedy-search'),
+        text: __("The tracking delay is set as ", 'speedy-search') + $tracking_delay + __("ms and must be larger than the typing delay of ", 'speedy-search') + $typing_delay + __("ms. Tracking relies on the search results being visible to the user, so if it runs too early before results are loaded it won't capture anything. This separation allows tracking to run in its own AJAX request after the main search, which helps keep the search fast and responsive.", 'speedy-search'),
+        icon: "error",
+        confirmButtonColor: "#46BEA4",
+      });
+
+      $("#tracking_delay").addClass("validation");
+      $("#typing_delay").addClass("validation");
+
+      return false;
+    }
+
+    $("#tracking_delay").removeClass("validation");
+    $("#typing_delay").removeClass("validation");
+
+    return true;
   }
 
 });

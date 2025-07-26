@@ -16,6 +16,7 @@ class API {
    */
   public function init() {
     add_action('rest_api_init', array($this, 'add_endpoints'));
+    add_action('rest_api_init', array($this, 'add_new_endpoints'));
   }
 
   /**
@@ -84,6 +85,73 @@ class API {
       );
 	  }
 	}
+
+  /**
+	 * Add endpoint for webhooks to connect to
+	 *
+	 * @return void
+	 */
+	public function add_new_endpoints() {
+    $products         = Utils::get_option('products');
+    $products_enabled = isset($products['enabled']) ? $products['enabled'] : 0;
+
+    if ($products_enabled) {
+      register_rest_route(
+        'snappy-search/v1',
+        '/products/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_products'),
+          'permission_callback' => '__return_true',
+        )
+      );
+    }
+
+    $downloads         = Utils::get_option('downloads');
+    $downloads_enabled = isset($downloads['enabled']) ? $downloads['enabled'] : 0;
+
+    if ($downloads_enabled) {
+      register_rest_route(
+        'snappy-search/v1',
+        '/downloads/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_downloads'),
+          'permission_callback' => '__return_true',
+        )
+      );
+    }
+
+    $posts         = Utils::get_option('posts');
+    $posts_enabled = isset($posts['enabled']) ? $posts['enabled'] : 1;
+
+    if ($posts_enabled) {
+      register_rest_route(
+        'snappy-search/v1',
+        '/posts/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_posts'),
+          'permission_callback' => '__return_true',
+        )
+      );
+    }
+
+    $pages         = Utils::get_option('pages');
+    $pages_enabled = isset($pages['enabled']) ? $pages['enabled'] : 0;
+
+    if ($pages_enabled) {
+      register_rest_route(
+        'snappy-search/v1',
+        '/pages/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_pages'),
+          'permission_callback' => '__return_true',
+        )
+      );
+	  }
+	}
   
   /**
    * Get posts
@@ -94,6 +162,7 @@ class API {
   public function get_posts(WP_REST_Request $request) {
 		$options          = Utils::get_option('posts');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
+		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -103,7 +172,7 @@ class API {
       ), 400);
     }
 
-    if (strlen($search_query) > 100) {
+    if (strlen($search_query) > $max_characters) {
       return new WP_REST_Response(array(
         'error' => 'Too many characters in search query.'
       ), 400);
@@ -169,6 +238,7 @@ class API {
   public function get_pages(WP_REST_Request $request) {
 		$options          = Utils::get_option('pages');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
+		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -178,7 +248,7 @@ class API {
       ), 400);
     }
 
-    if (strlen($search_query) > 100) {
+    if (strlen($search_query) > $max_characters) {
       return new WP_REST_Response(array(
         'error' => 'Too many characters in search query.'
       ), 400);
@@ -244,6 +314,7 @@ class API {
   public function get_products(WP_REST_Request $request) {
 		$options          = Utils::get_option('products');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
+		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -253,7 +324,7 @@ class API {
       ), 400);
     }
 
-    if (strlen($search_query) > 100) {
+    if (strlen($search_query) > $max_characters) {
       return new WP_REST_Response(array(
         'error' => 'Too many characters in search query.'
       ), 400);
@@ -320,6 +391,7 @@ class API {
   public function get_downloads(WP_REST_Request $request) {
 		$options          = Utils::get_option('downloads');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
+		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -329,7 +401,7 @@ class API {
       ), 400);
     }
 
-    if (strlen($search_query) > 100) {
+    if (strlen($search_query) > $max_characters) {
       return new WP_REST_Response(array(
         'error' => 'Too many characters in search query.'
       ), 400);

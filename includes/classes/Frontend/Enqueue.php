@@ -91,9 +91,10 @@ class Enqueue {
         
         wp_enqueue_script('speedy-search-analytics', plugins_url('/js/frontend/analytics.js', $this->plugin), array('jquery'), $this->version, true);
         wp_localize_script(
-          'speedy-search-analytics',
-          'speedy_search_analytics_object',
+          'snappy-search-analytics',
+          'snappy_search_analytics_object',
           array(
+            'options'  => $options,
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce'    => wp_create_nonce('speedy_search_analytics_nonce')
           )
@@ -113,11 +114,12 @@ class Enqueue {
         );
         wp_set_script_translations('snappy-search-shortcode', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
         
-        wp_enqueue_script('speedy-search-analytics', plugins_url('/js/backend/analytics.js', $this->plugin), array('jquery'), $this->version, true);
+        wp_enqueue_script('snappy-search-analytics', plugins_url('/js/backend/analytics.js', $this->plugin), array('jquery'), $this->version, true);
         wp_localize_script(
-          'speedy-search-analytics',
-          'speedy_search_analytics_object',
+          'snappy-search-analytics',
+          'snappy_search_analytics_object',
           array(
+            'options'  => $options,
             'ajax_url' => admin_url('admin-ajax.php'),
             'nonce'    => wp_create_nonce('speedy_search_analytics_nonce')
           )

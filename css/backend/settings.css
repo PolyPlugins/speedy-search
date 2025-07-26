@@ -24,7 +24,7 @@ h1 {
   text-align: center;
 }
 
-input[type="text"], input[type="number"], select {
+input[type="text"], input[type="number"], select, textarea {
   width: 100%!important;
 }
 
@@ -342,4 +342,8 @@ a.btn.btn-dark {
   line-height: 1.4 !important;   /* Added to control text vertical position */
   height: 25px !important;       /* Added to ensure consistent height */
   border: 1px solid #ddd !important;
+}
+
+.validation {
+  border-color: #DC3545!important;
 }
