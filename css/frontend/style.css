@@ -67,11 +67,34 @@
   border: none;
   font-size: 24px;
   cursor: pointer;
-  color: #666;
+  color: #737373;
   display: none;
 }
 
 .speedy-search-container .snappy-search-input:focus + .snappy-search-close,
 .speedy-search-container .snappy-search-input:not(:placeholder-shown) + .snappy-search-close {
   display: inline;
+}
+
+
+
+.popular-searches .popular {
+  margin: 5px 0 0 0;
+  font-weight: 700;
+}
+
+.popular-searches a.search-term {
+  background-color: #999;
+  color: #fff;
+  padding: 5px 8px;
+  border-radius: 25px;
+  text-decoration: none !important;
+  margin-right: 5px;
+  margin-top: 5px;
+  display: inline-block;
+}
+
+.popular-searches a.search-term:hover {
+  background-color: #737373;
+  color: #fff;
 }

@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Frontend;
 
+use PolyPlugins\Speedy_Search\Backend\DB;
 use PolyPlugins\Speedy_Search\Utils;
 
 class Enqueue {
@@ -70,6 +71,8 @@ class Enqueue {
     $pages_index                    = Utils::get_index('pages');
     $products_index                 = Utils::get_index('products');
     $downloads_index                = Utils::get_index('downloads');
+    $popular_options                = Utils::get_option('popular');
+    $popular_enabled                = isset($popular_options['enabled']) ? $popular_options['enabled'] : 0;
     $is_posts_indexing_complete     = isset($posts_index['complete']) ? true : false;
     $is_pages_indexing_complete     = isset($pages_index['complete']) ? true : false;
     $is_products_indexing_complete  = isset($products_index['complete']) ? true : false;
@@ -84,21 +87,24 @@ class Enqueue {
           'snappy_search_object',
           array(
             'options'  => $options,
+            'popular'  => DB::get_top_terms_last_x_days(),
             'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
           )
         );
         wp_set_script_translations('snappy-search-selector', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
         
-        wp_enqueue_script('speedy-search-analytics', plugins_url('/js/frontend/analytics.js', $this->plugin), array('jquery'), $this->version, true);
-        wp_localize_script(
-          'snappy-search-analytics',
-          'snappy_search_analytics_object',
-          array(
-            'options'  => $options,
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce'    => wp_create_nonce('speedy_search_analytics_nonce')
-          )
-        );
+        if ($popular_enabled) {
+          wp_enqueue_script('snappy-search-analytics', plugins_url('/js/frontend/analytics.js', $this->plugin), array('jquery'), $this->version, true);
+          wp_localize_script(
+            'snappy-search-analytics',
+            'snappy_search_analytics_object',
+            array(
+              'options'  => $options,
+              'ajax_url' => admin_url('admin-ajax.php'),
+              'nonce'    => wp_create_nonce('speedy_search_analytics_nonce')
+            )
+          );
+        }
       }
     } else {
       // Fallback to default search when indexing
@@ -114,16 +120,18 @@ class Enqueue {
         );
         wp_set_script_translations('snappy-search-shortcode', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
         
-        wp_enqueue_script('snappy-search-analytics', plugins_url('/js/backend/analytics.js', $this->plugin), array('jquery'), $this->version, true);
-        wp_localize_script(
-          'snappy-search-analytics',
-          'snappy_search_analytics_object',
-          array(
-            'options'  => $options,
-            'ajax_url' => admin_url('admin-ajax.php'),
-            'nonce'    => wp_create_nonce('speedy_search_analytics_nonce')
-          )
-        );
+        if ($popular_enabled) {
+          wp_enqueue_script('snappy-search-analytics', plugins_url('/js/frontend/analytics.js', $this->plugin), array('jquery'), $this->version, true);
+          wp_localize_script(
+            'snappy-search-analytics',
+            'snappy_search_analytics_object',
+            array(
+              'options'  => $options,
+              'ajax_url' => admin_url('admin-ajax.php'),
+              'nonce'    => wp_create_nonce('speedy_search_analytics_nonce')
+            )
+          );
+        }
       }
     }
   }

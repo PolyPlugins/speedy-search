@@ -7,6 +7,7 @@ let posts_enabled     = snappy_search_object.options?.posts?.enabled ?? false;
 let pages_enabled     = snappy_search_object.options?.pages?.enabled ?? false;
 let products_enabled  = snappy_search_object.options?.products?.enabled ?? false;
 let downloads_enabled = snappy_search_object.options?.downloads?.enabled ?? false;
+let popular           = snappy_search_object.popular ?? false;
 let currency          = snappy_search_object.currency ?? '$';
 
 jQuery(document).ready(function ($) {
@@ -23,6 +24,7 @@ jQuery(document).ready(function ($) {
   function init() {
     listener();
     navigation();
+    renderPopularTerms();
   }
 
   function listener() {
@@ -183,8 +185,20 @@ jQuery(document).ready(function ($) {
         '</div>\n';
     });
 
+    let popularHTML = '';
+
+    if (Array.isArray(popular) && popular.length > 0) {
+      popularHTML = `
+        <div class="popular-searches">
+          <p class="popular">Popular Searches</p>
+          <div class="popular-terms"></div>
+        </div>
+      `;
+    }
+
     let searchForm = `
       <div class="instant-search-wrapper">
+        ${popularHTML}
         ${tabsHTML}
         <div class="instant-search-results">
           ${sectionsHTML}
@@ -193,6 +207,26 @@ jQuery(document).ready(function ($) {
     `;
 
     return searchForm;
+  }
+
+  function renderPopularTerms() {
+    const $container = $(".popular-terms");
+
+    if (!$container.length || !Array.isArray(snappy_search_object.popular)) return;
+
+    snappy_search_object.popular.forEach(term => {
+      const $term = $('<a href="javascript:void(0);" class="search-term"></a>').text(term.term);
+      $container.append($term);
+    });
+
+    // Handle clicks on the rendered terms
+    $(document).on("click", ".search-term", function () {
+      const selectedTerm = $(this).text();
+
+      $searchInput
+        .val(selectedTerm)
+        .trigger("input"); // Triggers the existing listener for search
+    });
   }
 
   function getTypes() {

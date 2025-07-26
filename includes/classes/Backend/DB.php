@@ -2,6 +2,8 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Utils;
+
 class DB {
 
   const TABLE_NAME = 'ss_term_logs';
@@ -87,6 +89,62 @@ class DB {
       array('%d', '%s'),
       array('%d')
     );
+  }
+
+  /**
+   * Get top search terms from the last X days with at least 10 results
+   *
+   * @param string $type Optional. Filter by post type.
+   * @param int    $limit Optional. Number of results to return.
+   * @return array Array of top terms with their counts
+   */
+  public static function get_top_terms_last_x_days() {
+    global $wpdb;
+
+    $table           = $wpdb->prefix . self::TABLE_NAME;
+		$popular_options = Utils::get_option('popular');
+    $hits            = isset($popular_options['hits']) ? $popular_options['hits'] : 1;
+    $limit           = isset($popular_options['limit']) ? $popular_options['limit'] : 5;
+    $days            = isset($popular_options['days']) ? $popular_options['days'] : 30;
+    $blacklist       = isset($popular_options['blacklist']) ? $popular_options['blacklist'] : array();
+    $cutoff          = date('Y-m-d H:i:s', strtotime('-' . $days . ' days'));
+
+    if (!empty($blacklist)) {
+      $blacklist = array_map('trim', explode(',', $blacklist));
+    }
+
+    $placeholders = '';
+
+    if (!empty($blacklist)) {
+      $placeholders = implode(',', array_fill(0, count($blacklist), '%s'));
+    }
+
+    if (!empty($blacklist)) {
+      $sql = $wpdb->prepare("
+        SELECT term, COUNT(*) as count
+        FROM %i
+        WHERE searched_at >= %s
+        AND result_count >= %d
+        AND term NOT IN ($placeholders)
+        GROUP BY term
+        ORDER BY count DESC
+        LIMIT %d
+      ", array_merge(array($table, $cutoff, $hits), $blacklist, array($limit)));
+    } else {
+      $sql = $wpdb->prepare("
+        SELECT term, COUNT(*) as count
+        FROM %i
+        WHERE searched_at >= %s
+        AND result_count >= %d
+        GROUP BY term
+        ORDER BY count DESC
+        LIMIT %d
+      ", $table, $cutoff, $hits, $limit);
+    }
+
+    $results = $wpdb->get_results($sql, ARRAY_A);
+
+    return $results;
   }
 
 }

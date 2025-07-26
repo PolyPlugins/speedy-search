@@ -179,10 +179,10 @@ class API {
     }
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_' . md5($search_query);
+    $cache_key = 'speedy_search_posts_' . md5($search_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key);
+    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -222,8 +222,7 @@ class API {
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, '', 600);
-      $cached_results = wp_cache_get($cache_key);
+      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -255,10 +254,10 @@ class API {
     }
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_' . md5($search_query);
+    $cache_key = 'speedy_search_pages_' . md5($search_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key);
+    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -298,8 +297,7 @@ class API {
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, '', 600);
-      $cached_results = wp_cache_get($cache_key);
+      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -331,10 +329,10 @@ class API {
     }
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_' . md5($search_query);
+    $cache_key = 'speedy_search_products_' . md5($search_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key);
+    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -375,8 +373,7 @@ class API {
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, '', 600);
-      $cached_results = wp_cache_get($cache_key);
+      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -408,10 +405,10 @@ class API {
     }
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_' . md5($search_query);
+    $cache_key = 'speedy_search_downloads_' . md5($search_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key);
+    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -454,8 +451,7 @@ class API {
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, '', 600);
-      $cached_results = wp_cache_get($cache_key);
+      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
