@@ -22,6 +22,13 @@ class Analytics {
   }
 
   public function track_query() {
+    $popular_options = Utils::get_option('popular');
+    $popular_enabled = isset($popular_options['enabled']) ? $popular_options['enabled'] : 0;
+
+    if (!$popular_enabled) {
+      return;
+    }
+    
     if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'speedy_search_analytics_nonce')) {
       Utils::send_error('Invalid session', 403);
     }
