@@ -56,28 +56,14 @@ class Shortcode {
 
     ob_start();
 
-    
-		$popular_options = Utils::get_option('popular');
-    $enabled         = isset($popular_options['enabled']) ? $popular_options['enabled'] : 0;
-    ?>
-    <div class="speedy-search-container">
-      <form role="search" method="get" class="snappy-search-form" action="<?php echo esc_url(home_url('/')); ?>">
-        <input type="text" class="snappy-search-input" placeholder="<?php echo esc_attr($atts['placeholder']); ?>" autocomplete="off" name="s">
-        <button type="button" class="snappy-search-close" aria-label="Close Search">×</button>
-      </form>
-      <?php if ($enabled) : ?>
-        <div class="popular-searches">
-          <p class="popular">Popular Searches</p>
-          <?php
-          $popular = DB::get_top_terms_last_x_days();
-          ?>
-          <?php foreach ($popular as $term) : ?>
-            <a href="javascript:void(0);" class="search-term"><?php echo esc_html($term['term']); ?></a>
-          <?php endforeach; ?>
-        </div>
-      <?php endif; ?>
-    </div>
-    <?php
+    $template_file = locate_template('snappy-search-form.php');
+
+    if (!empty($template_file)) {
+      include $template_file;
+    } else {
+      include plugin_dir_path($this->plugin) . 'templates/snappy-search-form.php';
+    }
+
     return ob_get_clean();
   }
   
