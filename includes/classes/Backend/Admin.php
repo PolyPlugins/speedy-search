@@ -63,7 +63,7 @@ class Admin {
 	public function add_admin_menu() {
     add_action('admin_notices', array($this, 'maybe_show_indexing_notice'));
     add_action('admin_notices', array($this, 'maybe_show_missing_extensions_notice'));
-		add_submenu_page('options-general.php', __('Snappy Search', 'speedy-search'), __('Snappy Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
+		add_menu_page(__('Snappy Search', 'speedy-search'), __('Snappy Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'), 'dashicons-search');
 	}
   
   /**

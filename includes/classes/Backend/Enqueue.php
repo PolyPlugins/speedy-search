@@ -47,7 +47,7 @@ class Enqueue {
   public function enqueue($hook_suffix) {
     $this->enqueue_dismiss_notices();
 
-    if ($hook_suffix === 'settings_page_speedy-search') {
+    if ($hook_suffix === 'toplevel_page_speedy-search') {
       $this->enqueue_styles();
       $this->enqueue_scripts();
       $this->enqueue_wordpress();
