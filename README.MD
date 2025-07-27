@@ -51,7 +51,7 @@ This plugin collects and stores certain data on your server to ensure proper fun
 
 * Storing plugin settings
 * Remembering which notices have been dismissed
-* Storing search terms made by users if enabled
+* Storing search terms made by users when enabled
 
 ## Screenshots
 
