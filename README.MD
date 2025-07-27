@@ -24,6 +24,8 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 * Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
 * Ability to adjust the batch size for the initial index so smaller servers don't get overloaded
 * Limit the number of results displayed
+* Popular search terms can be displayed below the search [NEW]
+* Add your own custom shortcode template by copying snappy-search-form.php to your theme folder [NEW]
 * Reindexer button
 * Adds /wp-json/snappy-search/v1/products endpoint to get array of post id's (Requires WooCommerce)
 * Adds /wp-json/snappy-search/v1/downloads endpoint to get array of post id's (Requires EDD)
@@ -54,10 +56,11 @@ This plugin collects and stores certain data on your server to ensure proper fun
 
 ![Demo](.wordpress-org/screenshot-1.jpg)
 ![General Settings](.wordpress-org/screenshot-2.jpg)
-![Posts Settings](.wordpress-org/screenshot-3.jpg)
-![Pages Settings](.wordpress-org/screenshot-4.jpg)
-![Products Settings](.wordpress-org/screenshot-5.jpg)
-![Repo Settings](.wordpress-org/screenshot-6.jpg)
+![Popular Settings](.wordpress-org/screenshot-3.jpg)
+![Posts Settings](.wordpress-org/screenshot-4.jpg)
+![Pages Settings](.wordpress-org/screenshot-5.jpg)
+![Products Settings](.wordpress-org/screenshot-6.jpg)
+![Repo Settings](.wordpress-org/screenshot-7.jpg)
 
 ## Installation
 
@@ -74,21 +77,40 @@ By default, it will index 10 posts per minute.
 
 ## Changelog
 
+### 1.2.0
+* Added: Custom template for shortcode search so the layout can be changed. Add your own custom template by copying snappy-search-form.php to your theme folder
+* Added: Popular searches that display under the search form
+* Added: Popular search enable setting
+* Added: Popular search limit setting to only show top X number of popular search terms below the form
+* Added: Popular days setting for the number of days of search term history to look through for popular search terms
+* Added: Popular tracking delay setting to handle triggering tracking search after it's been completed, this must be larger than typing delay
+* Added: Popular search character setting for preventing non words from showing in popular search terms
+* Added: Popular result count setting to prevent search terms with no or low results from showing
+* Added: Popular blacklist setting to block specific search terms from showing as popular
+* Added: Cron that cleans up popular searches table based on number of days for a search term to be considered popular
+* Added: Handling for creating the new popular search term table
+* Added: Max character setting under general to limit the length of search terms
+* Updated: Endpoint names with old endpoints still being accessible, but they will be removed in the future, so please update references if you are using them outside of this plugin
+* Updated: TNTSearch to 5.0.1
+* Updated: Translations
+* Moved: Activation logic to it's own classes
+* Moved: Snappy Search settings to top level
+
 ### 1.1.0
-- Added: Support for WooCommerce Products
-- Added: Support for Easy Digital Downloads
-- Added: Support for Pages
-- Added: Shortcode [snappy_search_polyplugins] to inject a Snappy Search form anywhere
-- Added: Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
-- Added: Reindex button to settings
-- Added: Characters and Typing Delay options under General settings
-- Added: Enabled option under various index types
-- Added: Tab navigation to search if showing more than one index
-- Updated: Name to Snappy Search
-- Bugfix: Cron jobs may not register during activation
+* Added: Support for WooCommerce Products
+* Added: Support for Easy Digital Downloads
+* Added: Support for Pages
+* Added: Shortcode [snappy_search_polyplugins] to inject a Snappy Search form anywhere
+* Added: Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
+* Added: Reindex button to settings
+* Added: Characters and Typing Delay options under General settings
+* Added: Enabled option under various index types
+* Added: Tab navigation to search if showing more than one index
+* Updated: Name to Snappy Search
+* Bugfix: Cron jobs may not register during activation
 
 ### 1.0.1
-- Added: Repo Advanced Search
+* Added: Repo Advanced Search
 
 ### 1.0.0
-- Initial Release
+* Initial Release
