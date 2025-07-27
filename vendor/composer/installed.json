@@ -66,21 +66,22 @@
         },
         {
             "name": "teamtnt/tntsearch",
-            "version": "v4.4.0",
-            "version_normalized": "4.4.0.0",
+            "version": "v5.0.1",
+            "version_normalized": "5.0.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/teamtnt/tntsearch.git",
-                "reference": "781e0eec1a1f56db0cdc2936849c508482b25547"
+                "reference": "1a86ca3431dce7fcd816b153d5a340f5665bf40e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/teamtnt/tntsearch/zipball/781e0eec1a1f56db0cdc2936849c508482b25547",
-                "reference": "781e0eec1a1f56db0cdc2936849c508482b25547",
+                "url": "https://api.github.com/repos/teamtnt/tntsearch/zipball/1a86ca3431dce7fcd816b153d5a340f5665bf40e",
+                "reference": "1a86ca3431dce7fcd816b153d5a340f5665bf40e",
                 "shasum": ""
             },
             "require": {
                 "ext-mbstring": "*",
+                "ext-pdo": "*",
                 "php": "~7.1|^8",
                 "predis/predis": "^2.2"
             },
@@ -88,7 +89,7 @@
                 "phpunit/phpunit": "7.*|8.*|9.*",
                 "symfony/var-dumper": "^4|^5.2"
             },
-            "time": "2024-12-13T08:58:55+00:00",
+            "time": "2025-06-17T16:10:52+00:00",
             "type": "library",
             "installation-source": "dist",
             "autoload": {
@@ -126,7 +127,7 @@
             ],
             "support": {
                 "issues": "https://github.com/teamtnt/tntsearch/issues",
-                "source": "https://github.com/teamtnt/tntsearch/tree/v4.4.0"
+                "source": "https://github.com/teamtnt/tntsearch/tree/v5.0.1"
             },
             "funding": [
                 {
@@ -137,6 +138,6 @@
             "install-path": "../teamtnt/tntsearch"
         }
     ],
-    "dev": false,
+    "dev": true,
     "dev-package-names": []
 }

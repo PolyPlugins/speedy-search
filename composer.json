@@ -8,6 +8,6 @@
     "autoload": "composer dump-autoload"
   },
   "require": {
-    "teamtnt/tntsearch": "^4.4"
+    "teamtnt/tntsearch": "^5.0"
   }
 }
