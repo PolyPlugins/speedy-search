@@ -15,17 +15,33 @@ class Background_Worker {
   private $pages_index_name     = 'pages.sqlite';
   private $products_index_name  = 'products.sqlite';
   private $downloads_index_name = 'downloads.sqlite';
-
+  
+  /**
+   * __construct
+   *
+   * @return void
+   */
   public function __construct() {
     $this->tnt     = TNTSearch::get_instance()->tnt();
     $this->options = Utils::get_options();
   }
-
+  
+  /**
+   * init
+   *
+   * @return void
+   */
   public function init() {
-    add_action('speedy_search_background_worker', array($this, 'background_worker'));
+    add_action('snappy_search_background_worker', array($this, 'background_worker'));
+    add_action('snappy_search_daily_background_worker', array($this, 'daily_background_worker'));
     add_action('cron_schedules', array($this, 'add_cron_schedules'));
   }
 
+  /**
+   * Background worker
+   *
+   * @return void
+   */
   public function background_worker() {
     $enabled               = Utils::get_option('enabled');
     $is_missing_extensions = Utils::is_missing_extensions();
@@ -35,37 +51,86 @@ class Background_Worker {
       return;
     }
 
-    if ($enabled) {
-      $posts         = Utils::get_option('posts');
-      $posts_enabled = isset($posts['enabled']) ? $posts['enabled'] : 1;
+    if (!$enabled) {
+      return;
+    }
 
-      if ($posts_enabled) {
-        $this->maybe_index_posts();
-      }
+    $this->indexer();
+  }
 
-      $pages         = Utils::get_option('pages');
-      $pages_enabled = isset($pages['enabled']) ? $pages['enabled'] : 0;
+  /**
+   * Background worker
+   *
+   * @return void
+   */
+  public function daily_background_worker() {
+    $enabled = Utils::get_option('enabled');
 
-      if ($pages_enabled) {
-        $this->maybe_index_pages();
-      }
+    if (!$enabled) {
+      return;
+    }
 
-      $products         = Utils::get_option('products');
-      $products_enabled = isset($products['enabled']) ? $products['enabled'] : 0;
+    $this->cleanup_old_term_logs();
+  }
+  
+  /**
+   * Indexer
+   *
+   * @return void
+   */
+  public function indexer() {
+    $posts         = Utils::get_option('posts');
+    $posts_enabled = isset($posts['enabled']) ? $posts['enabled'] : 1;
 
-      if ($products_enabled && class_exists('WooCommerce')) {
-        $this->maybe_index_products();
-      }
+    if ($posts_enabled) {
+      $this->maybe_index_posts();
+    }
 
-      $downloads         = Utils::get_option('downloads');
-      $downloads_enabled = isset($downloads['enabled']) ? $downloads['enabled'] : 0;
+    $pages         = Utils::get_option('pages');
+    $pages_enabled = isset($pages['enabled']) ? $pages['enabled'] : 0;
 
-      if ($downloads_enabled && class_exists('Easy_Digital_Downloads')) {
-        $this->maybe_index_downloads();
-      }
+    if ($pages_enabled) {
+      $this->maybe_index_pages();
+    }
+
+    $products         = Utils::get_option('products');
+    $products_enabled = isset($products['enabled']) ? $products['enabled'] : 0;
+
+    if ($products_enabled && class_exists('WooCommerce')) {
+      $this->maybe_index_products();
+    }
+
+    $downloads         = Utils::get_option('downloads');
+    $downloads_enabled = isset($downloads['enabled']) ? $downloads['enabled'] : 0;
+
+    if ($downloads_enabled && class_exists('Easy_Digital_Downloads')) {
+      $this->maybe_index_downloads();
     }
   }
 
+  /**
+   * Cleanup old term logs
+   *
+   * @return void
+   */
+  public function cleanup_old_term_logs() {
+    $popular_options = Utils::get_option('popular');
+    $enabled         = isset($popular_options['enabled']) ? $popular_options['enabled'] : false;
+
+    if (!$enabled) {
+      return;
+    }
+
+    $days = isset($popular_options['days']) ? $popular_options['days'] : 30;
+
+    DB::delete_terms_older_than_x_days($days);
+  }
+
+  /**
+   * Add cron schedules
+   * @param  array $schedules The schedules array
+   * @return array $schedules The schedules array
+   */
   public function add_cron_schedules($schedules) {
     if (!isset($schedules['every_minute'])) {
       $schedules['every_minute'] = array(
@@ -77,6 +142,11 @@ class Background_Worker {
     return $schedules;
   }
 
+  /**
+   * Maybe index posts
+   *
+   * @return void
+   */
   public function maybe_index_posts() {
     $posts_index          = Utils::get_index('posts');
     $is_indexing_complete = isset($posts_index['complete']) ? true : false;
@@ -131,6 +201,11 @@ class Background_Worker {
     }
   }
 
+  /**
+   * Maybe index pages
+   *
+   * @return void
+   */
   public function maybe_index_pages() {
     $pages_index          = Utils::get_index('pages');
     $is_indexing_complete = isset($pages_index['complete']) ? true : false;
@@ -184,7 +259,12 @@ class Background_Worker {
       wp_reset_postdata();
     }
   }
-
+  
+  /**
+   * Maybe index products
+   *
+   * @return void
+   */
   public function maybe_index_products() {
     $products_index       = Utils::get_index('products');
     $is_indexing_complete = isset($products_index['complete']) ? true : false;
@@ -248,7 +328,12 @@ class Background_Worker {
       wp_reset_postdata();
     }
   }
-
+  
+  /**
+   * Maybe index downloads
+   *
+   * @return void
+   */
   public function maybe_index_downloads() {
     $downloads_index       = Utils::get_index('downloads');
     $is_indexing_complete  = isset($downloads_index['complete']) ? true : false;

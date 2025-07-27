@@ -9,37 +9,6 @@ class DB {
   const TABLE_NAME = 'ss_term_logs';
   
   /**
-   * Get term counts
-   *
-   * @param  string $term The search term
-   * @param  string $type The post type
-   * @return object $term The term object
-   */
-  public static function get_term_counts($term, $type) {
-    $cache_key = 'speedy_search_term_counts_' . md5($term . '_' . $type);
-    $term_count = wp_cache_get($cache_key, 'speedy_search');
-
-    if (!$term_count) {
-      global $wpdb;
-
-      $table = $wpdb->prefix . self::TABLE_NAME;
-
-      $sql = $wpdb->prepare("
-        SELECT COUNT(*) 
-        FROM $table
-        WHERE term = %s 
-        AND post_type = %s
-      ", $term, $type);
-
-      $term_count = (int) $wpdb->get_var($sql);
-
-      wp_cache_set($cache_key, $term_count, 'speedy_search_term_counts', 600);
-    }
-
-    return $term_count;
-  }
-  
-  /**
    * Insert term
    *
    * @param  string $term The search term
@@ -48,6 +17,12 @@ class DB {
    */
   public static function insert_term_log($term, $type, $result_count) {
     global $wpdb;
+
+    $allowed_types = Utils::get_allowed_post_types();
+
+    if (!in_array($type, $allowed_types)) {
+      return;
+    }
 
     $table = $wpdb->prefix . self::TABLE_NAME;
     $now   = current_time('mysql');
@@ -103,35 +78,28 @@ class DB {
 
     $table           = $wpdb->prefix . self::TABLE_NAME;
 		$popular_options = Utils::get_option('popular');
-    $hits            = isset($popular_options['hits']) ? $popular_options['hits'] : 1;
+    $result_count    = isset($popular_options['result_count']) ? $popular_options['result_count'] : 10;
     $limit           = isset($popular_options['limit']) ? $popular_options['limit'] : 5;
     $days            = isset($popular_options['days']) ? $popular_options['days'] : 30;
-    $blacklist       = isset($popular_options['blacklist']) ? $popular_options['blacklist'] : array();
-    $cutoff          = date('Y-m-d H:i:s', strtotime('-' . $days . ' days'));
+    $blacklist_raw   = isset($popular_options['blacklist']) ? $popular_options['blacklist'] : '';
+    $blacklist       = array_filter(array_map('trim', explode(',', $blacklist_raw)));
+    $cutoff          = gmdate('Y-m-d H:i:s', strtotime('-' . $days . ' days'));
 
     if (!empty($blacklist)) {
-      $blacklist = array_map('trim', explode(',', $blacklist));
-    }
+      $args = array_merge(array($table, $cutoff, $result_count), $blacklist, array($limit));
 
-    $placeholders = '';
-
-    if (!empty($blacklist)) {
-      $placeholders = implode(',', array_fill(0, count($blacklist), '%s'));
-    }
-
-    if (!empty($blacklist)) {
-      $sql = $wpdb->prepare("
+      $results = $wpdb->get_results($wpdb->prepare("
         SELECT term, COUNT(*) as count
         FROM %i
         WHERE searched_at >= %s
         AND result_count >= %d
-        AND term NOT IN ($placeholders)
+        AND term NOT IN (" . implode(',', array_fill(0, count($blacklist), '%s')) . ")
         GROUP BY term
         ORDER BY count DESC
         LIMIT %d
-      ", array_merge(array($table, $cutoff, $hits), $blacklist, array($limit)));
+      ", $args), ARRAY_A);
     } else {
-      $sql = $wpdb->prepare("
+      $results = $wpdb->get_results($wpdb->prepare("
         SELECT term, COUNT(*) as count
         FROM %i
         WHERE searched_at >= %s
@@ -139,12 +107,32 @@ class DB {
         GROUP BY term
         ORDER BY count DESC
         LIMIT %d
-      ", $table, $cutoff, $hits, $limit);
+      ", $table, $cutoff, $result_count, $limit), ARRAY_A);
     }
-
-    $results = $wpdb->get_results($sql, ARRAY_A);
 
     return $results;
+  }
+
+  /**
+   * Get top search terms from the last X days with at least 10 results
+   *
+   * @param string $type Optional. Filter by post type.
+   * @param int    $limit Optional. Number of results to return.
+   * @return array Array of top terms with their counts
+   */
+  public static function delete_terms_older_than_x_days($days = 30) {
+    global $wpdb;
+
+    $table       = $wpdb->prefix . self::TABLE_NAME;
+    $cutoff_date = gmdate('Y-m-d H:i:s', strtotime('-' . $days . ' days'));
+
+    $wpdb->query(
+      $wpdb->prepare(
+        "DELETE FROM %i WHERE searched_at < %s",
+        $table,
+        $cutoff_date
+      )
+    );
   }
 
 }

@@ -22,6 +22,9 @@ class Deactivation {
    */
   private static function clear_cron() {
     wp_clear_scheduled_hook('speedy_search_background_worker');
+    wp_clear_scheduled_hook('speedy_search_daily_background_worker');
+    wp_clear_scheduled_hook('snappy_search_background_worker');
+    wp_clear_scheduled_hook('snappy_search_daily_background_worker');
   }
 
 }

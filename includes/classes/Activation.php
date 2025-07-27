@@ -23,8 +23,12 @@ class Activation {
    * @return void
    */
   private static function schedule_cron() {
-    if (!wp_next_scheduled('speedy_search_background_worker')) {
-      wp_schedule_event(time(), 'every_minute', 'speedy_search_background_worker');
+    if (!wp_next_scheduled('snappy_search_background_worker')) {
+      wp_schedule_event(time(), 'every_minute', 'snappy_search_background_worker');
+    }
+
+    if (!wp_next_scheduled('snappy_search_daily_background_worker')) {
+      wp_schedule_event(time(), 'daily', 'snappy_search_daily_background_worker');
     }
   }
   

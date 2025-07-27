@@ -1,13 +1,9 @@
 # 1.2.0
-[ ] Add option for last x days for most popular
-[ ] Add minimum result count for being considered popular
-[ ] Add cron cleanup for search history table
-[ ] Maybe tie sending tracking to checking if results are displayed
-[ ] Add option for private API
 [ ] Update screenshots
-[ ] Plugin check
-[ ] Add translations
+[ ] Add template so webmasters can customize the search further
+[ ] Update TNTSearch version
 [X] Add popular searches backend functionality
+[X] Add cron cleanup for search history table
 [X] Add setting blacklist for popular searches
 [X] Add option to set tracking time in ms for done typing
 [X] Update option to say in milliseconds
@@ -21,26 +17,33 @@
 [X] Add popular searches to frontend (selector and js to make it auto fill)
 [X] Add popular blacklist functionality
 [X] Update api calls cache to account for post type
+[X] Add option for last x days for most popular
+[X] Add minimum result count for being considered popular
+[X] Add additional translations
 
 # 1.3.0
 [ ] Add analytics for 0 search items and other things
+[ ] Add scroll to load more results
+[ ] Add logging class from our other plugins
+[ ] Add another shortcode for replacing advanced search
+[ ] Add autocomplete functionality
 
 # General
-[ ] Add custom template support
+[ ] Add option for private API
 [ ] Add ability to use both selector and shortcode for advanced search
 [ ] Move DB to Utils folder
-[ ] Make API an option and allow for admin ajax
-[ ] Add autocomplete functionality
 [ ] Add better handling for indexing fallback
-[ ] Add scroll to load more results
 [ ] Add advanced search
-[ ] Add template so webmasters can customize the search further
-[ ] Add logging
 [ ] Separate admin class
-[ ] Update TNTSearch version
+[ ] Admin nav in sidebar instead of under settings
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
+
+# Update Checklist
+[ ] Update Readme
+[ ] Update Screenshots
+[ ] Plugin Scan
 
 # Completed
 [X] Add support for WooCommerce

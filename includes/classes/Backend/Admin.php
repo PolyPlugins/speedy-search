@@ -224,6 +224,22 @@ class Admin {
 		);
     
 		add_settings_field(
+			'popular_limit',
+			__('Limit', 'speedy-search'),
+			array($this, 'popular_limit_render'),
+			'speedy_search_popular_polyplugins',
+			'speedy_search_popular_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'popular_days',
+			__('Days', 'speedy-search'),
+			array($this, 'popular_days_render'),
+			'speedy_search_popular_polyplugins',
+			'speedy_search_popular_section_polyplugins'
+		);
+    
+		add_settings_field(
 			'popular_tracking_delay',
 			__('Tracking Delay', 'speedy-search'),
 			array($this, 'popular_tracking_delay_render'),
@@ -235,6 +251,14 @@ class Admin {
 			'popular_characters',
 			__('Characters', 'speedy-search'),
 			array($this, 'popular_characters_render'),
+			'speedy_search_popular_polyplugins',
+			'speedy_search_popular_section_polyplugins'
+		);
+    
+		add_settings_field(
+			'popular_result_count',
+			__('Result Count', 'speedy-search'),
+			array($this, 'popular_result_count_render'),
 			'speedy_search_popular_polyplugins',
 			'speedy_search_popular_section_polyplugins'
 		);
@@ -435,6 +459,34 @@ class Admin {
 	}
 
   /**
+	 * Render Limit
+	 *
+	 * @return void
+	 */
+	public function popular_limit_render() {
+		$options = Utils::get_option('popular');
+    $option  = isset($options['limit']) && is_numeric($options['limit']) ? $options['limit'] : 5;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[popular][limit]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('Number of popular search terms to show.', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Popular Days
+	 *
+	 * @return void
+	 */
+	public function popular_days_render() {
+		$options = Utils::get_option('popular');
+    $option  = isset($options['days']) && is_numeric($options['days']) ? $options['days'] : 30;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[popular][days]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('The number of days of search term history to look through for popular search terms. Note: We run a background worker that will cleanup any search term history beyond the number of days you set.', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
 	 * Render Popular Tracking Delay
 	 *
 	 * @return void
@@ -459,6 +511,20 @@ class Admin {
     ?>
     <input type="number" name="speedy_search_settings_polyplugins[popular][characters]" value="<?php echo esc_html($option); ?>">
     <p><strong><?php esc_html_e('Number of characters required for the search term to be tracked.', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Popular Result Count
+	 *
+	 * @return void
+	 */
+	public function popular_result_count_render() {
+		$options = Utils::get_option('popular');
+    $option  = isset($options['result_count']) && is_numeric($options['result_count']) ? $options['result_count'] : 10;
+    ?>
+    <input type="number" name="speedy_search_settings_polyplugins[popular][result_count]" value="<?php echo esc_html($option); ?>">
+    <p><strong><?php esc_html_e('The number of found results for a search term to be considered popular. Set higher than 0 to prevent search terms with no results from showing as a popular term.', 'speedy-search'); ?></strong></p>
 	  <?php
 	}
 
@@ -846,12 +912,24 @@ class Admin {
       $sanitary_values['popular']['enabled'] = false;
     }
 
+    if (isset($input['popular']['limit']) && is_numeric($input['popular']['limit'])) {
+			$sanitary_values['popular']['limit'] = sanitize_text_field($input['popular']['limit']);
+		}
+
+    if (isset($input['popular']['days']) && is_numeric($input['popular']['days'])) {
+			$sanitary_values['popular']['days'] = sanitize_text_field($input['popular']['days']);
+		}
+
     if (isset($input['popular']['delay']) && is_numeric($input['popular']['delay'])) {
 			$sanitary_values['popular']['delay'] = sanitize_text_field($input['popular']['delay']);
 		}
 
     if (isset($input['popular']['characters']) && is_numeric($input['popular']['characters'])) {
 			$sanitary_values['popular']['characters'] = sanitize_text_field($input['popular']['characters']);
+		}
+
+    if (isset($input['popular']['result_count']) && is_numeric($input['popular']['result_count'])) {
+			$sanitary_values['popular']['result_count'] = sanitize_text_field($input['popular']['result_count']);
 		}
 
     if (isset($input['popular']['blacklist']) && $input['popular']['blacklist']) {

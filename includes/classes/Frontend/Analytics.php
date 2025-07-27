@@ -26,13 +26,13 @@ class Analytics {
       Utils::send_error('Invalid session', 403);
     }
 
-    $term = isset($_POST['term']) ? sanitize_text_field($_POST['term']) : '';
+    $term = isset($_POST['term']) ? sanitize_text_field(wp_unslash($_POST['term'])) : '';
 
     if (!$term) {
       return;
     }
 
-    $result_counts = isset($_POST['result_counts']) && is_array($_POST['result_counts']) ? $_POST['result_counts'] : array();
+    $result_counts = isset($_POST['result_counts']) && is_array($_POST['result_counts']) ? array_map('absint', wp_unslash($_POST['result_counts'])) : array();
     
     if (!$result_counts) {
       return;

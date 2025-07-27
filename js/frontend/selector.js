@@ -190,7 +190,7 @@ jQuery(document).ready(function ($) {
     if (Array.isArray(popular) && popular.length > 0) {
       popularHTML = `
         <div class="popular-searches">
-          <p class="popular">Popular Searches</p>
+          <p class="popular">` + __('Popular Searches', 'speedy-search') + `</p>
           <div class="popular-terms"></div>
         </div>
       `;

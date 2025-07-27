@@ -61,6 +61,16 @@ class Updater {
   private function update_to_120() {
     global $wpdb;
 
+    wp_clear_scheduled_hook('speedy_search_background_worker');
+    
+    if (!wp_next_scheduled('snappy_search_background_worker')) {
+      wp_schedule_event(time(), 'every_minute', 'snappy_search_background_worker');
+    }
+    
+    if (!wp_next_scheduled('snappy_search_daily_background_worker')) {
+      wp_schedule_event(time(), 'daily', 'snappy_search_daily_background_worker');
+    }
+
     $table_name      = $wpdb->prefix . 'ss_term_logs';
     $charset_collate = $wpdb->get_charset_collate();
 
