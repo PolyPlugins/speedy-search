@@ -4,17 +4,12 @@ namespace PolyPlugins\Speedy_Search\Backend;
 
 use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
-use TeamTNT\TNTSearch\Exceptions\IndexNotFoundException;
 use WP_Query;
 
 class Background_Worker {
 
   private $tnt;
   private $options;
-  private $posts_index_name     = 'posts.sqlite';
-  private $pages_index_name     = 'pages.sqlite';
-  private $products_index_name  = 'products.sqlite';
-  private $downloads_index_name = 'downloads.sqlite';
   
   /**
    * __construct
@@ -79,32 +74,15 @@ class Background_Worker {
    * @return void
    */
   public function indexer() {
-    $posts         = Utils::get_option('posts');
-    $posts_enabled = isset($posts['enabled']) ? $posts['enabled'] : 1;
+    $this->maybe_index('post');
+    $this->maybe_index('page');
 
-    if ($posts_enabled) {
-      $this->maybe_index_posts();
+    if (class_exists('WooCommerce')) {
+      $this->maybe_index('product');
     }
 
-    $pages         = Utils::get_option('pages');
-    $pages_enabled = isset($pages['enabled']) ? $pages['enabled'] : 0;
-
-    if ($pages_enabled) {
-      $this->maybe_index_pages();
-    }
-
-    $products         = Utils::get_option('products');
-    $products_enabled = isset($products['enabled']) ? $products['enabled'] : 0;
-
-    if ($products_enabled && class_exists('WooCommerce')) {
-      $this->maybe_index_products();
-    }
-
-    $downloads         = Utils::get_option('downloads');
-    $downloads_enabled = isset($downloads['enabled']) ? $downloads['enabled'] : 0;
-
-    if ($downloads_enabled && class_exists('Easy_Digital_Downloads')) {
-      $this->maybe_index_downloads();
+    if (class_exists('Easy_Digital_Downloads')) {
+      $this->maybe_index('download');
     }
   }
 
@@ -143,161 +121,66 @@ class Background_Worker {
   }
 
   /**
-   * Maybe index posts
+   * Maybe index
    *
    * @return void
    */
-  public function maybe_index_posts() {
-    $posts_index          = Utils::get_index('posts');
-    $is_indexing_complete = isset($posts_index['complete']) ? true : false;
+  public function maybe_index($post_type) {
+    $type    = $post_type . 's';
+    $options = Utils::get_option($type);
+    $enabled = isset($options['enabled']) ? $options['enabled'] : 1;
 
-    if (!$is_indexing_complete) {
-      try {
-        $this->tnt->selectIndex($this->posts_index_name);
-      } catch (IndexNotFoundException $e) {
-        $this->tnt->createIndex($this->posts_index_name);
-        $this->tnt->selectIndex($this->posts_index_name);
-      }
+    $index                = Utils::get_index($type);
+    $is_indexing_complete = isset($index['complete']) ? true : false;
 
-      $progress = isset($posts_index['progress']) ? $posts_index['progress'] : 1;
-
-      $args = array(
-        'post_type'      => 'post', 
-        'posts_per_page' => isset($this->options['posts']['batch']) ? $this->options['posts']['batch'] : 20,
-        'offset'         => $progress,
-        'orderby'        => 'date',
-        'order'          => 'ASC',
-        'post_status'    => 'publish'
-      );
-
-      $query = new WP_Query($args);
-
-      if ($query->have_posts()) {
-        $index = $this->tnt->getIndex();
-        $index->disableOutput = true;
-
-        while ($query->have_posts()) {
-          $query->the_post();
-
-          $post_id = get_the_ID();
-          $title   = get_the_title();
-          $content = get_the_content();
-
-          $index->insert(array(
-            'id'      => intval($post_id),
-            'title'   => sanitize_text_field($title),
-            'content' => sanitize_text_field($content)
-          ));
-
-          $progress++;
-        }
-
-        Utils::update_index('posts', 'progress', $progress);
-      } else {
-        Utils::update_index('posts', 'complete', true);
-      }
-
-      wp_reset_postdata();
+    if ($is_indexing_complete) {
+      return;
     }
-  }
 
-  /**
-   * Maybe index pages
-   *
-   * @return void
-   */
-  public function maybe_index_pages() {
-    $pages_index          = Utils::get_index('pages');
-    $is_indexing_complete = isset($pages_index['complete']) ? true : false;
+    if (!$enabled) {
+      Utils::update_index($type, 'complete', true);
 
-    if (!$is_indexing_complete) {
-      try {
-        $this->tnt->selectIndex($this->pages_index_name);
-      } catch (IndexNotFoundException $e) {
-        $this->tnt->createIndex($this->pages_index_name);
-        $this->tnt->selectIndex($this->pages_index_name);
-      }
-
-      $progress = isset($pages_index['progress']) ? $pages_index['progress'] : 1;
-
-      $args = array(
-        'post_type'      => 'page', 
-        'posts_per_page' => isset($this->options['pages']['batch']) ? $this->options['pages']['batch'] : 20,
-        'offset'         => $progress,
-        'orderby'        => 'date',
-        'order'          => 'ASC',
-        'post_status'    => 'publish'
-      );
-
-      $query = new WP_Query($args);
-
-      if ($query->have_posts()) {
-        $index = $this->tnt->getIndex();
-        $index->disableOutput = true;
-
-        while ($query->have_posts()) {
-          $query->the_post();
-
-          $post_id = get_the_ID();
-          $title   = get_the_title();
-          $content = get_the_content();
-
-          $index->insert(array(
-            'id'      => intval($post_id),
-            'title'   => sanitize_text_field($title),
-            'content' => sanitize_text_field($content)
-          ));
-
-          $progress++;
-        }
-
-        Utils::update_index('pages', 'progress', $progress);
-      } else {
-        Utils::update_index('pages', 'complete', true);
-      }
-
-      wp_reset_postdata();
+      return;
     }
-  }
-  
-  /**
-   * Maybe index products
-   *
-   * @return void
-   */
-  public function maybe_index_products() {
-    $products_index       = Utils::get_index('products');
-    $is_indexing_complete = isset($products_index['complete']) ? true : false;
 
-    if (!$is_indexing_complete) {
-      try {
-        $this->tnt->selectIndex($this->products_index_name);
-      } catch (IndexNotFoundException $e) {
-        $this->tnt->createIndex($this->products_index_name);
-        $this->tnt->selectIndex($this->products_index_name);
-      }
+    $index_name = Utils::get_index_name($post_type);
 
-      $progress = isset($products_index['progress']) ? $products_index['progress'] : 1;
+    if (!$index) {
+      $this->tnt->createIndex($index_name);
+    }
 
-      $args = array(
-        'post_type'      => 'product', 
-        'posts_per_page' => isset($this->options['products']['batch']) ? $this->options['products']['batch'] : 20,
-        'offset'         => $progress,
-        'orderby'        => 'date',
-        'order'          => 'ASC',
-        'post_status'    => 'publish'
-      );
+    $this->tnt->selectIndex($index_name);
 
-      $query = new WP_Query($args);
+    $progress = isset($index['progress']) ? $index['progress'] : 1;
 
-      if ($query->have_posts()) {
-        $index = $this->tnt->getIndex();
-        $index->disableOutput = true;
+    $args = array(
+      'post_type'      => $post_type, 
+      'posts_per_page' => isset($this->options[$type]['batch']) ? $this->options[$type]['batch'] : 20,
+      'offset'         => $progress,
+      'orderby'        => 'date',
+      'order'          => 'ASC',
+      'post_status'    => 'publish'
+    );
 
-        while ($query->have_posts()) {
-          $query->the_post();
+    $query = new WP_Query($args);
 
-          $post_id    = get_the_ID();
+    if ($query->have_posts()) {
+      $index = $this->tnt->getIndex();
+
+      while ($query->have_posts()) {
+        $query->the_post();
+
+        $post_id = get_the_ID();
+        $title   = get_the_title();
+        $content = get_the_content();
+
+        $args = array(
+          'id'      => intval($post_id),
+          'title'   => sanitize_text_field($title),
+          'content' => sanitize_text_field($content)
+        );
+
+        if ($post_type === 'product') {
           $product    = wc_get_product($post_id);
           $visibility = $product->get_catalog_visibility();
 
@@ -306,86 +189,21 @@ class Background_Worker {
             continue;
           }
 
-          $title   = get_the_title();
-          $content = get_the_content();
-          $sku     = get_post_meta($post_id, '_sku', true);
-
-          $index->insert(array(
-            'id'      => intval($post_id),
-            'title'   => sanitize_text_field($title),
-            'sku'     => sanitize_text_field($sku),
-            'content' => sanitize_text_field($content)
-          ));
-
-          $progress++;
+          $sku         = get_post_meta($post_id, '_sku', true);
+          $args['sku'] = sanitize_text_field($sku);
         }
 
-        Utils::update_index('products', 'progress', $progress);
-      } else {
-        Utils::update_index('products', 'complete', true);
+        $index->insert($args);
+
+        $progress++;
       }
 
-      wp_reset_postdata();
+      Utils::update_index($type, 'progress', $progress);
+    } else {
+      Utils::update_index($type, 'complete', true);
     }
-  }
-  
-  /**
-   * Maybe index downloads
-   *
-   * @return void
-   */
-  public function maybe_index_downloads() {
-    $downloads_index       = Utils::get_index('downloads');
-    $is_indexing_complete  = isset($downloads_index['complete']) ? true : false;
 
-    if (!$is_indexing_complete) {
-      try {
-        $this->tnt->selectIndex($this->downloads_index_name);
-      } catch (IndexNotFoundException $e) {
-        $this->tnt->createIndex($this->downloads_index_name);
-        $this->tnt->selectIndex($this->downloads_index_name);
-      }
-
-      $progress = isset($downloads_index['progress']) ? $downloads_index['progress'] : 1;
-
-      $args = array(
-        'post_type'      => 'download',
-        'posts_per_page' => isset($this->options['downloads']['batch']) ? $this->options['downloads']['batch'] : 20,
-        'offset'         => $progress,
-        'orderby'        => 'date',
-        'order'          => 'ASC',
-        'post_status'    => 'publish'
-      );
-
-      $query = new WP_Query($args);
-
-      if ($query->have_posts()) {
-        $index = $this->tnt->getIndex();
-        $index->disableOutput = true;
-
-        while ($query->have_posts()) {
-          $query->the_post();
-
-          $post_id = get_the_ID();
-          $title   = get_the_title();
-          $content = get_the_content();
-
-          $index->insert(array(
-            'id'      => intval($post_id),
-            'title'   => sanitize_text_field($title),
-            'content' => sanitize_text_field($content)
-          ));
-
-          $progress++;
-        }
-
-        Utils::update_index('downloads', 'progress', $progress);
-      } else {
-        Utils::update_index('downloads', 'complete', true);
-      }
-
-      wp_reset_postdata();
-    }
+    wp_reset_postdata();
   }
 
 }

@@ -190,8 +190,10 @@ class API {
 
     // Get TNTSearch instance
     $tnt = TNTSearch::get_instance()->tnt();
-    
-    $tnt->selectIndex('posts.sqlite');
+
+    $index_name = Utils::get_index_name('post');
+
+    $tnt->selectIndex($index_name);
     $tnt->fuzziness = true;
 
     // Perform the search
@@ -266,7 +268,9 @@ class API {
     // Get TNTSearch instance
     $tnt = TNTSearch::get_instance()->tnt();
     
-    $tnt->selectIndex('pages.sqlite');
+    $index_name = Utils::get_index_name('page');
+
+    $tnt->selectIndex($index_name);
     $tnt->fuzziness = true;
 
     // Perform the search
@@ -341,7 +345,9 @@ class API {
     // Get TNTSearch instance
     $tnt = TNTSearch::get_instance()->tnt();
     
-    $tnt->selectIndex('products.sqlite');
+    $index_name = Utils::get_index_name('product');
+    
+    $tnt->selectIndex($index_name);
     $tnt->fuzziness = true;
 
     // Perform the search
@@ -417,7 +423,9 @@ class API {
     // Get TNTSearch instance
     $tnt = TNTSearch::get_instance()->tnt();
     
-    $tnt->selectIndex('downloads.sqlite');
+    $index_name = Utils::get_index_name('download');
+
+    $tnt->selectIndex($index_name);
     $tnt->fuzziness = true;
 
     // Perform the search

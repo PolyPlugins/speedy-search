@@ -184,6 +184,14 @@ class Admin {
 		);
 
 		add_settings_field(
+			'database_type',
+		  __('Database Type', 'speedy-search'),
+			array($this, 'database_type_render'),
+			'speedy_search_general_polyplugins',
+			'speedy_search_general_section_polyplugins'
+		);
+
+		add_settings_field(
 			'characters',
 		  __('Characters', 'speedy-search'),
 			array($this, 'characters_render'),
@@ -388,6 +396,22 @@ class Admin {
       <input type="checkbox" name="speedy_search_settings_polyplugins[enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
 		<?php
+	}
+
+  /**
+	 * Render Database Type Field
+	 *
+	 * @return void
+	 */
+	public function database_type_render() {
+		$option = Utils::get_option('database_type') ?: 'mysql';
+    ?>
+    <select name="speedy_search_settings_polyplugins[database_type]">
+      <option value="mysql" <?php selected($option, 'mysql'); ?>>MySQL</option>
+      <option value="sqlite" <?php selected($option, 'sqlite'); ?>>SQLite</option>
+    </select>
+    <p><strong><?php esc_html_e("If your server runs MySQL you can store the index inside your existing database, otherwise its stored on your filesystem.", 'speedy-search'); ?><br /><br /><?php esc_html_e("Note: Changing this setting triggers a reindex.", 'speedy-search'); ?></strong></p>
+	  <?php
 	}
 
   /**
@@ -888,6 +912,22 @@ class Admin {
       $sanitary_values['enabled'] = $input['enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['enabled'] = false;
+    }
+
+    if (isset($input['database_type'])) {
+      $allowed_types         = array('mysql', 'sqlite');
+      $database_type         = sanitize_text_field($input['database_type']);
+		  $current_database_type = Utils::get_option('database_type') ?: 'mysql';
+
+      if (in_array($database_type, $allowed_types, true)) {
+        $sanitary_values['database_type'] = $database_type;
+      } else {
+        $sanitary_values['database_type'] = 'mysql';
+      }
+
+      if ($current_database_type !== $database_type) {
+        Utils::reindex();
+      }
     }
 
     if (isset($input['characters']) && is_numeric($input['characters'])) {

@@ -65,19 +65,7 @@ class Reindexer {
       Utils::send_error('Unauthorized', 401);
     }
 
-    // Reset indexing progress
-    Utils::delete_index($this->index_path, 'posts.sqlite');
-    Utils::delete_index($this->index_path, 'pages.sqlite');
-
-    if (class_exists('WooCommerce')) {
-      Utils::delete_index($this->index_path, 'products.sqlite');
-    }
-
-    if (class_exists('Easy_Digital_Downloads')) {
-      Utils::delete_index($this->index_path, 'downloads.sqlite');
-    }
-
-    delete_option('speedy_search_indexes_polyplugins');
+    Utils::reindex();
 
     Utils::send_success("Reindexing started");
   }

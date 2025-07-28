@@ -56,6 +56,14 @@ class Updater {
 
       update_option('speedy_search_version_polyplugins', $stored_version);
     }
+
+    if (version_compare($stored_version, '1.3.0', '<')) {
+      $stored_version = '1.3.0';
+
+      $this->update_to_130();
+
+      update_option('speedy_search_version_polyplugins', $stored_version);
+    }
   }
 
   private function update_to_120() {
@@ -92,6 +100,12 @@ class Updater {
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
 
     dbDelta($sql);
+  }
+
+  private function update_to_130() {
+    update_option('speedy_search_notice_dismissed_polyplugins', false);
+    
+    Utils::update_option('database_type', 'sqlite');
   }
 
 }

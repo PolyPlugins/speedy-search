@@ -2,7 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search;
 
-use TeamTNT\TNTSearch\TNTSearch as TNTSearchTNTSearch;
+use TeamTNT\TNTSearch\TNTSearch as TNTSearchEngine;
 
 class TNTSearch {
   
@@ -28,15 +28,18 @@ class TNTSearch {
    */
   public function init() {
     $is_missing_extensions = Utils::is_missing_extensions();
+    $database_type         = Utils::get_option('database_type') ?: 'mysql';
 
     // Don't continue if missing extensions
     if ($is_missing_extensions) {
       return;
     }
 
-    if (!$this->index_path_exists()) {
-      $this->create_index_path();
-      $this->secure_index_path();
+    if ($database_type === 'sqlite') {
+      if (!$this->index_path_exists()) {
+        $this->create_index_path();
+        $this->secure_index_path();
+      }
     }
 
     $this->init_tnt();
@@ -48,13 +51,35 @@ class TNTSearch {
    * @return void
    */
   public function init_tnt() {
-    $this->tnt = new TNTSearchTNTSearch;
+		$database_type = Utils::get_option('database_type') ?: 'mysql';
+
+    if ($database_type === 'mysql') {
+      if (!defined('DB_HOST') || !defined('DB_NAME') || !defined('DB_USER') || !defined('DB_PASSWORD')) {
+        return;
+      }
+    }
+
+    $this->tnt = new TNTSearchEngine;
     
-    $this->tnt->loadConfig(array(
-      'driver'    => 'filesystem',
-      'storage'   => $this->index_path,
-      'stemmer'   => \TeamTNT\TNTSearch\Stemmer\PorterStemmer::class
-    ));
+    if ($database_type === 'mysql') {
+      $this->tnt->loadConfig(array(
+        'driver'    => 'mysql',
+        'engine'    => \TeamTNT\TNTSearch\Engines\MysqlEngine::class,
+        'host'      => DB_HOST,
+        'database'  => DB_NAME,
+        'username'  => DB_USER,
+        'password'  => DB_PASSWORD,
+        'storage'   => $this->index_path,
+        'stemmer'   => \TeamTNT\TNTSearch\Stemmer\PorterStemmer::class,
+        'tokenizer' => \TeamTNT\TNTSearch\Support\Tokenizer::class
+      ));
+    } else {
+      $this->tnt->loadConfig(array(
+        'driver'    => 'filesystem',
+        'storage'   => $this->index_path,
+        'stemmer'   => \TeamTNT\TNTSearch\Stemmer\PorterStemmer::class
+      ));
+    }
   }
   
   /**

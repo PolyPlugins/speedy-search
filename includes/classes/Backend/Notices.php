@@ -31,16 +31,32 @@ class Notices {
     
     $screen = get_current_screen();
 
-    if ($screen->id != 'settings_page_speedy-search') {
+    if ($screen->id != 'toplevel_page_speedy-search') {
       if ($this->version == '1.1.0') {
-        ?>
-        <div class="notice notice-success is-dismissible speedy-search">
-          <p><?php echo esc_html__('Speedy Search is now Snappy Search. We have change a lot including adding support for WooCommerce, EDD, and Pages. Indexes are also now updated when content is added, removed, or updated. We also added the ability to trigger reindexes and reverting the search to default when indexing. Try out the new features by visiting Snappy Search Settings.', 'speedy-search'); ?></p>
-          <a href="options-general.php?page=speedy-search"><?php echo esc_html__('Try new features', 'speedy-search'); ?></a>
-        </div>
-        <?php
+        $this->notice_110();
+      }
+      if ($this->version == '1.3.0') {
+        $this->notice_130();
       }
     }
+  }
+
+  public function notice_110() {
+    ?>
+    <div class="notice notice-success is-dismissible speedy-search">
+      <p><?php echo esc_html__('Speedy Search is now Snappy Search. We have change a lot including adding support for WooCommerce, EDD, and Pages. Indexes are also now updated when content is added, removed, or updated. We also added the ability to trigger reindexes and reverting the search to default when indexing. Try out the new features by visiting Snappy Search Settings.', 'speedy-search'); ?></p>
+      <a href="options-general.php?page=speedy-search"><?php echo esc_html__('Try new features', 'speedy-search'); ?></a>
+    </div>
+    <?php
+  }
+
+  public function notice_130() {
+    ?>
+    <div class="notice notice-success is-dismissible speedy-search">
+      <p><?php echo esc_html__('Snappy Search can now use MySQL databases, which means search indexes can be stored in your existing WordPress database for better performance.', 'speedy-search'); ?></p>
+      <a href="options-general.php?page=speedy-search"><?php echo esc_html__('Switch to MySQL', 'speedy-search'); ?></a>
+    </div>
+    <?php
   }
 
   public function dismiss_notice() {
