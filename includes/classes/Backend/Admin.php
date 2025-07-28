@@ -78,14 +78,9 @@ class Admin {
       return;
     }
 
-    $posts_index                   = Utils::get_index('posts');
-    $pages_index                   = Utils::get_index('pages');
-    $products_index                = Utils::get_index('products');
-    $is_posts_indexing_complete    = isset($posts_index['complete']) ? true : false;
-    $is_pages_indexing_complete    = isset($pages_index['complete']) ? true : false;
-    $is_products_indexing_complete = isset($products_index['complete']) ? true : false;
+    $is_indexing = Utils::is_indexing();
     ?>
-    <?php if (!$is_posts_indexing_complete || !$is_pages_indexing_complete || !$is_products_indexing_complete) : ?>
+    <?php if ($is_indexing) : ?>
       <div class="notice notice-warning">
         <p><?php esc_html_e('Snappy Search is currently indexing.', 'speedy-search'); ?></p>
       </div>

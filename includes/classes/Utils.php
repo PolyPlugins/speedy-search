@@ -2,7 +2,6 @@
 
 namespace PolyPlugins\Speedy_Search;
 
-use Exception;
 use PolyPlugins\Speedy_Search\TNTSearch;
 
 class Utils {
@@ -82,6 +81,28 @@ class Utils {
     $options[$index][$option] = $value;
 
     update_option('speedy_search_indexes_polyplugins', $options);
+  }
+  
+  /**
+   * Check if currently indexing
+   *
+   * @return bool $is_indexing The indexing status
+   */
+  public static function is_indexing() {
+    $allowed_post_types = self::get_allowed_post_types();
+    $is_indexing        = false;
+
+    foreach($allowed_post_types as $allowed_post_type) {
+      $type        = $allowed_post_type . 's';
+      $index       = self::get_index($type);
+      $is_indexing = isset($index['complete']) ? false : true;
+
+      if ($is_indexing) {
+        return $is_indexing;
+      }
+    }
+
+    return $is_indexing;
   }
 
   /**
@@ -207,7 +228,7 @@ class Utils {
    */
   public static function get_index_name($post_type) {
     $type          = $post_type . 's';
-		$database_type = Utils::get_option('database_type') ?: 'mysql';
+		$database_type = self::get_option('database_type') ?: 'mysql';
     $index_name    = '';
 
     if ($database_type === 'mysql') {
@@ -225,7 +246,7 @@ class Utils {
    * @return mixed $is_missing_extension Array of missing extensions or false
    */
   public static function is_missing_extensions() {
-		$database_type      = Utils::get_option('database_type') ?: 'mysql';
+		$database_type      = self::get_option('database_type') ?: 'mysql';
     $missing_extensions = array();
 
     $extensions = array(
