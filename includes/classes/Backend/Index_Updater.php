@@ -141,7 +141,7 @@ class Index_Updater {
     if ($new_status === 'publish') {
       // If type is product
       if (get_post_type($post->ID) === 'product') {
-        $product = wc_get_product($post->ID);
+        $product    = wc_get_product($post->ID);
         $visibility = $product->get_catalog_visibility();
 
         // If product does not have search visibility remove it

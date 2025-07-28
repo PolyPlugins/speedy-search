@@ -67,20 +67,13 @@ class Enqueue {
   private function enqueue_scripts() {
     $options                        = get_option('speedy_search_settings_polyplugins');
     $selector                       = isset($options['selector']) ? $options['selector'] : '';
-    $posts_index                    = Utils::get_index('posts');
-    $pages_index                    = Utils::get_index('pages');
-    $products_index                 = Utils::get_index('products');
-    $downloads_index                = Utils::get_index('downloads');
+    $is_indexing                    = Utils::is_indexing();
     $popular_options                = Utils::get_option('popular');
     $popular_enabled                = isset($popular_options['enabled']) ? $popular_options['enabled'] : 0;
-    $is_posts_indexing_complete     = isset($posts_index['complete']) ? true : false;
-    $is_pages_indexing_complete     = isset($pages_index['complete']) ? true : false;
-    $is_products_indexing_complete  = isset($products_index['complete']) ? true : false;
-    $is_downloads_indexing_complete = isset($downloads_index['complete']) ? true : false;
     
     if ($selector) {
       // Fallback to default search when indexing
-      if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete || $is_downloads_indexing_complete) {
+      if (!$is_indexing) {
         wp_enqueue_script('snappy-search-selector', plugins_url('/js/frontend/selector.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
         wp_localize_script(
           'snappy-search-selector',
@@ -108,7 +101,7 @@ class Enqueue {
       }
     } else {
       // Fallback to default search when indexing
-      if ($is_posts_indexing_complete || $is_pages_indexing_complete || $is_products_indexing_complete || $is_downloads_indexing_complete) {
+      if (!$is_indexing) {
         wp_enqueue_script('snappy-search-shortcode', plugins_url('/js/frontend/shortcode.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
         wp_localize_script(
           'snappy-search-shortcode',
