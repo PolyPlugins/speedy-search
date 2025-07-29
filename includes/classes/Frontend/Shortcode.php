@@ -47,6 +47,8 @@ class Shortcode {
   public function init() {
     add_shortcode('speedy_search_polyplugins', array($this, 'snappy_search_shortcode_render'));
     add_shortcode('snappy_search_polyplugins', array($this, 'snappy_search_shortcode_render'));
+    add_shortcode('snappy_search_mobile_polyplugins', array($this, 'snappy_search_mobile_shortcode_render'));
+    add_shortcode('snappy_search_advanced_polyplugins', array($this, 'snappy_search_mobile_shortcode_render'));
   }
 
   public function snappy_search_shortcode_render($atts) {
@@ -62,6 +64,42 @@ class Shortcode {
       include $template_file;
     } else {
       include plugin_dir_path($this->plugin) . 'templates/snappy-search-form.php';
+    }
+
+    return ob_get_clean();
+  }
+
+  public function snappy_search_mobile_shortcode_render($atts) {
+    $atts = shortcode_atts(array(
+      'placeholder' => 'Search...',
+    ), $atts, 'snappy_search');
+
+    ob_start();
+
+    $template_file = locate_template('snappy-search-form.php');
+
+    if (!empty($template_file)) {
+      include $template_file;
+    } else {
+      include plugin_dir_path($this->plugin) . 'templates/snappy-search-mobile-form.php';
+    }
+
+    return ob_get_clean();
+  }
+
+  public function snappy_search_advanced_shortcode_render($atts) {
+    $atts = shortcode_atts(array(
+      'placeholder' => 'Search...',
+    ), $atts, 'snappy_search');
+
+    ob_start();
+
+    $template_file = locate_template('snappy-search-form.php');
+
+    if (!empty($template_file)) {
+      include $template_file;
+    } else {
+      include plugin_dir_path($this->plugin) . 'templates/snappy-search-mobile-form.php';
     }
 
     return ob_get_clean();

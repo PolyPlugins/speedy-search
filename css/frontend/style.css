@@ -47,6 +47,10 @@
 /**
  * Shortcode
  */
+.speedy-search-container {
+  position: relative;
+}
+
 .speedy-search-container .instant-search-wrapper {
   width: 100%;
   position: absolute;
@@ -76,8 +80,113 @@
   display: inline;
 }
 
+.speedy-search-container a {
+  text-decoration: none;
+}
 
+.speedy-search-container .instant-search-section {
+  padding: 0 0px;
+}
 
+.speedy-search-container .instant-search-section p {
+  margin: 0;
+}
+
+.speedy-search-container .title-result {
+  text-decoration: underline;
+}
+
+.speedy-search-container input {
+  width: 100%;
+  border-radius: 25px;
+  padding: 6px 12px;
+  border: 1px solid #fff;
+}
+
+.speedy-search-container .instant-search-wrapper {
+  position: absolute;
+  width: 100%;
+  top: 48px;
+  border-radius: 5px;
+  background-color: #fff;
+  z-index: 9999;
+  padding: 10px;
+}
+
+.speedy-search-container .instant-search-result {
+  padding: 10px 10px !important;
+}
+
+.speedy-search-container .instant-search-result:hover {
+  background-color: #ccc !important;
+}
+
+.speedy-search-container .instant-search-results {
+  margin-top: 0;
+}
+
+.speedy-search-container .price-result {
+  display: none;
+}
+
+.speedy-search-container .instant-search-results .instant-search-result {
+  background-color: #fff;
+  margin-bottom: 0;
+}
+
+.speedy-search-container .snappy-search-search {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.speedy-search-container .instant-search-result {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  border-bottom: 1px solid #555;
+  border-radius: 0 !important;
+}
+
+.speedy-search-container .image-wrapper {
+  flex: 0 0 100px;
+}
+
+.speedy-search-container .image-wrapper img {
+  width: 100px;
+  height: auto;
+  object-fit: cover;
+}
+
+.speedy-search-container .search-content {
+  flex: 1;
+}
+
+.speedy-search-container .title-result {
+  font-size: 16px;
+  margin: 0 0 5px;
+  text-decoration: none;
+}
+
+.speedy-search-container .price-result {
+  font-weight: bold;
+  margin: 0 0 5px;
+}
+
+.speedy-search-container .excerpt-result {
+  margin: 0;
+  font-size: 14px;
+  color: #555;
+}
+
+/**
+ * Popular
+ */
 .popular-searches .popular {
   margin: 5px 0 0 0;
   font-weight: 700;

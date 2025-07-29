@@ -144,22 +144,22 @@ jQuery(document).ready(function ($) {
                 '<p class="price-result">' + currency + item.price + "</p>";
             }
 
-            return (
-              '<div class="instant-search-result">' +
-              '<a href="' +
-              item.permalink +
-              '" class="permalink-result">' +
-              imageHTML +
-              '<h2 class="title-result">' +
-              item.title +
-              "</h2>" +
-              price +
-              '<p class="excerpt-result">' +
-              item.excerpt +
-              "</p>" +
-              "</a>" +
-              "</div>"
-            );
+            return `
+              <div class="instant-search-result">
+                <div class="image-wrapper">
+                  <a href="${item.permalink}" class="permalink-result">
+                    ${imageHTML}
+                  </a>
+                </div>
+                <div class="search-content">
+                  <a href="${item.permalink}" class="permalink-result">
+                    <h2 class="title-result">${item.title}</h2>
+                    ${price}
+                    <p class="excerpt-result">${item.excerpt}</p>
+                  </a>
+                </div>
+              </div>
+            `;
           }).join("");
 
           $('.instant-search-section[data-type="' + endpoint + '"]').empty();
