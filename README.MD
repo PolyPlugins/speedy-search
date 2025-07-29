@@ -18,7 +18,6 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 * Set a typing delay before an AJAX request is made
 * Tab selection between various indexes if more than one is enabled
 * Adds a dropdown by defined selector to search form to show results
-* Shortcode [snappy_search_polyplugins] to inject a Snappy Search form anywhere
 * Can build indexes for products, downloads, posts, and pages
 * Background sync for indexes
 * Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
@@ -27,10 +26,13 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 * [NEW] Popular search terms can be displayed below the search
 * [NEW] Add your own custom shortcode template by copying snappy-search-form.php to your theme folder
 * Reindexer button
-* Adds /wp-json/snappy-search/v1/products endpoint to get array of post id's (Requires WooCommerce)
-* Adds /wp-json/snappy-search/v1/downloads endpoint to get array of post id's (Requires EDD)
-* Adds /wp-json/snappy-search/v1/posts endpoint to get array of post id's
-* Adds /wp-json/snappy-search/v1/pages endpoint to get array of post id's
+* Shortcode [snappy_search_polyplugins placeholder="Search..."] to inject a Snappy Search form anywhere
+* Shortcode [snappy_search_mobile_polyplugins] to inject a mobile Snappy Search form anywhere
+* Shortcode [snappy_search_advanced_polyplugins] to inject an advanced Snappy Search form anywhere
+* /wp-json/snappy-search/v1/products endpoint to get array of product ids (Requires WooCommerce)
+* /wp-json/snappy-search/v1/downloads endpoint to get array of download ids (Requires EDD)
+* /wp-json/snappy-search/v1/posts endpoint to get array of post ids
+* /wp-json/snappy-search/v1/pages endpoint to get array of page ids
 
 ## Road Map
 
@@ -81,7 +83,8 @@ By default, it will index 10 posts per minute.
 ### 1.3.0
 * Added: Support for using the WP DB instead of SQLite since TNTSearch supports it
 * Added: Database type setting
-* Added: Another shortcode for replacing advanced search
+* Added: Shortcode [snappy_search_mobile_polyplugins] in case of needing another search form for mobile
+* Added: Shortcode [snappy_search_advanced_polyplugins] for replacing advanced search
 * Added: Better handling for indexing fallback
 * Added: Skeleton loader
 * Added: Initial loading indicator
