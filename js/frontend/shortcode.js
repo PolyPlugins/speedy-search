@@ -30,24 +30,35 @@ jQuery(document).ready(function ($) {
   function listener() {
     let typingTimer;
 
-    if (!$searchInput.length || !$searchForm.length) return;
+    if (!$searchInput.length) return;
 
-    $searchForm.after(initialSearchForm);
+    $searchInput.each(function () {
+      let $input = $(this);
+      let $form = $input.closest("form");
+      let $container = $form.closest(".speedy-search-container");
 
-    $searchInput.on("input", function () {
-      clearTimeout(typingTimer);
-      const query = $.trim($searchInput.val());
-
-      if (query.length >= characters) {
-        typingTimer = setTimeout(function () {
-          $(".instant-search-wrapper").show();
-          performSearch(query);
-        }, typingDelay);
-      } else {
-        // Change text to type more characters
+      // Inject dynamic HTML only if tabs are being built dynamically
+      if (!$container.find(".instant-search-wrapper").length) {
+        $form.after(buildInitialSearchForm());
       }
+
+      $input.on("input", function () {
+        clearTimeout(typingTimer);
+        const query = $.trim($input.val());
+
+        if (query.length >= characters) {
+          typingTimer = setTimeout(function () {
+            $container.find(".instant-search-wrapper").show();
+            performSearch(query, $container);
+          }, typingDelay);
+        } else {
+          // Could show a message like: "Keep typing..."
+          $container.find(".instant-search-wrapper").hide();
+        }
+      });
     });
   }
+
 
   function navigation() {
     const $tabs = $('.instant-search-tabs .tab');
@@ -95,53 +106,43 @@ jQuery(document).ready(function ($) {
     });
   }
 
-  function performSearch(query) {
-    // Show "Searching..." in each existing section
-    $('.instant-search-section').each(function () {
-      let $resultType = $(this).data('type');
+  function performSearch(query, $container) {
+    const $sections = $container.find('.instant-search-section');
 
-      // Find the matching post type object
-      let typeObj = postTypes.find(function (t) {
-        return t.type === $resultType;
-      });
+    $sections.each(function () {
+      let $section = $(this);
+      let type = $section.data('type');
 
-      // Fallback if not found
-      let label = typeObj ? typeObj.label : $resultType;
+      let typeObj = postTypes.find(t => t.type === type);
+      let label = typeObj ? typeObj.label : type;
 
-      $(this).html('<p>' + __("Searching " + $resultType + "...", "speedy-search") + '</p>');
+      $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
 
-      fetchResults(query, $resultType, label);
+      fetchResults(query, type, label, $section);
     });
   }
 
-  function fetchResults(query, endpoint, label) {
+  function fetchResults(query, endpoint, label, $section) {
     $.ajax({
       url: "/wp-json/speedy-search/v1/" + endpoint + "s/",
       data: { search: query },
       dataType: "json",
       success: function (data) {
+        $section.empty();
+
         if (!data.length) {
-          $('.instant-search-section[data-type="' + endpoint + '"]').empty();
-          $('.instant-search-section[data-type="' + endpoint + '"]').append(
-            "<p>" + __("No results found.", "speedy-search") + "</p>"
-          );
+          $section.append("<p>" + __("No results found.", "speedy-search") + "</p>");
         } else {
           const results = $.map(data, function (item) {
             let imageHTML = "";
             let price = "";
 
             if (item.thumbnail) {
-              imageHTML =
-                '<img src="' +
-                item.thumbnail +
-                '" alt="' +
-                item.title +
-                '" class="image-result">';
+              imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
             }
 
             if (item.price) {
-              price =
-                '<p class="price-result">' + currency + item.price + "</p>";
+              price = '<p class="price-result">' + currency + item.price + "</p>";
             }
 
             return `
@@ -162,21 +163,14 @@ jQuery(document).ready(function ($) {
             `;
           }).join("");
 
-          $('.instant-search-section[data-type="' + endpoint + '"]').empty();
-          $('.instant-search-section[data-type="' + endpoint + '"]')
-            .append(results);
+          $section.append(results);
         }
       },
       error: function (xhr, status, error) {
-        $('.instant-search-section[data-type="' + endpoint + '"]').empty();
-        $('.instant-search-section[data-type="' + endpoint + '"]')
-          .append(
-            "<p>" +
-              __("An error occurred while searching.", "speedy-search") +
-            "</p>"
-          );
+        $section.empty();
+        $section.append("<p>" + __("An error occurred while searching.", "speedy-search") + "</p>");
         console.error("Search error in " + endpoint + ":", error);
-      },
+      }
     });
   }
 

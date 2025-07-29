@@ -76,7 +76,7 @@ class Shortcode {
 
     ob_start();
 
-    $template_file = locate_template('snappy-search-form.php');
+    $template_file = locate_template('templates/snappy-search-mobile-form.php');
 
     if (!empty($template_file)) {
       include $template_file;
@@ -94,12 +94,12 @@ class Shortcode {
 
     ob_start();
 
-    $template_file = locate_template('snappy-search-form.php');
+    $template_file = locate_template('snappy-search-advanced-form.php');
 
     if (!empty($template_file)) {
       include $template_file;
     } else {
-      include plugin_dir_path($this->plugin) . 'templates/snappy-search-mobile-form.php';
+      include plugin_dir_path($this->plugin) . 'templates/snappy-search-advanced-form.php';
     }
 
     return ob_get_clean();
