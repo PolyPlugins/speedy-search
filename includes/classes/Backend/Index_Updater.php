@@ -46,14 +46,14 @@ class Index_Updater {
     $post_type = $post->post_type;
 
     // Allowed post types for indexing
-    $allowed_types = array('post', 'page', 'product', 'download');
+    $allowed_types = Utils::get_allowed_post_types();
 
     if (!in_array($post_type, $allowed_types, true)) {
       return;
     }
 
     // Select or create the appropriate index
-    $index_name = $this->get_index_name_for_post_type($post_type);
+    $index_name = Utils::get_index_name($post_type);
 
     try {
       $this->tnt->selectIndex($index_name);
@@ -98,13 +98,13 @@ class Index_Updater {
 
     $post_type = $post->post_type;
 
-    $allowed_types = array('post', 'page', 'product', 'download');
+    $allowed_types = Utils::get_allowed_post_types();
 
     if (!in_array($post_type, $allowed_types, true)) {
       return;
     }
 
-    $index_name = $this->get_index_name_for_post_type($post_type);
+    $index_name = Utils::get_index_name($post_type);
 
     try {
       $this->tnt->selectIndex($index_name);
@@ -131,7 +131,7 @@ class Index_Updater {
       return;
     }
 
-    $allowed_types = array('post', 'page', 'product', 'download');
+    $allowed_types = Utils::get_allowed_post_types();
 
     if (!in_array($post->post_type, $allowed_types, true)) {
       return;
@@ -141,7 +141,7 @@ class Index_Updater {
     if ($new_status === 'publish') {
       // If type is product
       if (get_post_type($post->ID) === 'product') {
-        $product = wc_get_product($post->ID);
+        $product    = wc_get_product($post->ID);
         $visibility = $product->get_catalog_visibility();
 
         // If product does not have search visibility remove it
@@ -156,27 +156,6 @@ class Index_Updater {
     // If going FROM publish TO any other status — remove from index
     if ($new_status !== 'publish') {
       $this->remove_from_index($post->ID);
-    }
-  }
-
-  /**
-   * Get index filename based on post type
-   *
-   * @param string $post_type
-   * @return string
-   */
-  private function get_index_name_for_post_type($post_type) {
-    switch ($post_type) {
-      case 'post':
-        return 'posts.sqlite';
-      case 'page':
-        return 'pages.sqlite';
-      case 'product':
-        return 'products.sqlite';
-      case 'download':
-        return 'downloads.sqlite';
-      default:
-        return '';
     }
   }
 }

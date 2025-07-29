@@ -2,6 +2,8 @@
 
 namespace PolyPlugins\Speedy_Search;
 
+use PolyPlugins\Speedy_Search\TNTSearch;
+
 class Utils {
 
   /**
@@ -80,6 +82,28 @@ class Utils {
 
     update_option('speedy_search_indexes_polyplugins', $options);
   }
+  
+  /**
+   * Check if currently indexing
+   *
+   * @return bool $is_indexing The indexing status
+   */
+  public static function is_indexing() {
+    $allowed_post_types = self::get_allowed_post_types();
+    $is_indexing        = false;
+
+    foreach($allowed_post_types as $allowed_post_type) {
+      $type        = $allowed_post_type . 's';
+      $index       = self::get_index($type);
+      $is_indexing = isset($index['complete']) ? false : true;
+
+      if ($is_indexing) {
+        return $is_indexing;
+      }
+    }
+
+    return $is_indexing;
+  }
 
   /**
    * Delete an index file
@@ -96,6 +120,49 @@ class Utils {
     }
 
     return false;
+  }
+  
+  /**
+   * Flush DB index
+   *
+   * @param  string $post_type The post type
+   * @return void
+   */
+  public static function delete_db_index($post_type) {
+    $tnt        = TNTSearch::get_instance()->tnt();
+    $index_name = self::get_index_name($post_type);
+
+    $tnt->selectIndex($index_name);
+    $tnt->engine->flushIndex($index_name);
+  }
+  
+  /**
+   * Reindex
+   *
+   * @return void
+   */
+  public static function reindex() {
+    $index_path         = TNTSearch::get_instance()->get_index_path();
+    $database_type      = self::get_option('database_type') ?: 'mysql';
+    $allowed_post_types = self::get_allowed_post_types();
+
+    if ($database_type === 'mysql') {
+      // Reset indexing progress
+      foreach ($allowed_post_types as $allowed_post_type) {
+        self::delete_db_index($allowed_post_type);
+      }
+
+      delete_option('speedy_search_indexes_polyplugins');
+    } else {
+      // Reset indexing progress
+      foreach ($allowed_post_types as $allowed_post_type) {
+        $index_name = self::get_index_name($allowed_post_type);
+
+        self::delete_index($index_path, $index_name);
+      }
+
+      delete_option('speedy_search_indexes_polyplugins');
+    }
   }
   
   /**
@@ -139,10 +206,38 @@ class Utils {
    */
   public static function get_allowed_post_types() {
     $allowed_post_types = array(
-      'post', 'page', 'product', 'download'
+      'post', 'page'
     );
 
+    if (class_exists('WooCommerce')) {
+      $allowed_post_types[] = 'product';
+    }
+
+    if (class_exists('Easy_Digital_Downloads')) {
+      $allowed_post_types[] = 'download';
+    }
+
     return $allowed_post_types;
+  }
+  
+  /**
+   * Get index name
+   *
+   * @param  string $post_type  The type of index
+   * @return string $index      The index name
+   */
+  public static function get_index_name($post_type) {
+    $type          = $post_type . 's';
+		$database_type = self::get_option('database_type') ?: 'mysql';
+    $index_name    = '';
+
+    if ($database_type === 'mysql') {
+      $index_name = 'wp_ss_' . $type;
+    } else {
+      $index_name = $type . '.sqlite';
+    }
+
+    return $index_name;
   }
   
   /**
@@ -151,13 +246,17 @@ class Utils {
    * @return mixed $is_missing_extension Array of missing extensions or false
    */
   public static function is_missing_extensions() {
+		$database_type      = self::get_option('database_type') ?: 'mysql';
     $missing_extensions = array();
 
     $extensions = array(
-      'pdo_sqlite',
       'PDO',
       'mbstring'
     );
+    
+    if ($database_type === 'sqlite') {
+      $extensions[] = 'pdo_sqlite';
+    }
 
     foreach ($extensions as $extension) {
       if (!extension_loaded($extension)) {

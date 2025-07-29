@@ -78,14 +78,9 @@ class Admin {
       return;
     }
 
-    $posts_index                   = Utils::get_index('posts');
-    $pages_index                   = Utils::get_index('pages');
-    $products_index                = Utils::get_index('products');
-    $is_posts_indexing_complete    = isset($posts_index['complete']) ? true : false;
-    $is_pages_indexing_complete    = isset($pages_index['complete']) ? true : false;
-    $is_products_indexing_complete = isset($products_index['complete']) ? true : false;
+    $is_indexing = Utils::is_indexing();
     ?>
-    <?php if (!$is_posts_indexing_complete || !$is_pages_indexing_complete || !$is_products_indexing_complete) : ?>
+    <?php if ($is_indexing) : ?>
       <div class="notice notice-warning">
         <p><?php esc_html_e('Snappy Search is currently indexing.', 'speedy-search'); ?></p>
       </div>
@@ -181,6 +176,14 @@ class Admin {
 			array($this, 'enabled_render'),             // Setting callback
 			'speedy_search_general_polyplugins',        // Setting page
 			'speedy_search_general_section_polyplugins' // Setting section
+		);
+
+		add_settings_field(
+			'database_type',
+		  __('Database Type', 'speedy-search'),
+			array($this, 'database_type_render'),
+			'speedy_search_general_polyplugins',
+			'speedy_search_general_section_polyplugins'
 		);
 
 		add_settings_field(
@@ -388,6 +391,22 @@ class Admin {
       <input type="checkbox" name="speedy_search_settings_polyplugins[enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
 		<?php
+	}
+
+  /**
+	 * Render Database Type Field
+	 *
+	 * @return void
+	 */
+	public function database_type_render() {
+		$option = Utils::get_option('database_type') ?: 'mysql';
+    ?>
+    <select name="speedy_search_settings_polyplugins[database_type]">
+      <option value="mysql" <?php selected($option, 'mysql'); ?>>MySQL</option>
+      <option value="sqlite" <?php selected($option, 'sqlite'); ?>>SQLite</option>
+    </select>
+    <p><strong><?php esc_html_e("If your server runs MySQL you can store the index inside your existing database, otherwise its stored on your filesystem.", 'speedy-search'); ?><br /><br /><?php esc_html_e("Note: Changing this setting triggers a reindex.", 'speedy-search'); ?></strong></p>
+	  <?php
 	}
 
   /**
@@ -888,6 +907,22 @@ class Admin {
       $sanitary_values['enabled'] = $input['enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['enabled'] = false;
+    }
+
+    if (isset($input['database_type'])) {
+      $allowed_types         = array('mysql', 'sqlite');
+      $database_type         = sanitize_text_field($input['database_type']);
+		  $current_database_type = Utils::get_option('database_type') ?: 'mysql';
+
+      if (in_array($database_type, $allowed_types, true)) {
+        $sanitary_values['database_type'] = $database_type;
+      } else {
+        $sanitary_values['database_type'] = 'mysql';
+      }
+
+      if ($current_database_type !== $database_type) {
+        Utils::reindex();
+      }
     }
 
     if (isset($input['characters']) && is_numeric($input['characters'])) {

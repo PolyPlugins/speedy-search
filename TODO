@@ -3,25 +3,34 @@
 [ ] Update Screenshots
 [ ] Plugin Scan
 
-# 1.3.0
-[ ] Add support for using the WP DB instead of SQLite since TNTSearch supports it
-[ ] Add analytics for 0 search items and other things
+# 1.4.0
+[ ] Now that MySQL is integrated add support for Admin Snappy Search
+[ ] Push featured to top of list and add a badge for "Featured"
+[ ] Handling indexing categories
 [ ] Add scroll to load more results
-[ ] Add logging class from our other plugins
-[ ] Add another shortcode for replacing advanced search
+[ ] Add analytics for 0 search items and top searches
 [ ] Add ability for admin side nav to jump to sub settings
+[ ] Add logging class from our other plugins
 
 # General
+[ ] Add scroll to load more results
+[ ] Add additional ordering like by top seller for products
 [ ] Add autocomplete functionality
-[ ] Add option for private API
 [ ] Add ability to use both selector and shortcode for advanced search
 [ ] Move DB to Utils folder
-[ ] Add better handling for indexing fallback
 [ ] Separate admin class
-[ ] Add scroll to load more results
+[ ] Add option for private API
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
+
+# 1.3.0
+[X] Skeleton loader
+[X] Add support for using the WP DB instead of SQLite since TNTSearch supports it
+[X] Add another shortcode for replacing advanced search
+[X] Add better handling for indexing fallback
+[X] Fall back to default WordPress search when indexing
+[X] Make sure works with MariaDB
 
 # 1.2.0
 [X] Add template so webmasters can customize the search further

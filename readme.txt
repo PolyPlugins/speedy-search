@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.2.0
+Stable tag: 1.3.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -94,6 +94,19 @@ By default it will index 10 posts per minute.
 
 
 == Changelog ==
+
+= 1.3.0 =
+* Added: Support for using the WP DB instead of SQLite since TNTSearch supports it
+* Added: Database type setting
+* Added: Another shortcode for replacing advanced search
+* Added: Better handling for indexing fallback
+* Added: Skeleton loader
+* Added: Initial loading indicator
+* Added: Additional styling
+* Updated: Fall back to default WordPress search when indexing
+* Updated: Translations
+* Bugfix: If using multiple search forms, only the first one works
+* Optimized: Indexing logic
 
 = 1.2.0 =
 * Added: Custom template for shortcode search so the layout can be changed. Add your own custom template by copying snappy-search-form.php to your theme folder
