@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.3.0
+Stable tag: 1.4.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -49,7 +49,6 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 
 == Road Map: ==
 
-* Add support for using the WP DB instead of SQLite since TNTSearch supports it
 * Add analytics for 0 search items and other things
 * Add scroll to load more results
 * Add logging class from our other plugins
