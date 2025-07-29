@@ -11,6 +11,7 @@ $popular_enabled = isset($popular_options['enabled']) ? $popular_options['enable
   <form role="search" method="get" class="snappy-search-form" action="<?php echo esc_url(home_url('/')); ?>">
     <input type="text" class="snappy-search-input" placeholder="<?php echo esc_attr($atts['placeholder']); ?>" autocomplete="off" name="s">
     <button type="button" class="snappy-search-close" aria-label="Close Search">×</button>
+    <span class="loader" style="display: none;"></span>
   </form>
   
   <?php if (!$is_indexing) : ?>

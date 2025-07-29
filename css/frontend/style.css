@@ -203,3 +203,80 @@
   background-color: #737373;
   color: #fff;
 }
+
+/**
+ * Skeleton Loader
+ */
+.instant-search-result.skeleton-loading .image-wrapper,
+.instant-search-result.skeleton-loading .title-result,
+.instant-search-result.skeleton-loading .price-result,
+.instant-search-result.skeleton-loading .excerpt-result {
+  background-color: #e0e0e0;
+  color: transparent;
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.instant-search-result.skeleton-loading .image-wrapper {
+  width: 80px;
+  height: 100px;
+}
+
+.instant-search-result.skeleton-loading .image-wrapper img {
+  visibility: hidden;
+}
+
+.instant-search-result.skeleton-loading .title-result,
+.instant-search-result.skeleton-loading .price-result,
+.instant-search-result.skeleton-loading .excerpt-result {
+  min-height: 14px;
+}
+
+@keyframes pulse {
+  0% {
+    background-color: #e0e0e0;
+  }
+  50% {
+    background-color: #f0f0f0;
+  }
+  100% {
+    background-color: #e0e0e0;
+  }
+}
+
+/**
+ * CSS Loader https://github.com/vineethtrv/css-loader
+ */
+.loader {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  position: absolute;
+  top: 12px;
+  right: 15px;
+  animation: rotate 1s linear infinite
+}
+
+.loader::before {
+  content: "";
+  box-sizing: border-box;
+  position: absolute;
+  inset: 0px;
+  border-radius: 50%;
+  border: 5px solid #FFF;
+  animation: prixClipFix 2s linear infinite ;
+}
+
+@keyframes rotate {
+  100%   {transform: rotate(360deg)}
+}
+
+@keyframes prixClipFix {
+    0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
+    25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
+    50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
+    75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
+    100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
+}

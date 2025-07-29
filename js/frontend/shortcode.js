@@ -102,6 +102,7 @@ jQuery(document).ready(function ($) {
     });
 
     $(".snappy-search-close").on("click", function(e) {
+      $(".snappy-search-input").val('');
       $(".instant-search-wrapper").hide();
     });
   }
@@ -116,7 +117,17 @@ jQuery(document).ready(function ($) {
       let typeObj = postTypes.find(t => t.type === type);
       let label = typeObj ? typeObj.label : type;
 
-      $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
+      
+      let $result = $(".speedy-search-container .instant-search-result");
+
+      if ($result.length) {
+        $result.addClass('skeleton-loading');
+      } else {
+        $(".speedy-search-container .snappy-search-close").hide();
+        $(".speedy-search-container .loader").show();
+      }
+
+      // $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
 
       fetchResults(query, type, label, $section);
     });
@@ -171,6 +182,10 @@ jQuery(document).ready(function ($) {
         $section.append("<p>" + __("An error occurred while searching.", "speedy-search") + "</p>");
         console.error("Search error in " + endpoint + ":", error);
       }
+    })
+    .always(function() {
+      $(".speedy-search-container .snappy-search-close").show();
+      $(".speedy-search-container .loader").hide();
     });
   }
 
