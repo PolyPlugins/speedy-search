@@ -24,6 +24,9 @@
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
 
+# 1.3.1
+[X] Fix the jumping that happens when initially searching since the loading icon should have fixed that
+
 # 1.3.0
 [X] Skeleton loader
 [X] Add support for using the WP DB instead of SQLite since TNTSearch supports it

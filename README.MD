@@ -36,7 +36,6 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 
 ## Road Map
 
-* Add support for using the WP DB instead of SQLite since TNTSearch supports it
 * Add analytics for 0 search items and other things
 * Add scroll to load more results
 * Add logging class from our other plugins
@@ -79,6 +78,9 @@ This plugin collects and stores certain data on your server to ensure proper fun
 By default, it will index 10 posts per minute.
 
 ## Changelog
+
+### 1.3.1
+* Bugfix: Jumping that happens when initially searching
 
 ### 1.3.0
 * Added: Support for using the WP DB instead of SQLite since TNTSearch supports it
