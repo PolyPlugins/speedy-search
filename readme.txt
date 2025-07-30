@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.4.0
+Stable tag: 1.3.1
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -95,6 +95,9 @@ By default it will index 10 posts per minute.
 
 
 == Changelog ==
+
+= 1.3.1 =
+* Bugfix: Jumping that happens when initially searching
 
 = 1.3.0 =
 * Added: Support for using the WP DB instead of SQLite since TNTSearch supports it

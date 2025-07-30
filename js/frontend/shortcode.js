@@ -48,12 +48,12 @@ jQuery(document).ready(function ($) {
 
         if (query.length >= characters) {
           typingTimer = setTimeout(function () {
-            $container.find(".instant-search-wrapper").show();
+            // $container.find(".instant-search-wrapper").show();
             performSearch(query, $container);
           }, typingDelay);
         } else {
           // Could show a message like: "Keep typing..."
-          $container.find(".instant-search-wrapper").hide();
+          // $container.find(".instant-search-wrapper").hide();
         }
       });
     });
@@ -97,11 +97,16 @@ jQuery(document).ready(function ($) {
   function close() {
     $(document).on("click", function(e) {
       if (!$(e.target).closest('.speedy-search-container').length) {
+        $(".speedy-search-container .instant-search-section").empty();
+
+        $(".snappy-search-input").val('');
         $(".instant-search-wrapper").hide();
       }
     });
 
     $(".snappy-search-close").on("click", function(e) {
+      $(".speedy-search-container .instant-search-section").empty();
+
       $(".snappy-search-input").val('');
       $(".instant-search-wrapper").hide();
     });
@@ -184,6 +189,7 @@ jQuery(document).ready(function ($) {
       }
     })
     .always(function() {
+      $(".speedy-search-container .instant-search-wrapper").show();
       $(".speedy-search-container .snappy-search-close").show();
       $(".speedy-search-container .loader").hide();
     });
@@ -208,13 +214,24 @@ jQuery(document).ready(function ($) {
       tabsHTML += '</ul>\n';
     }
 
-    $.each(postTypes, function(i, t) {
-      const isActive = t.type === firstType;
-      sectionsHTML +=
-        '<div class="instant-search-section" data-type="' + t.type + '" style="display: ' + (isActive ? 'block' : 'none') + ';">\n' +
-          '  <p>' + __('Search ' + t.type + ' you are looking for.', 'speedy-search') + '</p>\n' +
-        '</div>\n';
-    });
+    if (postTypes.length > 1) {
+      $.each(postTypes, function(i, t) {
+        let isActive = t.type === firstType;
+        let displayStyle = isActive ? 'block' : 'none';
+        let label = __('Search ' + t.type + ' you are looking for.', 'speedy-search');
+
+        sectionsHTML += `
+          <div class="instant-search-section" data-type="${t.type}" style="display: ${displayStyle};">
+            <p>${label}</p>
+          </div>
+        `;
+      });
+    } else {
+      sectionsHTML += `
+        <div class="instant-search-section" data-type="${firstType}">
+        </div>
+      `;
+    }
 
     let searchForm = `
       <div class="instant-search-wrapper" style="display: none;">

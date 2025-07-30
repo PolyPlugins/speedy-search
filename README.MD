@@ -79,6 +79,9 @@ By default, it will index 10 posts per minute.
 
 ## Changelog
 
+### 1.3.1
+* Bugfix: Jumping that happens when initially searching
+
 ### 1.3.0
 * Added: Support for using the WP DB instead of SQLite since TNTSearch supports it
 * Added: Database type setting
