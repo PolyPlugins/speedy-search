@@ -35,8 +35,9 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 * Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
 * Ability to adjust the batch size for the initial index so smaller servers don't get overloaded
 * Limit the number of results displayed
-* [NEW] Popular search terms can be displayed below the search
-* [NEW] Add your own custom shortcode template by copying snappy-search-form.php to your theme folder
+* [NEW] Advanced search to replace the default WordPress search
+* Popular search terms can be displayed below the search
+* Add your own custom shortcode template by copying snappy-search-form.php to your theme folder
 * Reindexer button
 * Shortcode [snappy_search_polyplugins placeholder="Search..."] to inject a Snappy Search form anywhere
 * Shortcode [snappy_search_mobile_polyplugins] to inject a mobile Snappy Search form anywhere
