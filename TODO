@@ -3,7 +3,7 @@
 [ ] Update Screenshots
 [ ] Plugin Scan
 
-# 1.4.0
+# 1.5.0
 [ ] Now that MySQL is integrated add support for Admin Snappy Search
 [ ] Push featured to top of list and add a badge for "Featured"
 [ ] Handling indexing categories
@@ -23,6 +23,15 @@
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
+
+# 1.4.0
+[X] Add advanced search to replace default search when pressing enter if enabled and not indexing
+[X] Add advanced search enabled, title, and placeholder settings
+[X] Add template snappy-search-advanced-search-form.php
+[X] Update search form templates to take advantage of advanced search
+[X] Update translations
+[X] Add SQLite deprecation notice
+[X] Fix indexer looping through the same results if failed
 
 # 1.3.1
 [X] Fix the jumping that happens when initially searching since the loading icon should have fixed that

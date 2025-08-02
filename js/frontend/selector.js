@@ -1,23 +1,30 @@
-const { __, _x, _n, _nx } = wp.i18n;
-
-let selector          = snappy_search_object.options?.selector ?? '';
-let characters        = snappy_search_object.options?.characters ?? 4;
-let typing_delay      = snappy_search_object.options?.typing_delay ?? 300;
-let posts_enabled     = snappy_search_object.options?.posts?.enabled ?? false;
-let pages_enabled     = snappy_search_object.options?.pages?.enabled ?? false;
-let products_enabled  = snappy_search_object.options?.products?.enabled ?? false;
-let downloads_enabled = snappy_search_object.options?.downloads?.enabled ?? false;
-let popular           = snappy_search_object.popular ?? false;
-let currency          = snappy_search_object.currency ?? '$';
-
 jQuery(document).ready(function ($) {
-  if (!selector) return;
+  const { __, _x, _n, _nx } = wp.i18n;
 
-  const $searchInput      = $(selector);
-  const $searchForm       = $searchInput.closest("form");
-  const typingDelay       = typing_delay;
-  const postTypes         = getTypes();
-  const initialSearchForm = buildInitialSearchForm();
+  let selector = snappy_search_object.options?.selector ?? '';
+
+  if (!selector) {
+    return;
+  }
+
+  if (!$(selector).length) {
+    return;
+  }
+
+  let characters            = snappy_search_object.options?.characters ?? 4;
+  let typing_delay          = snappy_search_object.options?.typing_delay ?? 300;
+  let posts_enabled         = snappy_search_object.options?.posts?.enabled ?? false;
+  let pages_enabled         = snappy_search_object.options?.pages?.enabled ?? false;
+  let products_enabled      = snappy_search_object.options?.products?.enabled ?? false;
+  let downloads_enabled     = snappy_search_object.options?.downloads?.enabled ?? false;
+  let popular               = snappy_search_object.popular ?? false;
+  let currency              = snappy_search_object.currency ?? '$';
+
+  const $searchInput        = $(selector);
+  const $searchForm         = $searchInput.closest("form");
+  const typingDelay         = typing_delay;
+  const postTypes           = getTypes();
+  const initialSearchForm   = buildInitialSearchForm();
 
   init();
   
@@ -153,7 +160,6 @@ jQuery(document).ready(function ($) {
               __("An error occurred while searching.", "speedy-search") +
             "</p>"
           );
-        console.error("Search error in " + endpoint + ":", error);
       },
     });
   }

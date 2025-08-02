@@ -2,14 +2,14 @@
 # This file is distributed under the GPL3.
 msgid ""
 msgstr ""
-"Project-Id-Version: Snappy Search 1.3.0\n"
+"Project-Id-Version: Snappy Search 1.4.0\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/speedy-search\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-07-29T20:50:50+00:00\n"
+"POT-Creation-Date: 2025-08-02T21:53:03+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: speedy-search\n"
@@ -48,248 +48,315 @@ msgstr ""
 msgid "Snappy Search requires the following extensions:"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:175
-#: includes/classes/Backend/Admin.php:223
-#: includes/classes/Backend/Admin.php:279
-#: includes/classes/Backend/Admin.php:303
-#: includes/classes/Backend/Admin.php:327
-#: includes/classes/Backend/Admin.php:351
-#: includes/classes/Backend/Admin.php:375
+#: includes/classes/Backend/Admin.php:182
+#: includes/classes/Backend/Admin.php:230
+#: includes/classes/Backend/Admin.php:286
+#: includes/classes/Backend/Admin.php:310
+#: includes/classes/Backend/Admin.php:334
+#: includes/classes/Backend/Admin.php:358
+#: includes/classes/Backend/Admin.php:382
+#: includes/classes/Backend/Admin.php:406
 msgid "Enabled?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:183
+#: includes/classes/Backend/Admin.php:190
 msgid "Database Type"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:191
-#: includes/classes/Backend/Admin.php:255
+#: includes/classes/Backend/Admin.php:198
+#: includes/classes/Backend/Admin.php:262
 msgid "Characters"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:199
+#: includes/classes/Backend/Admin.php:206
 msgid "Max Characters"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:207
+#: includes/classes/Backend/Admin.php:214
 msgid "Typing Delay"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:215
+#: includes/classes/Backend/Admin.php:222
 msgid "Selector"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:231
+#: includes/classes/Backend/Admin.php:238
 msgid "Limit"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:239
+#: includes/classes/Backend/Admin.php:246
 msgid "Days"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:247
+#: includes/classes/Backend/Admin.php:254
 msgid "Tracking Delay"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:263
+#: includes/classes/Backend/Admin.php:270
 msgid "Result Count"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:271
+#: includes/classes/Backend/Admin.php:278
 msgid "Blacklisted Words"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:287
-#: includes/classes/Backend/Admin.php:311
-#: includes/classes/Backend/Admin.php:335
-#: includes/classes/Backend/Admin.php:359
+#: includes/classes/Backend/Admin.php:294
+#: includes/classes/Backend/Admin.php:318
+#: includes/classes/Backend/Admin.php:342
+#: includes/classes/Backend/Admin.php:366
 msgid "Batch"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:295
-#: includes/classes/Backend/Admin.php:319
-#: includes/classes/Backend/Admin.php:343
-#: includes/classes/Backend/Admin.php:367
+#: includes/classes/Backend/Admin.php:302
+#: includes/classes/Backend/Admin.php:326
+#: includes/classes/Backend/Admin.php:350
+#: includes/classes/Backend/Admin.php:374
 msgid "Result Limit"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:391
-#: includes/classes/Backend/Admin.php:474
-#: includes/classes/Backend/Admin.php:574
-#: includes/classes/Backend/Admin.php:618
-#: includes/classes/Backend/Admin.php:662
-#: includes/classes/Backend/Admin.php:706
-#: includes/classes/Backend/Admin.php:749
+#: includes/classes/Backend/Admin.php:390
+msgid "Title"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:398
+msgid "Placeholder"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:422
+#: includes/classes/Backend/Admin.php:505
+#: includes/classes/Backend/Admin.php:605
+#: includes/classes/Backend/Admin.php:649
+#: includes/classes/Backend/Admin.php:693
+#: includes/classes/Backend/Admin.php:737
+#: includes/classes/Backend/Admin.php:781
+#: includes/classes/Backend/Admin.php:824
 msgid "Yes"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:408
+#: includes/classes/Backend/Admin.php:439
 msgid "If your server runs MySQL you can store the index inside your existing database, otherwise its stored on your filesystem."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:408
+#: includes/classes/Backend/Admin.php:439
 msgid "Note: Changing this setting triggers a reindex."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:421
+#: includes/classes/Backend/Admin.php:452
 msgid "How many characters to trigger Snappy Search?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:434
+#: includes/classes/Backend/Admin.php:465
 msgid "Maximum number of characters allowed to be searched?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:447
+#: includes/classes/Backend/Admin.php:478
 msgid "How many milliseconds between inputs until a search is fired?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:460
+#: includes/classes/Backend/Admin.php:491
 msgid "Enter your selector that you want to add the instant search to. Ex: #search"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:460
+#: includes/classes/Backend/Admin.php:491
 msgid "Leave blank if you are using the [snappy_search_polyplugins] shortcode."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:476
+#: includes/classes/Backend/Admin.php:507
 msgid "Enabling this will track searches and display popular search terms. This will track what users are searching, but it is not tied to individual users. Before you enable, please make sure you are in compliance with data protection regulations."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:490
+#: includes/classes/Backend/Admin.php:521
 msgid "Number of popular search terms to show."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:504
+#: includes/classes/Backend/Admin.php:535
 msgid "The number of days of search term history to look through for popular search terms. Note: We run a background worker that will cleanup any search term history beyond the number of days you set."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:518
+#: includes/classes/Backend/Admin.php:549
 msgid "How many milliseconds after a user is done typing, until the search is tracked?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:532
+#: includes/classes/Backend/Admin.php:563
 msgid "Number of characters required for the search term to be tracked."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:546
+#: includes/classes/Backend/Admin.php:577
 msgid "The number of found results for a search term to be considered popular. Set higher than 0 to prevent search terms with no results from showing as a popular term."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:560
+#: includes/classes/Backend/Admin.php:591
 msgid "By default, Snappy Search only shows popular search terms that return results. To block specific terms from appearing, enter them here as a comma separated list."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:576
+#: includes/classes/Backend/Admin.php:607
 msgid "Index and show posts in the search?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:590
+#: includes/classes/Backend/Admin.php:621
 msgid "How many posts should be indexed per minute?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:604
+#: includes/classes/Backend/Admin.php:635
 msgid "How many posts would you like to show?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:620
+#: includes/classes/Backend/Admin.php:651
 msgid "Index and show pages in the search?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:634
+#: includes/classes/Backend/Admin.php:665
 msgid "How many pages should be indexed per minute?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:648
+#: includes/classes/Backend/Admin.php:679
 msgid "How many pages would you like to show?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:664
+#: includes/classes/Backend/Admin.php:695
 msgid "Index and show products in the search?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:678
+#: includes/classes/Backend/Admin.php:709
 msgid "How many products should be indexed per minute?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:692
+#: includes/classes/Backend/Admin.php:723
 msgid "How many products would you like to show?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:708
+#: includes/classes/Backend/Admin.php:739
 msgid "Index and show downloads in the search?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:722
+#: includes/classes/Backend/Admin.php:753
 msgid "How many downloads should be indexed per minute?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:736
+#: includes/classes/Backend/Admin.php:767
 msgid "How many downloads would you like to show?"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:768
-msgid "Snappy Search Settings"
+#: includes/classes/Backend/Admin.php:783
+msgid "If enabled, pressing Enter will go to /advanced-search/ instead of the default search, unless indexing is active."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:778
-msgid "General"
+#: includes/classes/Backend/Admin.php:783
+msgid "Note: This will flush rewrite rules."
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:784
-msgid "Popular"
-msgstr ""
-
-#: includes/classes/Backend/Admin.php:790
-#: js/frontend/selector.js:244
-#: js/frontend/shortcode.js:243
-msgid "Posts"
-msgstr ""
-
-#: includes/classes/Backend/Admin.php:796
-#: js/frontend/selector.js:248
-#: js/frontend/shortcode.js:247
-msgid "Pages"
-msgstr ""
-
-#: includes/classes/Backend/Admin.php:803
-#: js/frontend/selector.js:236
-#: js/frontend/shortcode.js:235
-msgid "Products"
+#: includes/classes/Backend/Admin.php:797
+msgid "Set the page title of advanced search."
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:811
-#: js/frontend/selector.js:240
-#: js/frontend/shortcode.js:239
+msgid "Set the placeholder for the advanced search input."
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:843
+msgid "Snappy Search Settings"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:853
+msgid "General"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:859
+msgid "Popular"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:865
+#: js/frontend/advanced.js:271
+#: js/frontend/selector.js:250
+#: js/frontend/shortcode.js:264
+msgid "Posts"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:871
+#: js/frontend/advanced.js:275
+#: js/frontend/selector.js:254
+#: js/frontend/shortcode.js:268
+msgid "Pages"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:878
+#: js/frontend/advanced.js:263
+#: js/frontend/selector.js:242
+#: js/frontend/shortcode.js:256
+msgid "Products"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:886
+#: js/frontend/advanced.js:267
+#: js/frontend/selector.js:246
+#: js/frontend/shortcode.js:260
 msgid "Downloads"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:818
+#: includes/classes/Backend/Admin.php:893
+msgid "Advanced"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:899
 msgid "Repo"
 msgstr ""
 
-#: includes/classes/Backend/Admin.php:824
+#: includes/classes/Backend/Admin.php:905
 #: js/backend/settings.js:31
 msgid "Reindex"
+msgstr ""
+
+#: includes/classes/Backend/Admin.php:953
+msgid "Due to the layout differences of various themes, this more than likely will require a developer to add and customize the snappy-search-advanced-search-form.php template in your theme."
 msgstr ""
 
 #: includes/classes/Backend/Background_Worker.php:116
 msgid "Every Minute"
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:47
+#: includes/classes/Backend/Notices.php:50
 msgid "Speedy Search is now Snappy Search. We have change a lot including adding support for WooCommerce, EDD, and Pages. Indexes are also now updated when content is added, removed, or updated. We also added the ability to trigger reindexes and reverting the search to default when indexing. Try out the new features by visiting Snappy Search Settings."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:48
+#: includes/classes/Backend/Notices.php:51
 msgid "Try new features"
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:56
+#: includes/classes/Backend/Notices.php:59
 msgid "Snappy Search can now use MySQL databases, which means search indexes can be stored in your existing WordPress database for better performance."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:57
+#: includes/classes/Backend/Notices.php:60
+#: includes/classes/Backend/Notices.php:76
 msgid "Switch to MySQL"
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:68
+msgid "Starting with version 1.5.0, Snappy Search will include functionality offered by our "
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:70
+msgid " plugin. As part of this update, the plugin will gain the ability to index WooCommerce orders, which introduces additional security considerations."
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:72
+msgid "To support this securely and efficiently, we are "
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:72
+msgid "discontinuing support for SQLite"
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:72
+msgid ". Managing mixed database logic (SQLite and MySQL) adds unnecessary complexity and overhead, particularly when handling sensitive data like order information."
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:74
+msgid "Before updating to 1.5.0, please ensure your site is using MySQL."
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:75
+msgid "If your site is still using SQLite, search functionality will be automatically disabled after the update."
 msgstr ""
 
 #: includes/classes/Utils.php:176
@@ -303,10 +370,11 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: templates/snappy-search-advanced-form.php:20
-#: templates/snappy-search-form.php:20
-#: templates/snappy-search-mobile-form.php:20
-#: js/frontend/selector.js:193
+#: templates/snappy-search-advanced-form.php:24
+#: templates/snappy-search-advanced-search-form.php:28
+#: templates/snappy-search-form.php:24
+#: templates/snappy-search-mobile-form.php:24
+#: js/frontend/selector.js:199
 msgid "Popular Searches"
 msgstr ""
 
@@ -350,12 +418,14 @@ msgstr ""
 msgid "ms. Tracking relies on the search results being visible to the user, so if it runs too early before results are loaded it won't capture anything. This separation allows tracking to run in its own AJAX request after the main search, which helps keep the search fast and responsive."
 msgstr ""
 
-#: js/frontend/selector.js:104
-#: js/frontend/shortcode.js:145
+#: js/frontend/advanced.js:162
+#: js/frontend/selector.js:111
+#: js/frontend/shortcode.js:155
 msgid "No results found."
 msgstr ""
 
-#: js/frontend/selector.js:153
-#: js/frontend/shortcode.js:182
+#: js/frontend/advanced.js:199
+#: js/frontend/selector.js:160
+#: js/frontend/shortcode.js:192
 msgid "An error occurred while searching."
 msgstr ""

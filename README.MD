@@ -62,7 +62,8 @@ This plugin collects and stores certain data on your server to ensure proper fun
 ![Posts Settings](.wordpress-org/screenshot-4.jpg)
 ![Pages Settings](.wordpress-org/screenshot-5.jpg)
 ![Products Settings](.wordpress-org/screenshot-6.jpg)
-![Repo Settings](.wordpress-org/screenshot-7.jpg)
+![Advanced Search Settings](.wordpress-org/screenshot-7.jpg)
+![Repo Settings](.wordpress-org/screenshot-8.jpg)
 
 ## Installation
 
@@ -78,6 +79,15 @@ This plugin collects and stores certain data on your server to ensure proper fun
 By default, it will index 10 posts per minute.
 
 ## Changelog
+
+### 1.4.0
+* Added: Advanced Search to replace default search when pressing enter if enabled and not indexing
+* Added: Advanced Search enabled, title, and placeholder settings
+* Added: Template snappy-search-advanced-search-form.php
+* Updated: Search form templates to take advantage of advanced search
+* Updated: Translations
+* Bugfix: Indexer looping through the same results if failed
+* Deprecated: SQLite
 
 ### 1.3.1
 * Bugfix: Jumping that happens when initially searching

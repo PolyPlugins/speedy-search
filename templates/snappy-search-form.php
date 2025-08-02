@@ -2,14 +2,18 @@
 use PolyPlugins\Speedy_Search\Backend\DB;
 use PolyPlugins\Speedy_Search\Utils;
 
-$is_indexing     = Utils::is_indexing();
-$popular_options = Utils::get_option('popular');
-$popular_enabled = isset($popular_options['enabled']) ? $popular_options['enabled'] : 0;
+$is_indexing      = Utils::is_indexing();
+$popular_options  = Utils::get_option('popular');
+$popular_enabled  = isset($popular_options['enabled']) ? $popular_options['enabled'] : 0;
+$advanced_options = Utils::get_option('advanced');
+$advanced_enabled = isset($advanced_options['enabled']) ? $advanced_options['enabled'] : 0;
+$action           = $advanced_enabled && !$is_indexing ? home_url('/advanced-search/') : home_url('/');
+$name             = $advanced_enabled && !$is_indexing ? 'search' : 's';
 ?>
 
 <div class="speedy-search-container desktop">
-  <form role="search" method="get" class="snappy-search-form" action="<?php echo esc_url(home_url('/')); ?>">
-    <input type="text" class="snappy-search-input" placeholder="<?php echo esc_attr($atts['placeholder']); ?>" autocomplete="off" name="s">
+  <form role="search" method="get" class="snappy-search-form" action="<?php echo esc_url($action); ?>">
+    <input type="text" class="snappy-search-input" placeholder="<?php echo esc_attr($atts['placeholder']); ?>" autocomplete="off" name="<?php echo esc_html($name); ?>">
     <button type="button" class="snappy-search-close" aria-label="Close Search">×</button>
     <span class="loader" style="display: none;"></span>
   </form>

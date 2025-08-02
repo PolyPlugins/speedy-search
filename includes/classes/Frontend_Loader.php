@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search;
 
+use PolyPlugins\Speedy_Search\Frontend\Advanced_Search;
 use PolyPlugins\Speedy_Search\Frontend\Analytics;
 use PolyPlugins\Speedy_Search\Frontend\Enqueue;
 use PolyPlugins\Speedy_Search\Frontend\Shortcode;
@@ -50,6 +51,7 @@ class Frontend_Loader {
     $this->load_enqueue();
     $this->load_ui();
     $this->load_shortcode();
+    $this->load_advanced_search();
     $this->load_analytics();
   }
   
@@ -80,6 +82,16 @@ class Frontend_Loader {
    */
   public function load_shortcode() {
     $shortcode = new Shortcode($this->plugin, $this->version, $this->plugin_dir_url);
+    $shortcode->init();
+  }
+  
+  /**
+   * Load Advanced Search
+   *
+   * @return void
+   */
+  public function load_advanced_search() {
+    $shortcode = new Advanced_Search($this->plugin, $this->version, $this->plugin_dir_url);
     $shortcode->init();
   }
   

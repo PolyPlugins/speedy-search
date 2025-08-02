@@ -3,7 +3,7 @@
 jQuery(document).ready(function ($) {
   const { __, _x, _n, _nx } = wp.i18n;
 
-  let selector          = '.snappy-search-input';
+  let selector = '.snappy-search-advanced-input';
 
   if (!$(selector).length) {
     return;
@@ -17,11 +17,11 @@ jQuery(document).ready(function ($) {
   let downloads_enabled = snappy_search_object.options?.downloads?.enabled ?? false;
   let currency          = snappy_search_object.currency ?? '$';
 
-  const $searchInput        = $(selector);
-  const $searchForm         = $searchInput.closest("form");
-  const typingDelay         = typing_delay;
-  const postTypes           = getTypes();
-  const initialSearchForm   = buildInitialSearchForm();
+  const $searchInput      = $(selector);
+  const $searchForm       = $searchInput.closest("form");
+  const typingDelay       = typing_delay;
+  const postTypes         = getTypes();
+  const initialSearchForm = buildInitialSearchForm();
 
   init();
   
@@ -30,6 +30,7 @@ jQuery(document).ready(function ($) {
     navigation();
     popular();
     close();
+    initialSearch();
   }
 
   function listener() {
@@ -40,7 +41,7 @@ jQuery(document).ready(function ($) {
     $searchInput.each(function () {
       let $input = $(this);
       let $form = $input.closest("form");
-      let $container = $form.closest(".speedy-search-container");
+      let $container = $form.closest(".speedy-search-container.advanced-search");
 
       // Inject dynamic HTML only if tabs are being built dynamically
       if (!$container.find(".instant-search-wrapper").length) {
@@ -63,7 +64,6 @@ jQuery(document).ready(function ($) {
       });
     });
   }
-
 
   function navigation() {
     const $tabs = $('.instant-search-tabs .tab');
@@ -104,7 +104,7 @@ jQuery(document).ready(function ($) {
       if (!$(e.target).closest('.speedy-search-container').length) {
         $(".speedy-search-container .instant-search-section").empty();
 
-        $(".snappy-search-input").val('');
+        $(".snappy-search-advanced-input").val('');
         $(".instant-search-wrapper").hide();
       }
     });
@@ -112,9 +112,16 @@ jQuery(document).ready(function ($) {
     $(".snappy-search-close").on("click", function(e) {
       $(".speedy-search-container .instant-search-section").empty();
 
-      $(".snappy-search-input").val('');
+      $(".snappy-search-advanced-input").val('');
       $(".instant-search-wrapper").hide();
     });
+  }
+
+  function initialSearch() {
+    let $query      = $.trim($(".snappy-search-advanced-input").val());
+    let $container = $(".speedy-search-container.advanced-search");
+    
+    performSearch($query, $container);
   }
 
   function performSearch(query, $container) {

@@ -212,7 +212,7 @@
 .instant-search-result.skeleton-loading .price-result,
 .instant-search-result.skeleton-loading .excerpt-result {
   background-color: #e0e0e0;
-  color: transparent;
+  color: transparent!important;
   border-radius: 4px;
   position: relative;
   overflow: hidden;
@@ -232,6 +232,13 @@
 .instant-search-result.skeleton-loading .price-result,
 .instant-search-result.skeleton-loading .excerpt-result {
   min-height: 14px;
+}
+
+/**
+ * Advanced Search
+ */
+.speedy-search-container.advanced-search .instant-search-wrapper {
+  position: unset;
 }
 
 @keyframes pulse {
@@ -274,9 +281,9 @@
 }
 
 @keyframes prixClipFix {
-    0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
-    25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
-    50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
-    75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
-    100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
+  0%   {clip-path:polygon(50% 50%,0 0,0 0,0 0,0 0,0 0)}
+  25%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 0,100% 0,100% 0)}
+  50%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,100% 100%,100% 100%)}
+  75%  {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 100%)}
+  100% {clip-path:polygon(50% 50%,0 0,100% 0,100% 100%,0 100%,0 0)}
 }
