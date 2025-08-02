@@ -32,6 +32,24 @@ input[type="range"] {
   width: 95%!important;
 }
 
+.tab .warning {
+  background-color: #FFC107;
+  color: #333;
+  border-top-right-radius: 5px;
+  border-top-left-radius: 5px;
+  padding: 8px 12px;
+  font-weight: 700;
+}
+
+.tab .danger {
+  background-color: #DC3545;
+  color: #333;
+  border-top-right-radius: 5px;
+  border-top-left-radius: 5px;
+  padding: 8px 12px;
+  font-weight: 700;
+}
+
 .tabs h2 {
   font-size: x-large;
   margin: 0;

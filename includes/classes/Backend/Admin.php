@@ -163,6 +163,13 @@ class Admin {
     );
 
     add_settings_section(
+      'speedy_search_advanced_section_polyplugins',
+      '',
+      null,
+      'speedy_search_advanced_polyplugins'
+    );
+
+    add_settings_section(
       'speedy_search_repo_section_polyplugins',
       '',
       null,
@@ -368,6 +375,30 @@ class Admin {
 			array($this, 'downloads_result_limit_render'),
 			'speedy_search_downloads_polyplugins',
 			'speedy_search_downloads_section_polyplugins'
+		);
+
+		add_settings_field(
+			'advanced_enabled',                             
+			__('Enabled?', 'speedy-search'),
+			array($this, 'advanced_enabled_render'),
+			'speedy_search_advanced_polyplugins',
+			'speedy_search_advanced_section_polyplugins'
+		);
+
+		add_settings_field(
+			'advanced_title',                             
+			__('Title', 'speedy-search'),
+			array($this, 'advanced_title_render'),
+			'speedy_search_advanced_polyplugins',
+			'speedy_search_advanced_section_polyplugins'
+		);
+
+		add_settings_field(
+			'advanced_placeholder',                             
+			__('Placeholder', 'speedy-search'),
+			array($this, 'advanced_placeholder_render'),
+			'speedy_search_advanced_polyplugins',
+			'speedy_search_advanced_section_polyplugins'
 		);
 
 		add_settings_field(
@@ -738,6 +769,50 @@ class Admin {
 	}
 
   /**
+	 * Render Advanced Enabled Field
+	 *
+	 * @return void
+	 */
+	public function advanced_enabled_render() {
+		$options = Utils::get_option('advanced');
+    $option  = isset($options['enabled']) ? $options['enabled'] : false;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[advanced][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('If enabled, pressing Enter will go to /advanced-search/ instead of the default search, unless indexing is active.', 'speedy-search'); ?><br /><?php esc_html_e('Note: This will flush rewrite rules.', 'speedy-search'); ?></strong></p>
+    <?php
+	}
+
+  /**
+	 * Render Advanced Title Field
+	 *
+	 * @return void
+	 */
+	public function advanced_title_render() {
+		$options = Utils::get_option('advanced');
+    $option  = isset($options['title']) ? $options['title'] : 'Advanced Search';
+    ?>
+    <input type="text" name="speedy_search_settings_polyplugins[advanced][title]" value="<?php echo esc_html($option); ?>" />
+    <p><strong><?php esc_html_e('Set the page title of advanced search.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Advanced Placeholder Field
+	 *
+	 * @return void
+	 */
+	public function advanced_placeholder_render() {
+		$options = Utils::get_option('advanced');
+    $option  = isset($options['placeholder']) ? $options['placeholder'] : 'Search...';
+    ?>
+    <input type="text" name="speedy_search_settings_polyplugins[advanced][placeholder]" value="<?php echo esc_html($option); ?>" />
+    <p><strong><?php esc_html_e('Set the placeholder for the advanced search input.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
 	 * Render Repo Enabled Field
 	 *
 	 * @return void
@@ -813,6 +888,12 @@ class Admin {
                   </li>
                 <?php endif; ?>
                 <li>
+                  <a href="javascript:void(0);" data-section="advanced">
+                    <i class="bi bi-funnel-fill"></i>
+                    <?php esc_html_e('Advanced', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <li>
                   <a href="javascript:void(0);" data-section="repo">
                     <i class="bi bi-plug-fill"></i>
                     <?php esc_html_e('Repo', 'speedy-search'); ?>
@@ -866,6 +947,15 @@ class Admin {
                   ?>
                 </div>
               <?php endif; ?>
+
+              <div class="tab advanced" style="display: none;">
+                <div class="warning">
+                  <?php esc_html_e('Due to the layout differences of various themes, this more than likely will require a developer to add and customize the snappy-search-advanced-search-form.php template in your theme.', 'speedy-search'); ?> If you need a developer you can <a href="https://www.polyplugins.com/contact/" target="_blank">hire us</a> to help.
+                </div>
+                <?php
+                do_settings_sections('speedy_search_advanced_polyplugins');
+                ?>
+              </div>
 
               <div class="tab repo" style="display: none;">
                 <?php
@@ -1025,6 +1115,36 @@ class Admin {
 
     if (isset($input['downloads']['result_limit']) && is_numeric($input['downloads']['result_limit'])) {
 			$sanitary_values['downloads']['result_limit'] = sanitize_text_field($input['downloads']['result_limit']);
+		}
+
+    if (isset($input['advanced']['enabled']) && $input['advanced']['enabled']) {
+      $sanitary_values['advanced']['enabled'] = $input['advanced']['enabled'] === 'on' ? true : false;
+
+      $new      = $sanitary_values['advanced']['enabled'];
+      $advanced = Utils::get_option('advanced');
+      $current  = isset($advanced['enabled']) ? $advanced['enabled'] : false;
+
+      if ($current !== $new) {
+        update_option('speedy_search_flush_rewrite_rules_polyplugins', true);
+      }
+    } else {
+      $sanitary_values['advanced']['enabled'] = false;
+
+      $new      = $sanitary_values['advanced']['enabled'];
+      $advanced = Utils::get_option('advanced');
+      $current  = isset($advanced['enabled']) ? $advanced['enabled'] : false;
+
+      if ($current !== $new) {
+        update_option('speedy_search_flush_rewrite_rules_polyplugins', true);
+      }
+    }
+
+    if (isset($input['advanced']['title']) && $input['advanced']['title']) {
+			$sanitary_values['advanced']['title'] = sanitize_text_field($input['advanced']['title']);
+		}
+
+    if (isset($input['advanced']['placeholder']) && $input['advanced']['placeholder']) {
+			$sanitary_values['advanced']['placeholder'] = sanitize_text_field($input['advanced']['placeholder']);
 		}
 
     if (isset($input['repo_enabled']) && $input['repo_enabled']) {

@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -95,6 +95,14 @@ By default it will index 10 posts per minute.
 
 
 == Changelog ==
+
+= 1.4.0 =
+* Added: Advanced Search to replace default search when pressing enter if enabled and not indexing
+* Added: Advanced Search enabled, title, and placeholder settings
+* Added: Template snappy-search-advanced-search-form.php
+* Updated: Search form templates to take advantage of advanced search
+* Updated: Translations
+* Deprecated: SQLite
 
 = 1.3.1 =
 * Bugfix: Jumping that happens when initially searching

@@ -38,6 +38,9 @@ class Notices {
       if ($this->version == '1.3.0') {
         $this->notice_130();
       }
+      if ($this->version == '1.4.0') {
+        $this->notice_140();
+      }
     }
   }
 
@@ -54,6 +57,22 @@ class Notices {
     ?>
     <div class="notice notice-success is-dismissible speedy-search">
       <p><?php echo esc_html__('Snappy Search can now use MySQL databases, which means search indexes can be stored in your existing WordPress database for better performance.', 'speedy-search'); ?></p>
+      <a href="options-general.php?page=speedy-search"><?php echo esc_html__('Switch to MySQL', 'speedy-search'); ?></a>
+    </div>
+    <?php
+  }
+
+  public function notice_140() {
+    ?>
+    <div class="notice notice-error is-dismissible speedy-search" style="padding-bottom: 10px;">
+      <p><?php echo esc_html__('Starting with version 1.5.0, Snappy Search will include functionality offered by our ', 'speedy-search'); ?>
+      <a href="https://wordpress.org/plugins/admin-instant-search/" target="_blank">Admin Instant Search</a>
+      <?php echo esc_html__(' plugin. As part of this update, the plugin will gain the ability to index WooCommerce orders, which introduces additional security considerations.', 'speedy-search'); ?>
+      <br /><br />
+      <?php echo esc_html__('To support this securely and efficiently, we are ', 'speedy-search'); ?><strong><?php echo esc_html__('discontinuing support for SQLite', 'speedy-search'); ?></strong><?php echo esc_html__('. Managing mixed database logic (SQLite and MySQL) adds unnecessary complexity and overhead, particularly when handling sensitive data like order information.', 'speedy-search'); ?>
+      <br /><br />
+      <strong?><?php echo esc_html__('Before updating to 1.5.0, please ensure your site is using MySQL.', 'speedy-search'); ?></strong>
+      <?php echo esc_html__('If your site is still using SQLite, search functionality will be automatically disabled after the update.', 'speedy-search'); ?></p>
       <a href="options-general.php?page=speedy-search"><?php echo esc_html__('Switch to MySQL', 'speedy-search'); ?></a>
     </div>
     <?php
