@@ -196,9 +196,9 @@ class Background_Worker {
         $index->insert($args);
 
         $progress++;
-      }
 
-      Utils::update_index($type, 'progress', $progress);
+        Utils::update_index($type, 'progress', $progress);
+      }
     } else {
       Utils::update_index($type, 'complete', true);
     }

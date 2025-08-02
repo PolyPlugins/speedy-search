@@ -102,6 +102,7 @@ By default it will index 10 posts per minute.
 * Added: Template snappy-search-advanced-search-form.php
 * Updated: Search form templates to take advantage of advanced search
 * Updated: Translations
+* Bugfix: Indexer looping through the same results if failed
 * Deprecated: SQLite
 
 = 1.3.1 =
