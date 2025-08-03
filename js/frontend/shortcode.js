@@ -168,18 +168,16 @@ jQuery(document).ready(function ($) {
 
             return `
               <div class="instant-search-result">
-                <div class="image-wrapper">
-                  <a href="${item.permalink}" class="permalink-result">
+                <a href="${item.permalink}" class="permalink-result">
+                  <div class="image-wrapper">
                     ${imageHTML}
-                  </a>
-                </div>
-                <div class="search-content">
-                  <a href="${item.permalink}" class="permalink-result">
-                    <h2 class="title-result">${item.title}</h2>
-                    ${price}
-                    <p class="excerpt-result">${item.excerpt}</p>
-                  </a>
-                </div>
+                  </div>
+                  <div class="search-content">
+                      <h2 class="title-result">${item.title}</h2>
+                      ${price}
+                      <p class="excerpt-result">${item.excerpt}</p>
+                  </div>
+                </a>
               </div>
             `;
           }).join("");

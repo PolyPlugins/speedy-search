@@ -141,10 +141,13 @@
   cursor: pointer;
 }
 
-.speedy-search-container .instant-search-result {
+.speedy-search-container .instant-search-result .permalink-result {
   display: flex;
   align-items: flex-start;
   gap: 15px;
+}
+
+.speedy-search-container .instant-search-result {
   border-bottom: 1px solid #555;
   border-radius: 0 !important;
 }
