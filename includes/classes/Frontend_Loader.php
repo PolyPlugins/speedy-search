@@ -48,11 +48,15 @@ class Frontend_Loader {
    * @return void
    */
   public function init() {
-    $this->load_enqueue();
-    $this->load_ui();
-    $this->load_shortcode();
-    $this->load_advanced_search();
-    $this->load_analytics();
+    $database_type = Utils::get_option('database_type') ?: 'mysql';
+    
+    if ($database_type === 'mysql') {
+      $this->load_enqueue();
+      $this->load_ui();
+      $this->load_shortcode();
+      $this->load_advanced_search();
+      $this->load_analytics();
+    }
   }
   
   /**
