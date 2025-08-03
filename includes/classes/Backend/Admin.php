@@ -185,13 +185,17 @@ class Admin {
 			'speedy_search_general_section_polyplugins' // Setting section
 		);
 
-		add_settings_field(
-			'database_type',
-		  __('Database Type', 'speedy-search'),
-			array($this, 'database_type_render'),
-			'speedy_search_general_polyplugins',
-			'speedy_search_general_section_polyplugins'
-		);
+    $database_type = Utils::get_option('database_type') ?: 'mysql';
+
+    if ($database_type !== 'mysql') {
+      add_settings_field(
+        'database_type',
+        __('Database Type', 'speedy-search'),
+        array($this, 'database_type_render'),
+        'speedy_search_general_polyplugins',
+        'speedy_search_general_section_polyplugins'
+      );
+    }
 
 		add_settings_field(
 			'characters',
