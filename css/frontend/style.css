@@ -205,6 +205,17 @@
 }
 
 /**
+ * Advanced Search
+ */
+.speedy-search-container.advanced-search .instant-search-wrapper {
+  position: unset;
+}
+
+.speedy-search-container.advanced-search .instant-search-results {
+  max-height: unset;
+}
+
+/**
  * Skeleton Loader
  */
 .instant-search-result.skeleton-loading .image-wrapper,
@@ -232,13 +243,6 @@
 .instant-search-result.skeleton-loading .price-result,
 .instant-search-result.skeleton-loading .excerpt-result {
   min-height: 14px;
-}
-
-/**
- * Advanced Search
- */
-.speedy-search-container.advanced-search .instant-search-wrapper {
-  position: unset;
 }
 
 @keyframes pulse {
