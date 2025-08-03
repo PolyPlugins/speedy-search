@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -97,6 +97,13 @@ By default it will index 10 posts per minute.
 
 
 == Changelog ==
+
+= 1.4.1 =
+* Bugfix: Advanced search styling max height
+* Bugfix: Flush rewrite rules not working correctly.
+* Bugfix: Advanced Search template override not working.
+* Bugfix: Title changes can conflict with menus
+* Bugfix: Entire search result not selectable
 
 = 1.4.0 =
 * Added: Advanced Search to replace default search when pressing enter if enabled and not indexing
