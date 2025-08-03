@@ -61,7 +61,7 @@ class Advanced_Search {
       add_action('init', array($this, 'register_advanced_search_query'));
       add_filter('template_include', array($this, 'load_advanced_search_template'));
       add_filter('pre_get_document_title', array($this, 'update_title'), 9999);
-      add_filter('the_title', array($this, 'update_title'), 9999);
+      // add_filter('the_title', array($this, 'update_title'), 9999);
     }
   }
   
