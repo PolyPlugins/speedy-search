@@ -74,7 +74,7 @@ class Advanced_Search {
     $flush_rewrite_rules = get_option('speedy_search_flush_rewrite_rules_polyplugins');
 
     if ($flush_rewrite_rules) {
-      flush_rewrite_rules(false);
+      flush_rewrite_rules();
 
       delete_option('speedy_search_flush_rewrite_rules_polyplugins');
     }
@@ -102,7 +102,13 @@ class Advanced_Search {
   */
   public function load_advanced_search_template($template) {
     if (get_query_var('advanced_search')) {
-      return plugin_dir_path($this->plugin) . 'templates/snappy-search-advanced-search-form.php';
+      $template_file = locate_template('snappy-search-advanced-search-form.php');
+
+      if (!empty($template_file)) {
+        return $template_file;
+      } else {
+        return plugin_dir_path($this->plugin) . 'templates/snappy-search-advanced-search-form.php';
+      }
     }
 
     return $template;
