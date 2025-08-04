@@ -98,6 +98,10 @@ By default it will index 10 posts per minute.
 
 == Changelog ==
 
+= 1.4.3 =
+* Bugfix: Updating index triggering error
+* Bugfix: Advanced search malfunctioning, switched to page templates to resolve issues
+
 = 1.4.2 =
 * Bugfix: No search results error when directly visiting advanced search page
 
