@@ -239,6 +239,32 @@ class Utils {
 
     return $index_name;
   }
+
+  /**
+   * Get the slug of the page using the advanced search template
+   *
+   * @return string|false
+   */
+  public static function get_page_slug_by_template() {
+    $args = array(
+      'post_type'      => 'page',
+      'posts_per_page' => 1,
+      'post_status'    => 'publish',
+      'meta_key'       => '_wp_page_template',
+      'meta_value'     => 'snappy-search-advanced-search-form.php',
+      'fields'         => 'ids',
+    );
+
+    $page_ids = get_posts($args);
+
+    if (!empty($page_ids)) {
+      $slug = get_post_field('post_name', $page_ids[0]);
+
+      return $slug;
+    }
+
+    return false;
+  }
   
   /**
    * Checks for any missing extensions

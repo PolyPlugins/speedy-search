@@ -2,14 +2,14 @@
 # This file is distributed under the GPL3.
 msgid ""
 msgstr ""
-"Project-Id-Version: Snappy Search 1.4.0\n"
+"Project-Id-Version: Snappy Search 1.4.3\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/speedy-search\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-08-02T21:53:03+00:00\n"
+"POT-Creation-Date: 2025-08-04T20:47:43+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: speedy-search\n"
@@ -238,11 +238,7 @@ msgid "How many downloads would you like to show?"
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:783
-msgid "If enabled, pressing Enter will go to /advanced-search/ instead of the default search, unless indexing is active."
-msgstr ""
-
-#: includes/classes/Backend/Admin.php:783
-msgid "Note: This will flush rewrite rules."
+msgid "If enabled, pressing Enter will go to the page that you have the Advanced Snappy Search page template configured on instead of the default search, unless indexing is active."
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:797
@@ -268,28 +264,28 @@ msgstr ""
 #: includes/classes/Backend/Admin.php:865
 #: js/frontend/advanced.js:271
 #: js/frontend/selector.js:250
-#: js/frontend/shortcode.js:264
+#: js/frontend/shortcode.js:262
 msgid "Posts"
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:871
 #: js/frontend/advanced.js:275
 #: js/frontend/selector.js:254
-#: js/frontend/shortcode.js:268
+#: js/frontend/shortcode.js:266
 msgid "Pages"
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:878
 #: js/frontend/advanced.js:263
 #: js/frontend/selector.js:242
-#: js/frontend/shortcode.js:256
+#: js/frontend/shortcode.js:254
 msgid "Products"
 msgstr ""
 
 #: includes/classes/Backend/Admin.php:886
 #: js/frontend/advanced.js:267
 #: js/frontend/selector.js:246
-#: js/frontend/shortcode.js:260
+#: js/frontend/shortcode.js:258
 msgid "Downloads"
 msgstr ""
 
@@ -314,49 +310,73 @@ msgstr ""
 msgid "Every Minute"
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:50
+#: includes/classes/Backend/Notices.php:56
 msgid "Speedy Search is now Snappy Search. We have change a lot including adding support for WooCommerce, EDD, and Pages. Indexes are also now updated when content is added, removed, or updated. We also added the ability to trigger reindexes and reverting the search to default when indexing. Try out the new features by visiting Snappy Search Settings."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:51
+#: includes/classes/Backend/Notices.php:57
 msgid "Try new features"
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:59
+#: includes/classes/Backend/Notices.php:65
 msgid "Snappy Search can now use MySQL databases, which means search indexes can be stored in your existing WordPress database for better performance."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:60
-#: includes/classes/Backend/Notices.php:76
+#: includes/classes/Backend/Notices.php:66
+#: includes/classes/Backend/Notices.php:82
+#: includes/classes/Backend/Notices.php:98
+#: includes/classes/Backend/Notices.php:119
 msgid "Switch to MySQL"
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:68
+#: includes/classes/Backend/Notices.php:74
+#: includes/classes/Backend/Notices.php:90
+#: includes/classes/Backend/Notices.php:111
 msgid "Starting with version 1.5.0, Snappy Search will include functionality offered by our "
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:70
+#: includes/classes/Backend/Notices.php:76
+#: includes/classes/Backend/Notices.php:92
+#: includes/classes/Backend/Notices.php:113
 msgid " plugin. As part of this update, the plugin will gain the ability to index WooCommerce orders, which introduces additional security considerations."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:72
+#: includes/classes/Backend/Notices.php:78
+#: includes/classes/Backend/Notices.php:94
+#: includes/classes/Backend/Notices.php:115
 msgid "To support this securely and efficiently, we are "
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:72
+#: includes/classes/Backend/Notices.php:78
+#: includes/classes/Backend/Notices.php:94
+#: includes/classes/Backend/Notices.php:115
 msgid "discontinuing support for SQLite"
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:72
+#: includes/classes/Backend/Notices.php:78
+#: includes/classes/Backend/Notices.php:94
+#: includes/classes/Backend/Notices.php:115
 msgid ". Managing mixed database logic (SQLite and MySQL) adds unnecessary complexity and overhead, particularly when handling sensitive data like order information."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:74
+#: includes/classes/Backend/Notices.php:80
+#: includes/classes/Backend/Notices.php:96
+#: includes/classes/Backend/Notices.php:117
 msgid "Before updating to 1.5.0, please ensure your site is using MySQL."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:75
+#: includes/classes/Backend/Notices.php:81
+#: includes/classes/Backend/Notices.php:97
+#: includes/classes/Backend/Notices.php:118
 msgid "If your site is still using SQLite, search functionality will be automatically disabled after the update."
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:108
+msgid "Snappy Search Advanced Search has been disabled as it was causing issues as a dedicated page, so to fix these issues we put a page template in place of the dedicated page. This will allow you to customize the title and handle SEO as needed for it. Simply create a page and assign the Advanced Snappy Search template to it. You will need to re-enable Advanced Search, update your templates in your theme, and manually flush permalinks."
+msgstr ""
+
+#: includes/classes/Frontend/Advanced_Search.php:57
+msgid "Advanced Snappy Search"
 msgstr ""
 
 #: includes/classes/Utils.php:176
@@ -370,12 +390,24 @@ msgstr ""
 msgid "Error"
 msgstr ""
 
-#: templates/snappy-search-advanced-form.php:24
-#: templates/snappy-search-advanced-search-form.php:28
-#: templates/snappy-search-form.php:24
-#: templates/snappy-search-mobile-form.php:24
+#: templates/snappy-search-advanced-form.php:25
+#: templates/snappy-search-advanced-search-form.php:34
+#: templates/snappy-search-form.php:25
+#: templates/snappy-search-mobile-form.php:25
 #: js/frontend/selector.js:199
 msgid "Popular Searches"
+msgstr ""
+
+#: templates/snappy-search-advanced-search-form.php:10
+msgid "Search..."
+msgstr ""
+
+#: templates/snappy-search-advanced-search-form.php:28
+msgid "Your search could not be completed because it needs to be at least"
+msgstr ""
+
+#: templates/snappy-search-advanced-search-form.php:28
+msgid "characters."
 msgstr ""
 
 #: js/backend/settings.js:28
@@ -418,7 +450,7 @@ msgstr ""
 msgid "ms. Tracking relies on the search results being visible to the user, so if it runs too early before results are loaded it won't capture anything. This separation allows tracking to run in its own AJAX request after the main search, which helps keep the search fast and responsive."
 msgstr ""
 
-#: js/frontend/advanced.js:162
+#: js/frontend/advanced.js:164
 #: js/frontend/selector.js:111
 #: js/frontend/shortcode.js:155
 msgid "No results found."
@@ -426,6 +458,6 @@ msgstr ""
 
 #: js/frontend/advanced.js:199
 #: js/frontend/selector.js:160
-#: js/frontend/shortcode.js:192
+#: js/frontend/shortcode.js:190
 msgid "An error occurred while searching."
 msgstr ""
