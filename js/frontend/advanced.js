@@ -121,7 +121,9 @@ jQuery(document).ready(function ($) {
     let $query      = $.trim($(".snappy-search-advanced-input").val());
     let $container = $(".speedy-search-container.advanced-search");
     
-    performSearch($query, $container);
+    if ($query.length >= characters) {
+      performSearch($query, $container);
+    }
   }
 
   function performSearch(query, $container) {
