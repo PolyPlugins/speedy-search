@@ -780,7 +780,7 @@ class Admin {
     <div class="form-check form-switch">
       <input type="checkbox" name="speedy_search_settings_polyplugins[advanced][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
-    <p><strong><?php esc_html_e('If enabled, pressing Enter will go to /advanced-search/ instead of the default search, unless indexing is active.', 'speedy-search'); ?><br /><?php esc_html_e('Note: This will flush rewrite rules.', 'speedy-search'); ?></strong></p>
+    <p><strong><?php esc_html_e('If enabled, pressing Enter will go to the page that you have the Advanced Snappy Search page template configured on instead of the default search, unless indexing is active.', 'speedy-search'); ?></strong></p>
     <?php
 	}
 
@@ -1119,24 +1119,8 @@ class Admin {
 
     if (isset($input['advanced']['enabled']) && $input['advanced']['enabled']) {
       $sanitary_values['advanced']['enabled'] = $input['advanced']['enabled'] === 'on' ? true : false;
-
-      $new      = $sanitary_values['advanced']['enabled'];
-      $advanced = Utils::get_option('advanced');
-      $current  = isset($advanced['enabled']) ? $advanced['enabled'] : false;
-
-      if ($current !== $new) {
-        update_option('speedy_search_flush_rewrite_rules_polyplugins', true);
-      }
     } else {
       $sanitary_values['advanced']['enabled'] = false;
-
-      $new      = $sanitary_values['advanced']['enabled'];
-      $advanced = Utils::get_option('advanced');
-      $current  = isset($advanced['enabled']) ? $advanced['enabled'] : false;
-
-      if ($current !== $new) {
-        update_option('speedy_search_flush_rewrite_rules_polyplugins', true);
-      }
     }
 
     if (isset($input['advanced']['title']) && $input['advanced']['title']) {

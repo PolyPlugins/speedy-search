@@ -7,10 +7,11 @@ $popular_options      = Utils::get_option('popular');
 $popular_enabled      = isset($popular_options['enabled']) ? $popular_options['enabled'] : 0;
 $characters           = Utils::get_option('characters');
 $advanced_options     = Utils::get_option('advanced');
-$advanced_placeholder = isset($advanced_options['placeholder']) ? $advanced_options['placeholder'] : 'Search...';
+$advanced_placeholder = isset($advanced_options['placeholder']) ? $advanced_options['placeholder'] : __('Search...', 'speedy-search');
 $advanced_enabled     = isset($advanced_options['enabled']) ? $advanced_options['enabled'] : 0;
-$action               = $advanced_enabled && !$is_indexing ? home_url('/advanced-search/') : home_url('/');
-$name                 = $advanced_enabled && !$is_indexing ? 'search' : 's';
+$advanced_page_slug   = Utils::get_page_slug_by_template();
+$action               = $advanced_enabled && $advanced_page_slug && !$is_indexing ? home_url('/' . $advanced_page_slug . '/') : home_url('/');
+$name                 = $advanced_enabled && $advanced_page_slug && !$is_indexing ? 'search' : 's';
 $search               = isset($_GET['search']) ? sanitize_text_field(wp_unslash($_GET['search'])) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 
 get_header();
@@ -24,7 +25,7 @@ get_header();
   </form>
 
   <?php if (strlen(trim($search)) < $characters && strlen(trim($search)) > 0)  : ?>
-    <p class="search-error">Your search could not be completed because it needs to be at least <?php echo esc_html($characters); ?> characters.</p>
+    <p class="search-error"><?php esc_html_e('Your search could not be completed because it needs to be at least', 'speedy-search'); ?> <?php echo esc_html($characters); ?> <?php esc_attr_e('characters.', 'speedy-search'); ?></p>
   <?php endif; ?>
   
   <?php if (!$is_indexing) : ?>

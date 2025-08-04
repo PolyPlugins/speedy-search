@@ -51,6 +51,14 @@ class Index_Updater {
     if (!in_array($post_type, $allowed_types, true)) {
       return;
     }
+    
+    $type    = $post_type . 's';
+    $options = Utils::get_option($type);
+    $enabled = isset($options['enabled']) ? $options['enabled'] : 1;
+
+    if (!$enabled) {
+      return;
+    }
 
     // Select or create the appropriate index
     $index_name = Utils::get_index_name($post_type);
@@ -103,6 +111,14 @@ class Index_Updater {
     if (!in_array($post_type, $allowed_types, true)) {
       return;
     }
+    
+    $type    = $post_type . 's';
+    $options = Utils::get_option($type);
+    $enabled = isset($options['enabled']) ? $options['enabled'] : 1;
+
+    if (!$enabled) {
+      return;
+    }
 
     $index_name = Utils::get_index_name($post_type);
 
@@ -131,9 +147,19 @@ class Index_Updater {
       return;
     }
 
+    $post_type = $post->post_type;
+
     $allowed_types = Utils::get_allowed_post_types();
 
-    if (!in_array($post->post_type, $allowed_types, true)) {
+    if (!in_array($post_type, $allowed_types, true)) {
+      return;
+    }
+    
+    $type    = $post_type . 's';
+    $options = Utils::get_option($type);
+    $enabled = isset($options['enabled']) ? $options['enabled'] : 1;
+
+    if (!$enabled) {
       return;
     }
 
