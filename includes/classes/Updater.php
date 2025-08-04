@@ -72,6 +72,14 @@ class Updater {
 
       update_option('speedy_search_version_polyplugins', $stored_version);
     }
+
+    if (version_compare($stored_version, '1.4.2', '<')) {
+      $stored_version = '1.4.2';
+
+      $this->update_to_142();
+
+      update_option('speedy_search_version_polyplugins', $stored_version);
+    }
   }
 
   private function update_to_120() {
@@ -117,6 +125,10 @@ class Updater {
   }
 
   private function update_to_140() {
+    update_option('speedy_search_notice_dismissed_polyplugins', false);
+  }
+
+  private function update_to_142() {
     update_option('speedy_search_notice_dismissed_polyplugins', false);
   }
 

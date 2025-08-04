@@ -81,6 +81,9 @@ By default, it will index 10 posts per minute.
 
 ## Changelog
 
+### 1.4.2
+* Bugfix: No search results error when directly visiting advanced search page
+
 ### 1.4.1
 * Bugfix: Advanced search styling max height
 * Bugfix: Flush rewrite rules not working correctly.

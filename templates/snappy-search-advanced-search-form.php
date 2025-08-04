@@ -5,6 +5,7 @@ use PolyPlugins\Speedy_Search\Utils;
 $is_indexing          = Utils::is_indexing();
 $popular_options      = Utils::get_option('popular');
 $popular_enabled      = isset($popular_options['enabled']) ? $popular_options['enabled'] : 0;
+$characters           = Utils::get_option('characters');
 $advanced_options     = Utils::get_option('advanced');
 $advanced_placeholder = isset($advanced_options['placeholder']) ? $advanced_options['placeholder'] : 'Search...';
 $advanced_enabled     = isset($advanced_options['enabled']) ? $advanced_options['enabled'] : 0;
@@ -21,6 +22,10 @@ get_header();
     <button type="button" class="snappy-search-close" aria-label="Close Search">×</button>
     <span class="loader" style="display: none;"></span>
   </form>
+
+  <?php if (strlen(trim($search)) < $characters && strlen(trim($search)) > 0)  : ?>
+    <p class="search-error">Your search could not be completed because it needs to be at least <?php echo esc_html($characters); ?> characters.</p>
+  <?php endif; ?>
   
   <?php if (!$is_indexing) : ?>
     <?php if ($popular_enabled) : ?>

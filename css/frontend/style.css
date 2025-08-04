@@ -283,6 +283,10 @@
   animation: prixClipFix 2s linear infinite ;
 }
 
+.speedy-search-container .search-error {
+  color: #ff0000;
+}
+
 @keyframes rotate {
   100%   {transform: rotate(360deg)}
 }
