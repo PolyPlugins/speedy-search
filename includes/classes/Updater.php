@@ -72,6 +72,22 @@ class Updater {
 
       update_option('speedy_search_version_polyplugins', $stored_version);
     }
+
+    if (version_compare($stored_version, '1.4.2', '<')) {
+      $stored_version = '1.4.2';
+
+      $this->update_to_142();
+
+      update_option('speedy_search_version_polyplugins', $stored_version);
+    }
+
+    if (version_compare($stored_version, '1.4.3', '<')) {
+      $stored_version = '1.4.3';
+
+      $this->update_to_143();
+
+      update_option('speedy_search_version_polyplugins', $stored_version);
+    }
   }
 
   private function update_to_120() {
@@ -117,6 +133,24 @@ class Updater {
   }
 
   private function update_to_140() {
+    update_option('speedy_search_notice_dismissed_polyplugins', false);
+  }
+
+  private function update_to_142() {
+    update_option('speedy_search_notice_dismissed_polyplugins', false);
+  }
+
+  private function update_to_143() {
+    $options          = Utils::get_options();
+    $advanced_enabled = isset($options['advanced']['enabled']) ? sanitize_text_field($options['advanced']['enabled']) : false;
+
+    if ($advanced_enabled) {
+      $options['advanced']['enabled'] = 0;
+
+      update_option('speedy_search_advanced_notice_polyplugins', true);
+      update_option('speedy_search_settings_polyplugins', $options);
+    }
+
     update_option('speedy_search_notice_dismissed_polyplugins', false);
   }
 

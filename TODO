@@ -24,6 +24,20 @@
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
 
+# 1.4.3
+[X] Fix updating index triggering error
+[X] Advanced search malfunctioning, make it use page templates
+
+# 1.4.2
+[X] Fix no search results error when directly visiting advanced search page
+
+# 1.4.1
+[X] Fix advanced search styling max height
+[X] Fix flush rewrite rules not working correctly.
+[X] Fix advanced Search template override not working.
+[X] Fix title changes can conflict with menus
+[X] Fix entire search result not selectable
+
 # 1.4.0
 [X] Add advanced search to replace default search when pressing enter if enabled and not indexing
 [X] Add advanced search enabled, title, and placeholder settings

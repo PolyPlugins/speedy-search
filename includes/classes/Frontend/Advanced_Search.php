@@ -44,82 +44,49 @@ class Advanced_Search {
    * @return void
    */
   public function init() {
-    $this->maybe_load_advanced_search();
-    $this->maybe_flush_rewrite_rules();
+    add_filter('theme_page_templates', array($this, 'register_advanced_template'));
+    add_filter('template_include', array($this, 'load_advanced_template'));
   }
   
   /**
-   * Maybe load advanced search
+   * Register advanced template
    *
    * @return void
    */
-  public function maybe_load_advanced_search() {
-    $options = Utils::get_option('advanced');
-    $enabled = isset($options['enabled']) ? $options['enabled'] : false;
+  public function register_advanced_template($templates) {
+    $templates['snappy-search-advanced-search-form.php'] = __('Advanced Snappy Search', 'speedy-search');
 
-    if ($enabled) {
-      add_action('init', array($this, 'register_advanced_search_query'));
-      add_filter('template_include', array($this, 'load_advanced_search_template'));
-      add_filter('pre_get_document_title', array($this, 'update_title'), 9999);
-      add_filter('the_title', array($this, 'update_title'), 9999);
-    }
-  }
-  
-  /**
-   * Maybe flush rewrite rules
-   *
-   * @return void
-   */
-  public function maybe_flush_rewrite_rules() {
-    $flush_rewrite_rules = get_option('speedy_search_flush_rewrite_rules_polyplugins');
-
-    if ($flush_rewrite_rules) {
-      flush_rewrite_rules(false);
-
-      delete_option('speedy_search_flush_rewrite_rules_polyplugins');
-    }
+    return $templates;
   }
 
   /**
-  * Register advanced search query
-  *
-  * @return void
-  */
-  public function register_advanced_search_query() {
-    add_rewrite_rule('^advanced-search/?$', 'index.php?advanced_search=1', 'top');
-
-    add_filter('query_vars', function ($vars) {
-      $vars[] = 'advanced_search';
-      return $vars;
-    });
-  }
-
-  /**
-  * Load advanced search template
+  * Load advanced template
   *
   * @param  mixed $template
   * @return void
   */
-  public function load_advanced_search_template($template) {
-    if (get_query_var('advanced_search')) {
-      return plugin_dir_path($this->plugin) . 'templates/snappy-search-advanced-search-form.php';
+  public function load_advanced_template($template) {
+    if (is_page()) {
+      $page_template = get_page_template_slug();
+
+      if ($page_template === 'snappy-search-advanced-search-form.php') {
+        // Check if the theme has the template first
+        $theme_template = locate_template('snappy-search-advanced-search-form.php');
+
+        if (!empty($theme_template)) {
+          return $theme_template;
+        }
+
+        // Fallback to plugin template
+        $plugin_template = plugin_dir_path($this->plugin) . 'templates/snappy-search-advanced-search-form.php';
+
+        if (file_exists($plugin_template)) {
+          return $plugin_template;
+        }
+      }
     }
 
     return $template;
-  }
-  
-  /**
-   * Update the title
-   *
-   * @param  string $title The Title
-   * @return string $title The new title
-   */
-  public function update_title($title) {
-    if (get_query_var('advanced_search')) {
-      $title = 'Advanced Search';
-    }
-
-    return $title;
   }
   
 }

@@ -141,10 +141,13 @@
   cursor: pointer;
 }
 
-.speedy-search-container .instant-search-result {
+.speedy-search-container .instant-search-result .permalink-result {
   display: flex;
   align-items: flex-start;
   gap: 15px;
+}
+
+.speedy-search-container .instant-search-result {
   border-bottom: 1px solid #555;
   border-radius: 0 !important;
 }
@@ -205,6 +208,17 @@
 }
 
 /**
+ * Advanced Search
+ */
+.speedy-search-container.advanced-search .instant-search-wrapper {
+  position: unset;
+}
+
+.speedy-search-container.advanced-search .instant-search-results {
+  max-height: unset;
+}
+
+/**
  * Skeleton Loader
  */
 .instant-search-result.skeleton-loading .image-wrapper,
@@ -232,13 +246,6 @@
 .instant-search-result.skeleton-loading .price-result,
 .instant-search-result.skeleton-loading .excerpt-result {
   min-height: 14px;
-}
-
-/**
- * Advanced Search
- */
-.speedy-search-container.advanced-search .instant-search-wrapper {
-  position: unset;
 }
 
 @keyframes pulse {
@@ -274,6 +281,10 @@
   border-radius: 50%;
   border: 5px solid #FFF;
   animation: prixClipFix 2s linear infinite ;
+}
+
+.speedy-search-container .search-error {
+  color: #ff0000;
 }
 
 @keyframes rotate {
