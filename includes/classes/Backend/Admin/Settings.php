@@ -72,6 +72,22 @@ class Settings {
     add_action('admin_notices', array($this, 'maybe_show_indexing_notice'));
     add_action('admin_notices', array($this, 'maybe_show_missing_extensions_notice'));
 		add_menu_page(__('Snappy Search', 'speedy-search'), __('Snappy Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'), 'dashicons-search');
+    add_submenu_page('speedy-search', __('General', 'speedy-search'), __('General', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
+    add_submenu_page('speedy-search', __('Popular', 'speedy-search'), __('Popular', 'speedy-search'), 'manage_options', 'speedy-search-popular', array($this, 'redirect_to_popular_tab'));
+    add_submenu_page('speedy-search', __('Posts', 'speedy-search'), __('Posts', 'speedy-search'), 'manage_options', 'speedy-search-posts', array($this, 'redirect_to_posts_tab'));
+    add_submenu_page('speedy-search', __('Pages', 'speedy-search'), __('Pages', 'speedy-search'), 'manage_options', 'speedy-search-pages', array($this, 'redirect_to_pages_tab'));
+    
+    if (class_exists('WooCommerce')) {
+      add_submenu_page('speedy-search', __('Products', 'speedy-search'), __('Products', 'speedy-search'), 'manage_options', 'speedy-search-products', array($this, 'redirect_to_products_tab'));
+      add_submenu_page('speedy-search', __('Orders', 'speedy-search'), __('Orders', 'speedy-search'), 'manage_options', 'speedy-search-orders', array($this, 'redirect_to_orders_tab'));
+    }
+
+    if (class_exists('Easy_Digital_Downloads')) {
+      add_submenu_page('speedy-search', __('Downloads', 'speedy-search'), __('Downloads', 'speedy-search'), 'manage_options', 'speedy-search-downloads', array($this, 'redirect_to_downloads_tab'));
+    }
+
+    add_submenu_page('speedy-search', __('Advanced', 'speedy-search'), __('Advanced', 'speedy-search'), 'manage_options', 'speedy-search-advanced', array($this, 'redirect_to_advanced_tab'));
+    add_submenu_page('speedy-search', __('Repo', 'speedy-search'), __('Repo', 'speedy-search'), 'manage_options', 'speedy-search-repo', array($this, 'redirect_to_repo_tab'));
 	}
   
   /**
@@ -323,6 +339,54 @@ class Settings {
       </div>
     </form>
   <?php
+  }
+
+  public function redirect_to_advanced_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=advanced'));
+
+    exit;
+  }
+
+  public function redirect_to_downloads_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=downloads'));
+    
+    exit;
+  }
+
+  public function redirect_to_orders_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=orders'));
+    
+    exit;
+  }
+
+  public function redirect_to_pages_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=pages'));
+    
+    exit;
+  }
+
+  public function redirect_to_popular_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=popular'));
+    
+    exit;
+  }
+
+  public function redirect_to_posts_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=posts'));
+    
+    exit;
+  }
+
+  public function redirect_to_products_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=products'));
+    
+    exit;
+  }
+
+  public function redirect_to_repo_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=repo'));
+    
+    exit;
   }
 
   /**

@@ -13,6 +13,27 @@ jQuery(document).ready(function ($) {
   initSubmit();
 
   function initTabs() {
+    $("#toplevel_page_speedy-search .wp-submenu.wp-submenu-wrap").hide();
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentTab = urlParams.get('tab') || 'general';
+
+    // Check if the tab exists on the page before showing it
+    if (!$(".tabs .tab." + currentTab).length) {
+      currentTab = 'general'; // fallback if not found
+    }
+
+    // Set active tab on page load
+    $(".tabs .tab").hide();
+    $(".tabs .tab." + currentTab).show();
+
+    $(".nav-links li a").each(function () {
+      $(this).removeClass("active");
+      if ($(this).data("section") === currentTab) {
+        $(this).addClass("active");
+      }
+    });
+
     $(".nav-links li a").on("click", function() {
       let is_validated = initValidation();
 
@@ -64,6 +85,12 @@ jQuery(document).ready(function ($) {
 
         return;
       }
+
+      // Update the URL parameter "tab" without reloading the page
+      const params = new URLSearchParams(window.location.search);
+      params.set('tab', selected);
+      const newUrl = window.location.pathname + '?' + params.toString();
+      window.history.replaceState({}, '', newUrl);
 
       $(".nav-links li a").each(function() {
         let section = $(this).data('section');
