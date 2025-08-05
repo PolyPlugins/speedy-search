@@ -136,21 +136,22 @@ class Settings {
 	 */
 	public function load_setting_fields() {
     $field_classes = array(
-      'repo'      => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Repo',
       'advanced'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Advanced',
       'downloads' => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Downloads',
-      'products'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Products',
-      'pages'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Pages',
-      'posts'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Posts',
-      'popular'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Popular',
       'general'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\General',
+      'pages'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Pages',
+      'popular'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Popular',
+      'orders'    => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Orders',
+      'posts'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Posts',
+      'products'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Products',
+      'repo'      => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Repo',
     );
 
     foreach ($field_classes as $key => $class) {
       if (class_exists($class)) {
         $instance = new $class($this->plugin, $this->version, $this->plugin_dir_url);
         $instance->init();
-        
+
         $this->field_instances[$key] = $instance;
       }
     }
@@ -205,6 +206,12 @@ class Settings {
                     <a href="javascript:void(0);" data-section="products">
                       <i class="bi bi-bag-fill"></i>
                       <?php esc_html_e('Products', 'speedy-search'); ?>
+                    </a>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0);" data-section="orders">
+                      <i class="bi bi-box-seam-fill"></i>
+                      <?php esc_html_e('Orders', 'speedy-search'); ?>
                     </a>
                   </li>
                 <?php endif; ?>
@@ -265,6 +272,11 @@ class Settings {
                 <div class="tab products" style="display: none;">
                   <?php
                   do_settings_sections('speedy_search_products_polyplugins');
+                  ?>
+                </div>
+                <div class="tab orders" style="display: none;">
+                  <?php
+                  do_settings_sections('speedy_search_orders_polyplugins');
                   ?>
                 </div>
               <?php endif; ?>
@@ -430,6 +442,20 @@ class Settings {
 
     if (isset($input['products']['result_limit']) && is_numeric($input['products']['result_limit'])) {
 			$sanitary_values['products']['result_limit'] = sanitize_text_field($input['products']['result_limit']);
+		}
+
+    if (isset($input['orders']['enabled']) && $input['orders']['enabled']) {
+      $sanitary_values['orders']['enabled'] = $input['orders']['enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['orders']['enabled'] = false;
+    }
+
+    if (isset($input['orders']['batch']) && is_numeric($input['orders']['batch'])) {
+			$sanitary_values['orders']['batch'] = sanitize_text_field($input['orders']['batch']);
+		}
+
+    if (isset($input['orders']['result_limit']) && is_numeric($input['orders']['result_limit'])) {
+			$sanitary_values['orders']['result_limit'] = sanitize_text_field($input['orders']['result_limit']);
 		}
 
     if (isset($input['downloads']['enabled']) && $input['downloads']['enabled']) {
