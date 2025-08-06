@@ -331,7 +331,7 @@ class Settings {
               <div class="cta">
                 <h2 style="color: #fff;">Something Not Working?</h2>
                 <p>We pride ourselves on quality, so if something isn't working or you have a suggestion, feel free to call or email us. We're based out of Tennessee in the USA.
-                <p><a href="tel:+14232818591" class="button button-primary" style="text-decoration: none; color: #fff; font-weight: 700; text-transform: uppercase; background-color: #333; border-color: #333;" target="_blank">Call Us</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="https://www.polyplugins.com/contact/" class="button button-primary" style="text-decoration: none; color: #fff; font-weight: 700; text-transform: uppercase; background-color: #333; border-color: #333;" target="_blank">Email Us</a></p>
+                <p><a href="https://www.polyplugins.com/contact/" class="button button-primary" style="text-decoration: none; color: #fff; font-weight: 700; text-transform: uppercase; background-color: #333; border-color: #333;" target="_blank">Email Us</a></p>
               </div>
             </div>
           </div>
@@ -396,7 +396,9 @@ class Settings {
    * @return array $sanitary_values Array of sanitized options
    */
   public function sanitize($input) {
-		$sanitary_values = array();
+		$sanitary_values    = array();
+    $allowed_types      = Utils::get_allowed_types();
+    $allowed_post_types = Utils::get_allowed_post_types();
 
     if (isset($input['enabled']) && $input['enabled']) {
       $sanitary_values['enabled'] = $input['enabled'] === 'on' ? true : false;
@@ -404,12 +406,20 @@ class Settings {
       $sanitary_values['enabled'] = false;
     }
 
+    if (isset($input['default_result_type']) && $input['default_result_type']) {
+      if (array_key_exists($input['default_result_type'], $allowed_post_types)) {
+			  $sanitary_values['default_result_type'] = sanitize_text_field($input['default_result_type']);
+      } else {
+        $sanitary_values['default_result_type'] = $allowed_post_types[0];
+      }
+		}
+
     if (isset($input['database_type'])) {
-      $allowed_types         = array('mysql', 'sqlite');
+      $allowed_db_types      = array('mysql', 'sqlite');
       $database_type         = sanitize_text_field($input['database_type']);
 		  $current_database_type = Utils::get_option('database_type') ?: 'mysql';
 
-      if (in_array($database_type, $allowed_types, true)) {
+      if (in_array($database_type, $allowed_db_types, true)) {
         $sanitary_values['database_type'] = $database_type;
       } else {
         $sanitary_values['database_type'] = 'mysql';
@@ -472,6 +482,12 @@ class Settings {
       $sanitary_values['posts']['enabled'] = false;
     }
 
+    if (isset($input['posts']['tab_enabled']) && $input['posts']['tab_enabled']) {
+      $sanitary_values['posts']['tab_enabled'] = $input['posts']['tab_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['posts']['tab_enabled'] = false;
+    }
+
     if (isset($input['posts']['batch']) && is_numeric($input['posts']['batch'])) {
 			$sanitary_values['posts']['batch'] = sanitize_text_field($input['posts']['batch']);
 		}
@@ -486,6 +502,12 @@ class Settings {
       $sanitary_values['pages']['enabled'] = false;
     }
 
+    if (isset($input['pages']['tab_enabled']) && $input['pages']['tab_enabled']) {
+      $sanitary_values['pages']['tab_enabled'] = $input['pages']['tab_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['pages']['tab_enabled'] = false;
+    }
+
     if (isset($input['pages']['batch']) && is_numeric($input['pages']['batch'])) {
 			$sanitary_values['pages']['batch'] = sanitize_text_field($input['pages']['batch']);
 		}
@@ -498,6 +520,12 @@ class Settings {
       $sanitary_values['products']['enabled'] = $input['products']['enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['products']['enabled'] = false;
+    }
+
+    if (isset($input['products']['tab_enabled']) && $input['products']['tab_enabled']) {
+      $sanitary_values['products']['tab_enabled'] = $input['products']['tab_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['tab_enabled'] = false;
     }
 
     if (isset($input['products']['batch']) && is_numeric($input['products']['batch'])) {
@@ -528,6 +556,12 @@ class Settings {
       $sanitary_values['downloads']['enabled'] = false;
     }
 
+    if (isset($input['downloads']['tab_enabled']) && $input['downloads']['tab_enabled']) {
+      $sanitary_values['downloads']['tab_enabled'] = $input['downloads']['tab_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['downloads']['tab_enabled'] = false;
+    }
+
     if (isset($input['downloads']['batch']) && is_numeric($input['downloads']['batch'])) {
 			$sanitary_values['downloads']['batch'] = sanitize_text_field($input['downloads']['batch']);
 		}
@@ -540,6 +574,21 @@ class Settings {
       $sanitary_values['advanced']['enabled'] = $input['advanced']['enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['advanced']['enabled'] = false;
+    }
+
+    if (isset($input['advanced']['enabled_types']) && is_array($input['advanced']['enabled_types'])) {
+      // Only keep allowed types
+      $sanitary_values['advanced']['enabled_types'] = array();
+
+      foreach ($input['advanced']['enabled_types'] as $type) {
+        if (array_key_exists($type, $allowed_types)) {
+          $sanitary_values['advanced']['enabled_types'][] = sanitize_text_field($type);
+        }
+      }
+    } else {
+      foreach ($allowed_types as $key => $label) {
+        $sanitary_values['advanced']['enabled_types'][] = $key;
+      }
     }
 
     if (isset($input['advanced']['title']) && $input['advanced']['title']) {

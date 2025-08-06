@@ -77,6 +77,14 @@ class Posts {
 		);
 
 		add_settings_field(
+			'posts_tab_enabled',
+			__('Tab Enabled?', 'speedy-search'),
+			array($this, 'posts_tab_enabled_render'),
+			'speedy_search_posts_polyplugins',
+			'speedy_search_posts_section_polyplugins'
+		);
+
+		add_settings_field(
 			'posts_batch',
 		  __('Batch', 'speedy-search'),
 			array($this, 'posts_batch_render'),
@@ -106,6 +114,22 @@ class Posts {
       <input type="checkbox" name="speedy_search_settings_polyplugins[posts][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Index and show posts in the search?', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Enabled Field
+	 *
+	 * @return void
+	 */
+	public function posts_tab_enabled_render() {
+		$options = Utils::get_option('posts');
+    $option  = isset($options['tab_enabled']) ? $options['tab_enabled'] : 1;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[posts][tab_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Show the posts tab on non advanced search.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

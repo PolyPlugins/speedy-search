@@ -49,7 +49,7 @@ class Index_Updater {
     // Allowed post types for indexing
     $allowed_types = Utils::get_allowed_post_types();
 
-    if (!in_array($post_type, $allowed_types, true)) {
+    if (!array_key_exists($post_type, $allowed_types)) {
       return;
     }
     
@@ -109,7 +109,7 @@ class Index_Updater {
 
     $allowed_types = Utils::get_allowed_post_types();
 
-    if (!in_array($post_type, $allowed_types, true)) {
+    if (!array_key_exists($post_type, $allowed_types)) {
       return;
     }
     
@@ -152,7 +152,7 @@ class Index_Updater {
 
     $allowed_types = Utils::get_allowed_post_types();
 
-    if (!in_array($post_type, $allowed_types, true)) {
+    if (!array_key_exists($post_type, $allowed_types)) {
       return;
     }
     

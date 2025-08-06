@@ -382,17 +382,40 @@ class API {
       ));
 
       $posts_data = array();
+      $rated = array();
+      $unrated = array();
 
       foreach ($posts as $post) {
-        $posts_data[] = array(
-          'id'        => $post->ID,
-          'title'     => get_the_title($post->ID),
-          'price'     => get_post_meta($post->ID, '_price'),
-          'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
-          'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
-          'permalink' => get_permalink($post->ID)
+        $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
+
+        $tags = array(
+          'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
+          'span' => array('class' => array(), 'style' => array()),
         );
+        
+        $data = array(
+          'id'             => $post->ID,
+          'title'          => get_the_title($post->ID),
+          'price'          => get_post_meta($post->ID, '_price', true),
+          'thumbnail'      => get_the_post_thumbnail_url($post->ID, 'medium'),
+          'excerpt'        => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'average_rating' => $average_rating ? (float) $average_rating : 0,
+          'rating'         => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
+          'permalink'      => get_permalink($post->ID)
+        );
+
+        if ($average_rating > 0) {
+          $rated[] = $data;
+        } else {
+          $unrated[] = $data;
+        }
       }
+
+      usort($rated, function($a, $b) {
+        return $b['average_rating'] <=> $a['average_rating'];
+      });
+
+      $posts_data = array_merge($rated, $unrated);
 
       wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
 

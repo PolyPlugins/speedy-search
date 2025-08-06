@@ -54,7 +54,7 @@ class Analytics {
 
       $allowed_types = Utils::get_allowed_post_types();
 
-      if (!in_array($type, $allowed_types)) {
+      if (!array_key_exists($type, $allowed_types)) {
         continue;
       }
 

@@ -7,14 +7,16 @@ jQuery(document).ready(function ($) {
     return;
   }
 
-  let default_result_type = snappy_search_object.options?.default_result_type ?? '';
-  let characters          = snappy_search_object.options?.characters ?? 4;
-  let typing_delay        = snappy_search_object.options?.typing_delay ?? 300;
-  let posts_enabled       = snappy_search_object.options?.posts?.enabled ?? false;
-  let pages_enabled       = snappy_search_object.options?.pages?.enabled ?? false;
-  let products_enabled    = snappy_search_object.options?.products?.enabled ?? false;
-  let downloads_enabled   = snappy_search_object.options?.downloads?.enabled ?? false;
-  let currency            = snappy_search_object.currency ?? '$';
+  let default_result_type    = snappy_search_object.options?.default_result_type ?? '';
+  let characters             = snappy_search_object.options?.characters ?? 4;
+  let typing_delay           = snappy_search_object.options?.typing_delay ?? 300;
+  let posts_enabled          = snappy_search_object.options?.posts?.enabled ?? false;
+  let pages_enabled          = snappy_search_object.options?.pages?.enabled ?? false;
+  let products_enabled       = snappy_search_object.options?.products?.enabled ?? false;
+  let downloads_enabled      = snappy_search_object.options?.downloads?.enabled ?? false;
+  let advanced_enabled_types = snappy_search_object.options?.advanced?.enabled_types ?? [];
+  let currency               = snappy_search_object.currency ?? '$';
+  let ajaxCalls              = 0;
 
   const $searchInput      = $(selector);
   const $searchForm       = $searchInput.closest("form");
@@ -99,15 +101,6 @@ jQuery(document).ready(function ($) {
   }
   
   function close() {
-    $(document).on("click", function(e) {
-      if (!$(e.target).closest('.speedy-search-container').length) {
-        $(".speedy-search-container .instant-search-section").empty();
-
-        $(".snappy-search-advanced-input").val('');
-        $(".instant-search-wrapper").hide();
-      }
-    });
-
     $(".snappy-search-close").on("click", function(e) {
       $(".speedy-search-container .instant-search-section").empty();
 
@@ -127,6 +120,8 @@ jQuery(document).ready(function ($) {
 
   function performSearch(query, $container) {
     const $sections = $container.find('.instant-search-section');
+
+    ajaxCalls = $sections.length;
 
     $sections.each(function () {
       let $section = $(this);
@@ -159,38 +154,60 @@ jQuery(document).ready(function ($) {
       success: function (data) {
         $section.empty();
 
-        if (!data.length) {
-          $section.append("<p>" + __("No results found.", "speedy-search") + "</p>");
-        } else {
-          const results = $.map(data, function (item) {
-            let imageHTML = "";
-            let price = "";
+        const isDefaultType = endpoint === default_result_type;
+        const initialLimit = isDefaultType ? data.length : 4;
+        const showMore = !isDefaultType && data.length > initialLimit;
 
-            if (item.thumbnail) {
-              imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
-            }
+        const results = $.map(data, function (item, index) {
+          let imageHTML = "";
+          let price = "";
+          let rating = "";
 
-            if (item.price) {
-              price = '<p class="price-result">' + currency + item.price + "</p>";
-            }
+          if (item.thumbnail) {
+            imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
+          }
 
-            return `
-              <div class="instant-search-result">
-                <a href="${item.permalink}" class="permalink-result">
-                  <div class="image-wrapper">
-                    ${imageHTML}
-                  </div>
-                  <div class="search-content">
-                      <h2 class="title-result">${item.title}</h2>
-                      ${price}
-                      <p class="excerpt-result">${item.excerpt}</p>
-                  </div>
-                </a>
-              </div>
-            `;
-          }).join("");
+          if (item.price) {
+            price = '<p class="price-result">' + currency + item.price + "</p>";
+          }
 
-          $section.append(results);
+          if (item.rating && endpoint === 'product') {
+            rating = '<div class="rating-result"><div class="woocommerce">' + item.rating + "</div></div>";
+          }
+
+          // Add class to hide results after the limit
+          const hiddenClass = index >= initialLimit ? ' hidden-result' : '';
+
+          return `
+            <div class="instant-search-result grid-item${hiddenClass}">
+              <a href="${item.permalink}" class="permalink-result">
+                ${imageHTML ? `<div class="image-wrapper">${imageHTML}</div>` : ''}
+                <div class="search-content">
+                  <h2 class="title-result">${item.title}</h2>
+                  ${rating}
+                  ${price}
+                  <p class="excerpt-result">${item.excerpt}</p>
+                  ${
+                  endpoint === 'post' ? `
+                    <div class="read-more">
+                      ${__("Read more >", "speedy-search")}
+                    </div>` : ''
+                  }
+                </div>
+              </a>
+            </div>
+          `;
+        }).join("");
+
+        $section.append(results);
+
+        if (showMore) {
+          const readMoreBtn = `
+            <div class="instant-search-result grid-item more-results">
+              <button class="show-all-results">${__("Show all " + endpoint + " results", "speedy-search")}</button>
+            </div>
+          `;
+          $section.append(readMoreBtn);
         }
       },
       error: function (xhr, status, error) {
@@ -202,50 +219,42 @@ jQuery(document).ready(function ($) {
       $(".speedy-search-container .instant-search-wrapper").show();
       $(".speedy-search-container .snappy-search-close").show();
       $(".speedy-search-container .loader").hide();
+
+      ajaxCalls--;
+
+      if (ajaxCalls === 0) {
+        let allEmpty = true;
+        
+        $(".advanced-search .instant-search-section").each(function () {
+          if ($(this).children().length > 0) {
+            allEmpty = false;
+
+            return false;
+          }
+        });
+
+        if (allEmpty) {
+          $(".advanced-search .instant-search-section").first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
+        }
+      }
     });
   }
 
   function buildInitialSearchForm() {
     if (postTypes.length === 0) return ''; // nothing enabled
 
-    const showTabs = postTypes.length > 1;
-    const firstType = postTypes[0].type;
-
-    let tabsHTML = '';
     let sectionsHTML = '';
 
-    if (showTabs) {
-      tabsHTML = '<ul class="instant-search-tabs">\n';
+    $.each(postTypes, function(i, t) {
 
-      $.each(postTypes, function(i, t) {
-        tabsHTML += '  <li class="tab' + (i === 0 ? ' active' : '') + '" data-type="' + t.type + '">' + t.label + '</li>\n';
-      });
-
-      tabsHTML += '</ul>\n';
-    }
-
-    if (postTypes.length > 1) {
-      $.each(postTypes, function(i, t) {
-        let isActive = t.type === firstType;
-        let displayStyle = isActive ? 'block' : 'none';
-        let label = __('Search ' + t.type + ' you are looking for.', 'speedy-search');
-
-        sectionsHTML += `
-          <div class="instant-search-section" data-type="${t.type}" style="display: ${displayStyle};">
-            <p>${label}</p>
-          </div>
-        `;
-      });
-    } else {
       sectionsHTML += `
-        <div class="instant-search-section" data-type="${firstType}">
+        <div class="instant-search-section grid" data-type="${t.type}">
         </div>
       `;
-    }
+    });
 
     let searchForm = `
       <div class="instant-search-wrapper" style="display: none;">
-        ${tabsHTML}
         <div class="instant-search-results">
           ${sectionsHTML}
         </div>
@@ -258,31 +267,34 @@ jQuery(document).ready(function ($) {
   function getTypes() {
     let types = [];
 
-    if (products_enabled) {
-      types.push({ type: 'product', label: __('Products', 'speedy-search') });
-    }
+    let enabledTypes = Array.isArray(advanced_enabled_types) ? advanced_enabled_types : [];
 
-    if (downloads_enabled) {
-      types.push({ type: 'download', label: __('Downloads', 'speedy-search') });
-    }
-
-    if (posts_enabled) {
+    if (posts_enabled && (enabledTypes.length === 0 || enabledTypes.includes('posts'))) {
       types.push({ type: 'post', label: __('Posts', 'speedy-search') });
     }
-    
-    if (pages_enabled) {
+
+    if (pages_enabled && (enabledTypes.length === 0 || enabledTypes.includes('pages'))) {
       types.push({ type: 'page', label: __('Pages', 'speedy-search') });
     }
 
-    // Sort so the default_result_type appears first
-    if (default_result_type) {
-      types.sort(function (a, b) {
-        if (a.type === default_result_type) return -1;
-        if (b.type === default_result_type) return 1;
-        return 0;
-      });
+    if (products_enabled && (enabledTypes.length === 0 || enabledTypes.includes('products'))) {
+      types.push({ type: 'product', label: __('Products', 'speedy-search') });
+    }
+
+    if (downloads_enabled && (enabledTypes.length === 0 || enabledTypes.includes('downloads'))) {
+      types.push({ type: 'download', label: __('Downloads', 'speedy-search') });
     }
 
     return types;
   }
+
+  // Show hidden results on button click
+  $(document).on('click', '.show-all-results', function () {
+    const $hiddenResults = $(this).closest('.instant-search-section');
+
+    $hiddenResults.find('.hidden-result').removeClass('hidden-result');
+
+    $(this).closest('.more-results').hide();
+  });
+
 });

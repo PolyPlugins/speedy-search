@@ -77,6 +77,14 @@ class General {
 			'speedy_search_general_section_polyplugins' // Setting section
 		);
 
+    add_settings_field(
+      'default_result_type',
+      __('Default Result Type', 'speedy-search'),
+      array($this, 'default_result_type_render'),
+      'speedy_search_general_polyplugins',
+      'speedy_search_general_section_polyplugins'
+    );
+
     $database_type = Utils::get_option('database_type') ?: 'mysql';
 
     if ($database_type !== 'mysql') {
@@ -134,6 +142,24 @@ class General {
       <input type="checkbox" name="speedy_search_settings_polyplugins[enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
 		<?php
+	}
+
+  /**
+	 * Render Database Type Field
+	 *
+	 * @return void
+	 */
+	public function default_result_type_render() {
+    $allowed_types = Utils::get_allowed_post_types();
+		$option = Utils::get_option('default_result_type') ?: $allowed_types[0];
+    ?>
+    <select name="speedy_search_settings_polyplugins[default_result_type]">
+      <?php foreach ($allowed_types as $key => $label) : ?>
+        <option value="<?php echo esc_html($key); ?>" <?php selected($option, $key); ?>><?php echo esc_html($label); ?></option>
+      <?php endforeach; ?>
+    </select>
+    <p><strong><?php esc_html_e("Select the default that is displayed first in results.", 'speedy-search'); ?></strong></p>
+	  <?php
 	}
 
   /**

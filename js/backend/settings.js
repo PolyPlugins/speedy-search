@@ -228,8 +228,27 @@ jQuery(document).ready(function ($) {
       return false;
     }
 
+    $advanced_enabled = $("#advanced_enabled").is(":checked");
+    $advanced_enabled_types = $(".advanced-enabled-types:checked").length;
+
+    if ($advanced_enabled) {
+      if ($advanced_enabled_types === 0) {
+        Swal.fire({
+          title: __("Error", 'speedy-search'),
+          text: __("You can't have Advanced Search enabled if you have no enabled types to display!", 'speedy-search'),
+          icon: "error",
+          confirmButtonColor: "#46BEA4",
+        });
+
+        $(".advanced-enabled-types").addClass("validation");
+
+        return false;
+      }
+    }
     $("#tracking_delay").removeClass("validation");
     $("#typing_delay").removeClass("validation");
+
+    $(".advanced-enabled-types").removeClass("validation");
 
     return true;
   }

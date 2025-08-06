@@ -92,7 +92,7 @@ class Utils {
     $allowed_post_types = self::get_allowed_post_types();
     $is_indexing        = false;
 
-    foreach($allowed_post_types as $allowed_post_type) {
+    foreach($allowed_post_types as $allowed_post_type => $label) {
       $type        = $allowed_post_type . 's';
       $index       = self::get_index($type);
       $is_indexing = isset($index['complete']) ? false : true;
@@ -148,14 +148,14 @@ class Utils {
 
     if ($database_type === 'mysql') {
       // Reset indexing progress
-      foreach ($allowed_post_types as $allowed_post_type) {
+      foreach ($allowed_post_types as $allowed_post_type => $label) {
         self::delete_db_index($allowed_post_type);
       }
 
       delete_option('speedy_search_indexes_polyplugins');
     } else {
       // Reset indexing progress
-      foreach ($allowed_post_types as $allowed_post_type) {
+      foreach ($allowed_post_types as $allowed_post_type => $label) {
         $index_name = self::get_index_name($allowed_post_type);
 
         self::delete_index($index_path, $index_name);
@@ -206,18 +206,37 @@ class Utils {
    */
   public static function get_allowed_post_types() {
     $allowed_post_types = array(
-      'post', 'page'
+      'post' => __('Post', 'speedy-search'),
+      'page' => __('Page', 'speedy-search')
     );
 
     if (class_exists('WooCommerce')) {
-      $allowed_post_types[] = 'product';
+      $allowed_post_types['product'] = __('Product', 'speedy-search');
     }
 
     if (class_exists('Easy_Digital_Downloads')) {
-      $allowed_post_types[] = 'download';
+      $allowed_post_types['download'] = __('Download', 'speedy-search');
     }
 
     return $allowed_post_types;
+  }
+  
+  /**
+   * Get allowed types
+   *
+   * @return array $allowed_types The allowed types
+   */
+  public static function get_allowed_types() {
+    $allowed_post_types = self::get_allowed_post_types();
+
+    $allowed_types = array();
+
+    foreach ($allowed_post_types as $key => $label) {
+      $key                 = $key . 's';
+      $allowed_types[$key] = $label . __('s', 'speedy-search');
+    }
+
+    return $allowed_types;
   }
   
   /**
@@ -255,12 +274,29 @@ class Utils {
       'fields'         => 'ids',
     );
 
-    $page_ids = get_posts($args);
+    $default = get_posts($args);
 
-    if (!empty($page_ids)) {
-      $slug = get_post_field('post_name', $page_ids[0]);
+    if (!empty($default)) {
+      $slug = get_post_field('post_name', $default[0]);
 
       return $slug;
+    } else {
+      $args = array(
+        'post_type'      => 'page',
+        'posts_per_page' => 1,
+        'post_status'    => 'publish',
+        'meta_key'       => '_wp_page_template',
+        'meta_value'     => 'snappy-search-advanced-search-form-stacked.php',
+        'fields'         => 'ids',
+      );
+
+      $stacked = get_posts($args);
+
+      if (!empty($stacked)) {
+        $slug = get_post_field('post_name', $stacked[0]);
+
+        return $slug;
+      }
     }
 
     return false;

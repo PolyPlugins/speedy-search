@@ -77,6 +77,14 @@ class Downloads {
 		);
 
 		add_settings_field(
+			'downloads_tab_enabled',
+			__('Tab Enabled?', 'speedy-search'),
+			array($this, 'downloads_tab_enabled_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
+		);
+
+		add_settings_field(
 			'downloads_batch',
 		  __('Batch', 'speedy-search'),
 			array($this, 'downloads_batch_render'),
@@ -106,6 +114,22 @@ class Downloads {
       <input type="checkbox" name="speedy_search_settings_polyplugins[downloads][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Index and show downloads in the search?', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Enabled Field
+	 *
+	 * @return void
+	 */
+	public function dowloads_tab_enabled_render() {
+		$options = Utils::get_option('dowloads');
+    $option  = isset($options['tab_enabled']) ? $options['tab_enabled'] : 1;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[dowloads][tab_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Show the dowloads tab on non advanced search.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

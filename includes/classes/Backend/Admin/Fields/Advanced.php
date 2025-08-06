@@ -77,6 +77,14 @@ class Advanced {
 		);
 
 		add_settings_field(
+			'advanced_enabled_types',                             
+			__('Enabled Types', 'speedy-search'),
+			array($this, 'advanced_enabled_types_render'),
+			'speedy_search_advanced_polyplugins',
+			'speedy_search_advanced_section_polyplugins'
+		);
+
+		add_settings_field(
 			'advanced_title',                             
 			__('Title', 'speedy-search'),
 			array($this, 'advanced_title_render'),
@@ -103,10 +111,38 @@ class Advanced {
     $option  = isset($options['enabled']) ? $options['enabled'] : false;
     ?>
     <div class="form-check form-switch">
-      <input type="checkbox" name="speedy_search_settings_polyplugins[advanced][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+      <input type="checkbox" name="speedy_search_settings_polyplugins[advanced][enabled]" id="advanced_enabled" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('If enabled, pressing Enter will go to the page that you have the Advanced Snappy Search page template configured on instead of the default search, unless indexing is active.', 'speedy-search'); ?></strong></p>
     <?php
+	}
+
+  /**
+	 * Render Advanced Title Field
+	 *
+	 * @return void
+	 */
+	public function advanced_enabled_types_render() {
+    $allowed_types = Utils::get_allowed_types();
+		$options       = Utils::get_option('advanced');
+    $option        = isset($options['enabled_types']) ? $options['enabled_types'] : $allowed_types[0];
+    ?>
+    <?php foreach($allowed_types as $key => $label) : ?>
+      <div class="form-check">
+        <input class="form-check-input advanced-enabled-types" type="checkbox" name="speedy_search_settings_polyplugins[advanced][enabled_types][]" id="<?php echo esc_attr($key); ?>_checkbox_label" value="<?php echo esc_attr($key); ?>"
+          <?php
+            if (!empty($option) && is_array($option) && in_array($key, $option)) {
+              echo 'checked';
+            }
+          ?>
+        >
+        <label class="form-check-label" for="<?php echo esc_attr($key); ?>_checkbox_label">
+          <?php echo esc_html($label); ?>
+        </label>
+      </div>
+    <?php endforeach; ?>
+    <p><strong><?php esc_html_e('Select the types you want to be displayed on the advanced search results.', 'speedy-search'); ?></strong></p>
+		<?php
 	}
 
   /**
