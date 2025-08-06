@@ -64,8 +64,9 @@ This plugin collects and stores certain data on your server to ensure proper fun
 ![Posts Settings](.wordpress-org/screenshot-4.jpg)
 ![Pages Settings](.wordpress-org/screenshot-5.jpg)
 ![Products Settings](.wordpress-org/screenshot-6.jpg)
-![Advanced Search Settings](.wordpress-org/screenshot-7.jpg)
-![Repo Settings](.wordpress-org/screenshot-8.jpg)
+![Order Settings](.wordpress-org/screenshot-7.jpg)
+![Advanced Search Settings](.wordpress-org/screenshot-8.jpg)
+![Repo Settings](.wordpress-org/screenshot-9.jpg)
 
 ## Installation
 

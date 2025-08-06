@@ -93,8 +93,9 @@ By default it will index 10 posts per minute.
 4. Post Settings
 5. Pages Settings
 6. Products Settings
-7. Advanced Search Settings
-8. Repo Settings
+7. Order Settings
+8. Advanced Search Settings
+9. Repo Settings
 
 
 == Changelog ==
