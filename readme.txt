@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.4.3
+Stable tag: 1.5.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -18,8 +18,9 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 
 * Instantly searching WooCommerce products
 * Instantly searching Easy Digital Downloads downloads
-* Instantly searching WordPress Posts
-* Instantly searching WordPress Pages
+* Instantly searching WordPress posts
+* Instantly searching WordPress pages
+* Instantly searching through WooCommerce orders
 * Advanced repo search for finding plugins and themes. [Demo](https://www.polyplugins.com/repo-search/)
 
 
@@ -92,11 +93,29 @@ By default it will index 10 posts per minute.
 4. Post Settings
 5. Pages Settings
 6. Products Settings
-7. Advanced Search Settings
-8. Repo Settings
+7. Order Settings
+8. Advanced Search Settings
+9. Repo Settings
 
 
 == Changelog ==
+
+= 1.5.0 =
+* Added: Snappy Search to WooCommerce orders
+* Added: Order indexing
+* Added: Setting for order enabled
+* Added: Setting for order batch
+* Added: Setting for order result limit
+* Added: Advanced Stacked Template so tabs don't have to be used on the advanced search page, this puts posts and pages above products unless reordered in the settings
+* Added: Default result type setting to pick which results to show first
+* Added: Tab enabled setting to have the ability to not show tabs or perform queries for those types
+* Added: Rating for products
+* Added: Submenu options under Snappy Search admin sidebar
+* Added: Ability to jump to various tabs from the admin sidebar
+* Added: Ability to jump back to previously saved tab instead of always going to general tab after saving
+* Added: Logic for when switching to MySQL it disables switching back to SQLite
+* Added: Notice for deactivating Snappy Search due to using SQLite.
+* Optimized: Admin setting field logic into it's own field classes.
 
 = 1.4.3 =
 * Bugfix: Updating index triggering error

@@ -32,6 +32,22 @@ input[type="range"] {
   width: 95%!important;
 }
 
+input[type=checkbox] {
+  background-color: #ccc!important;
+}
+
+input[type=checkbox].validation {
+  background-color: #DC3545!important;
+}
+
+input[type=checkbox]:checked {
+  background-color: #46BEA4!important;
+}
+
+input[type=checkbox]:checked::before {
+  content: unset!important;
+}
+
 .tab .warning {
   background-color: #FFC107;
   color: #333;

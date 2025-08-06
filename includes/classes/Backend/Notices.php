@@ -48,6 +48,8 @@ class Notices {
         $this->notice_143();
       }
     }
+
+    $this->maybe_show_sqlite_notice();
   }
 
   public function notice_110() {
@@ -84,6 +86,20 @@ class Notices {
     <?php
   }
 
+  public function maybe_show_sqlite_notice() {
+    $database_type = Utils::get_option('database_type') ?: 'mysql';
+
+    if ($database_type !== 'mysql') {
+      ?>
+      <div class="notice notice-error is-dismissible speedy-search" style="padding-bottom: 8px;">
+        <p><?php echo esc_html__('Snappy Search has been disabled, because you are currently using SQLite. SQLite is no longer supported.', 'speedy-search'); ?>
+        <br /><br />
+        <a href="options-general.php?page=speedy-search" target="_blank">Switch to MySQL</a>
+      </div>
+      <?php
+    }
+  }
+  
   public function notice_142() {
     ?>
     <div class="notice notice-error is-dismissible speedy-search" style="padding-bottom: 10px;">

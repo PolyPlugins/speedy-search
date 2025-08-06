@@ -55,6 +55,7 @@ class Advanced_Search {
    */
   public function register_advanced_template($templates) {
     $templates['snappy-search-advanced-search-form.php'] = __('Advanced Snappy Search', 'speedy-search');
+    $templates['snappy-search-advanced-search-form-stacked.php'] = __('Advanced Snappy Search Stacked', 'speedy-search');
 
     return $templates;
   }
@@ -79,6 +80,19 @@ class Advanced_Search {
 
         // Fallback to plugin template
         $plugin_template = plugin_dir_path($this->plugin) . 'templates/snappy-search-advanced-search-form.php';
+
+        if (file_exists($plugin_template)) {
+          return $plugin_template;
+        }
+      } else if ($page_template === 'snappy-search-advanced-search-form-stacked.php') {
+        $theme_template = locate_template('snappy-search-advanced-search-form-stacked.php');
+
+        if (!empty($theme_template)) {
+          return $theme_template;
+        }
+
+        // Fallback to plugin template
+        $plugin_template = plugin_dir_path($this->plugin) . 'templates/snappy-search-advanced-search-form-stacked.php';
 
         if (file_exists($plugin_template)) {
           return $plugin_template;

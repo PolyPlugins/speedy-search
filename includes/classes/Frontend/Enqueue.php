@@ -170,17 +170,32 @@ class Enqueue {
   private function enqueue_advanced_search() {
     // Fallback to default search when indexing
     if (!$this->is_indexing) {
-      wp_enqueue_script('snappy-search-advanced', plugins_url('/js/frontend/advanced.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
-      wp_localize_script(
-        'snappy-search-advanced',
-        'snappy_search_object',
-        array(
-          'options'  => $this->options,
-          'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
-        )
-      );
-      wp_set_script_translations('snappy-search-advanced', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
       
+      $page_template = get_page_template_slug();
+
+      if (str_contains($page_template, 'stacked')) {
+        wp_enqueue_script('snappy-search-advanced-stacked', plugins_url('/js/frontend/advanced-stacked.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
+        wp_localize_script(
+          'snappy-search-advanced-stacked',
+          'snappy_search_object',
+          array(
+            'options'  => $this->options,
+            'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
+          )
+        );
+        wp_set_script_translations('snappy-search-advanced-stacked', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+      } else {
+        wp_enqueue_script('snappy-search-advanced', plugins_url('/js/frontend/advanced.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
+        wp_localize_script(
+          'snappy-search-advanced',
+          'snappy_search_object',
+          array(
+            'options'  => $this->options,
+            'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
+          )
+        );
+        wp_set_script_translations('snappy-search-advanced', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+      }
       if ($this->popular_options['enabled']) {
         $this->enqueue_popular_search();
       }

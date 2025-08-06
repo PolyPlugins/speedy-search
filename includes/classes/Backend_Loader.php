@@ -3,6 +3,7 @@
 namespace PolyPlugins\Speedy_Search;
 
 use PolyPlugins\Speedy_Search\Backend\Admin;
+use PolyPlugins\Speedy_Search\Backend\Admin\Settings;
 use PolyPlugins\Speedy_Search\Backend\API;
 use PolyPlugins\Speedy_Search\Backend\Background_Worker;
 use PolyPlugins\Speedy_Search\Backend\Enqueue;
@@ -51,7 +52,7 @@ class Backend_Loader {
    */
   public function init() {
     $this->load_enqueue();
-    $this->load_admin();
+    $this->load_settings();
     $this->load_api();
     $this->load_background_worker();
     $this->load_index_updater();
@@ -74,9 +75,9 @@ class Backend_Loader {
    *
    * @return void
    */
-  public function load_admin() {
-    $admin = new Admin($this->plugin, $this->version, $this->plugin_dir_url);
-    $admin->init();
+  public function load_settings() {
+    $settings = new Settings($this->plugin, $this->version, $this->plugin_dir_url);
+    $settings->init();
   }
   
   /**

@@ -11,12 +11,17 @@ jQuery(document).ready(function ($) {
     return;
   }
 
+  let default_result_type   = snappy_search_object.options?.default_result_type ?? '';
   let characters            = snappy_search_object.options?.characters ?? 4;
   let typing_delay          = snappy_search_object.options?.typing_delay ?? 300;
   let posts_enabled         = snappy_search_object.options?.posts?.enabled ?? false;
+  let posts_tab_enabled     = snappy_search_object.options?.posts?.tab_enabled ?? false;
   let pages_enabled         = snappy_search_object.options?.pages?.enabled ?? false;
+  let pages_tab_enabled     = snappy_search_object.options?.pages?.tab_enabled ?? false;
   let products_enabled      = snappy_search_object.options?.products?.enabled ?? false;
+  let products_tab_enabled  = snappy_search_object.options?.products?.tab_enabled ?? false;
   let downloads_enabled     = snappy_search_object.options?.downloads?.enabled ?? false;
+  let downloads_tab_enabled = snappy_search_object.options?.downloads?.tab_enabled ?? false;
   let popular               = snappy_search_object.popular ?? false;
   let currency              = snappy_search_object.currency ?? '$';
 
@@ -238,20 +243,29 @@ jQuery(document).ready(function ($) {
   function getTypes() {
     let types = [];
 
-    if (products_enabled) {
+    if (products_enabled && products_tab_enabled) {
       types.push({ type: 'product', label: __('Products', 'speedy-search') });
     }
 
-    if (downloads_enabled) {
+    if (downloads_enabled && downloads_tab_enabled) {
       types.push({ type: 'download', label: __('Downloads', 'speedy-search') });
     }
 
-    if (posts_enabled) {
+    if (posts_enabled && posts_tab_enabled) {
       types.push({ type: 'post', label: __('Posts', 'speedy-search') });
     }
-    
-    if (pages_enabled) {
+
+    if (pages_enabled && pages_tab_enabled) {
       types.push({ type: 'page', label: __('Pages', 'speedy-search') });
+    }
+
+    // Sort so the default_result_type appears first
+    if (default_result_type) {
+      types.sort(function (a, b) {
+        if (a.type === default_result_type) return -1;
+        if (b.type === default_result_type) return 1;
+        return 0;
+      });
     }
 
     return types;

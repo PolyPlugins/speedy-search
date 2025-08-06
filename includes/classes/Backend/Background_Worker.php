@@ -84,6 +84,10 @@ class Background_Worker {
     if (class_exists('Easy_Digital_Downloads')) {
       $this->maybe_index('download');
     }
+
+    if (class_exists('WooCommerce')) {
+      $this->maybe_index_orders();
+    }
   }
 
   /**
@@ -204,6 +208,83 @@ class Background_Worker {
     }
 
     wp_reset_postdata();
+  }
+
+  /**
+   * Maybe index orders
+   *
+   * @return void
+   */
+  public function maybe_index_orders() {
+    $post_type = 'shop_order';
+    $type      = $post_type . 's';
+    $options   = Utils::get_option('orders');
+    $enabled   = isset($options['enabled']) ? $options['enabled'] : 1;
+
+    $index                = Utils::get_index($type);
+    $is_indexing_complete = isset($index['complete']) ? true : false;
+
+    if ($is_indexing_complete) {
+      return;
+    }
+
+    if (!$enabled) {
+      Utils::update_index($type, 'complete', true);
+      return;
+    }
+
+    $index_name = Utils::get_index_name($post_type);
+
+    if (!$index) {
+      $this->tnt->createIndex($index_name);
+    }
+
+    $this->tnt->selectIndex($index_name);
+
+    $progress = isset($index['progress']) ? $index['progress'] : 1;
+    $batch    = isset($this->options[$type]['batch']) ? $this->options[$type]['batch'] : 100;
+
+    $args = array(
+      'limit'     => $batch,
+      'offset'    => $progress - 1,
+      'orderby'   => 'date',
+      'order'     => 'ASC',
+      'return'    => 'objects',
+    );
+
+    $orders = wc_get_orders($args);
+
+    if (!empty($orders)) {
+      $index = $this->tnt->getIndex();
+
+      foreach ($orders as $order) {
+        $order_id = $order->get_id();
+
+        $args = array(
+          'id'                  => intval($order_id),
+          'order_number'        => sanitize_text_field($order->get_order_number()),
+          'billing_first_name'  => sanitize_text_field($order->get_billing_first_name()),
+          'billing_last_name'   => sanitize_text_field($order->get_billing_last_name()),
+          'billing_address_1'   => sanitize_text_field($order->get_billing_address_1()),
+          'billing_address_2'   => sanitize_text_field($order->get_billing_address_2()),
+          'billing_city'        => sanitize_text_field($order->get_billing_city()),
+          'billing_email'       => sanitize_email($order->get_billing_email()),
+          'billing_phone'       => sanitize_text_field($order->get_billing_phone()),
+          'shipping_first_name' => sanitize_text_field($order->get_shipping_first_name()),
+          'shipping_last_name'  => sanitize_text_field($order->get_shipping_last_name()),
+          'shipping_address_1'  => sanitize_text_field($order->get_shipping_address_1()),
+          'shipping_address_2'  => sanitize_text_field($order->get_shipping_address_2()),
+          'shipping_city'       => sanitize_text_field($order->get_shipping_city()),
+        );
+
+        $index->insert($args);
+        $progress++;
+
+        Utils::update_index($type, 'progress', $progress);
+      }
+    } else {
+      Utils::update_index($type, 'complete', true);
+    }
   }
 
 }

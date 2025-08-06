@@ -7,8 +7,9 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 
 * Instantly searching WooCommerce products
 * Instantly searching Easy Digital Downloads downloads
-* Instantly searching WordPress Posts
-* Instantly searching WordPress Pages
+* Instantly searching WordPress posts
+* Instantly searching WordPress pages
+* Instantly searching through WooCommerce orders
 * Advanced repo search for finding plugins and themes. [Demo](https://www.polyplugins.com/repo-search/)
 
 ## Features
@@ -63,8 +64,9 @@ This plugin collects and stores certain data on your server to ensure proper fun
 ![Posts Settings](.wordpress-org/screenshot-4.jpg)
 ![Pages Settings](.wordpress-org/screenshot-5.jpg)
 ![Products Settings](.wordpress-org/screenshot-6.jpg)
-![Advanced Search Settings](.wordpress-org/screenshot-7.jpg)
-![Repo Settings](.wordpress-org/screenshot-8.jpg)
+![Order Settings](.wordpress-org/screenshot-7.jpg)
+![Advanced Search Settings](.wordpress-org/screenshot-8.jpg)
+![Repo Settings](.wordpress-org/screenshot-9.jpg)
 
 ## Installation
 
@@ -80,6 +82,23 @@ This plugin collects and stores certain data on your server to ensure proper fun
 By default, it will index 10 posts per minute.
 
 ## Changelog
+
+### 1.5.0
+* Added: Snappy Search to WooCommerce orders
+* Added: Order indexing
+* Added: Setting for order enabled
+* Added: Setting for order batch
+* Added: Setting for order result limit
+* Added: Advanced Stacked Template so tabs don't have to be used on the advanced search page, this puts posts and pages above products unless reordered in the settings
+* Added: Default result type setting to pick which results to show first
+* Added: Tab enabled setting to have the ability to not show tabs or perform queries for those types
+* Added: Rating for products
+* Added: Submenu options under Snappy Search admin sidebar
+* Added: Ability to jump to various tabs from the admin sidebar
+* Added: Ability to jump back to previously saved tab instead of always going to general tab after saving
+* Added: Logic for when switching to MySQL it disables switching back to SQLite
+* Added: Notice for deactivating Snappy Search due to using SQLite.
+* Optimized: Admin setting field logic into it's own field classes.
 
 ### 1.4.3
 * Bugfix: Updating index triggering error
