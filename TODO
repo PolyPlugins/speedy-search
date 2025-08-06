@@ -3,13 +3,11 @@
 [ ] Update Screenshots
 [ ] Plugin Scan
 
-# 1.5.0
-[ ] Now that MySQL is integrated add support for Admin Snappy Search
+# 1.6.0
 [ ] Push featured to top of list and add a badge for "Featured"
 [ ] Handling indexing categories
 [ ] Add scroll to load more results
 [ ] Add analytics for 0 search items and top searches
-[ ] Add ability for admin side nav to jump to sub settings
 [ ] Add logging class from our other plugins
 
 # General
@@ -23,6 +21,23 @@
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
+
+# 1.5.0
+[X] Now that MySQL is integrated add support for Admin Snappy Search
+[X] Add ability for admin side nav to jump to sub settings
+[X] Add order indexing
+[X] Add setting for order enabled
+[X] Add setting for order batch
+[X] Add setting for order result limit
+[X] Add Advanced Stacked Template so tabs don't have to be used on the advanced search page, this puts posts and pages above products unless reordered in the settings
+[X] Add default result type setting to pick which results to show first
+[X] Add tab enabled setting to have the ability to not show tabs or perform queries for those types
+[X] Add rating for products
+[X] Add submenu options under Snappy Search admin sidebar
+[X] Add ability to jump back to previously saved tab instead of always going to general tab after saving
+[X] Add logic for when switching to MySQL it disables switching back to SQLite
+[X] Add notice for deactivating Snappy Search due to using SQLite.
+[X] Optimize admin setting field logic into it's own field classes.
 
 # 1.4.3
 [X] Fix updating index triggering error
