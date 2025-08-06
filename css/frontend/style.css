@@ -348,6 +348,7 @@
 .speedy-search-container.advanced-search.stacked .instant-search-result .excerpt-result,
 .speedy-search-container.advanced-search.stacked .instant-search-result .image-wrapper,
 .speedy-search-container.advanced-search.stacked .instant-search-result .rating-result,
+.speedy-search-container.advanced-search.stacked .instant-search-result .price-result,
 .speedy-search-container.advanced-search.stacked .instant-search-result .read-more {
   text-align: left;
 }
@@ -361,6 +362,13 @@
   margin-top: 3px;
 }
 
+.speedy-search-container.advanced-search.stacked .instant-search-result {
+  border-bottom: none;
+}
+
+/**
+ * Skeleton
+ */
 .speedy-search-container.advanced-search.stacked .instant-search-result.skeleton-loading .image-wrapper {
   margin-left: 0;
   margin-right: 0;

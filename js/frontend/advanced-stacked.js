@@ -7,7 +7,6 @@ jQuery(document).ready(function ($) {
     return;
   }
 
-  let default_result_type    = snappy_search_object.options?.default_result_type ?? '';
   let characters             = snappy_search_object.options?.characters ?? 4;
   let typing_delay           = snappy_search_object.options?.typing_delay ?? 300;
   let posts_enabled          = snappy_search_object.options?.posts?.enabled ?? false;
@@ -23,6 +22,9 @@ jQuery(document).ready(function ($) {
   const typingDelay       = typing_delay;
   const postTypes         = getTypes();
   const initialSearchForm = buildInitialSearchForm();
+
+  let firstenabled = postTypes.length ? postTypes[0].type : '';
+  let default_result_type = snappy_search_object.options?.default_result_type ?? firstenabled;
 
   init();
   
@@ -92,11 +94,11 @@ jQuery(document).ready(function ($) {
   }
 
   function popular() {
-    $(document).on("click", ".speedy-search-container .search-term", function(e) {
+    $(document).on("click", ".speedy-search-container.advanced-search.stacked .search-term", function(e) {
       let $popular = $(this).text();
 
-      $(".snappy-search-form .snappy-search-input").val($popular);
-      $(".snappy-search-form .snappy-search-input").val($popular).trigger("input");
+      $(".speedy-search-container.advanced-search.stacked .snappy-search-form .snappy-search-advanced-input").val($popular);
+      $(".speedy-search-container.advanced-search.stacked .snappy-search-form .snappy-search-advanced-input").val($popular).trigger("input");
     });
   }
   
