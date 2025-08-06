@@ -15,13 +15,13 @@ jQuery(document).ready(function ($) {
   let characters            = snappy_search_object.options?.characters ?? 4;
   let typing_delay          = snappy_search_object.options?.typing_delay ?? 300;
   let posts_enabled         = snappy_search_object.options?.posts?.enabled ?? false;
-  let posts_tab_enabled     = snappy_search_object.options?.posts?.tab_enabled ?? false;
+  let posts_tab_enabled     = snappy_search_object.options?.posts?.tab_enabled ?? true;
   let pages_enabled         = snappy_search_object.options?.pages?.enabled ?? false;
-  let pages_tab_enabled     = snappy_search_object.options?.pages?.tab_enabled ?? false;
+  let pages_tab_enabled     = snappy_search_object.options?.pages?.tab_enabled ?? true;
   let products_enabled      = snappy_search_object.options?.products?.enabled ?? false;
-  let products_tab_enabled  = snappy_search_object.options?.products?.tab_enabled ?? false;
+  let products_tab_enabled  = snappy_search_object.options?.products?.tab_enabled ?? true;
   let downloads_enabled     = snappy_search_object.options?.downloads?.enabled ?? false;
-  let downloads_tab_enabled = snappy_search_object.options?.downloads?.tab_enabled ?? false;
+  let downloads_tab_enabled = snappy_search_object.options?.downloads?.tab_enabled ?? true;
   let popular               = snappy_search_object.popular ?? false;
   let currency              = snappy_search_object.currency ?? '$';
 
@@ -36,6 +36,7 @@ jQuery(document).ready(function ($) {
   function init() {
     listener();
     navigation();
+    popular();
     renderPopularTerms();
   }
 
@@ -82,6 +83,15 @@ jQuery(document).ready(function ($) {
           $(this).hide();
         }
       });
+    });
+  }
+
+  function popular() {
+    $(document).on("click", ".speedy-search-container .search-term", function(e) {
+      let $popular = $(this).text();
+
+      $(".snappy-search-form .snappy-search-input").val($popular);
+      $(".snappy-search-form .snappy-search-input").val($popular).trigger("input");
     });
   }
 

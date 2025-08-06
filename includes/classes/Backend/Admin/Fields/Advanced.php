@@ -125,7 +125,7 @@ class Advanced {
 	public function advanced_enabled_types_render() {
     $allowed_types = Utils::get_allowed_types();
 		$options       = Utils::get_option('advanced');
-    $option        = isset($options['enabled_types']) ? $options['enabled_types'] : $allowed_types[0];
+    $option        = isset($options['enabled_types']) ? $options['enabled_types'] : array(key($allowed_types));
     ?>
     <?php foreach($allowed_types as $key => $label) : ?>
       <div class="form-check">
