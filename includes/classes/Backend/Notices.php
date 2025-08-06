@@ -47,6 +47,9 @@ class Notices {
       if ($this->version == '1.4.3') {
         $this->notice_143();
       }
+      if ($this->version == '1.5.0') {
+        $this->notice_150();
+      }
     }
 
     $this->maybe_show_sqlite_notice();
@@ -133,6 +136,17 @@ class Notices {
       <strong?><?php echo esc_html__('Before updating to 1.5.0, please ensure your site is using MySQL.', 'speedy-search'); ?></strong>
       <?php echo esc_html__('If your site is still using SQLite, search functionality will be automatically disabled after the update.', 'speedy-search'); ?></p>
       <a href="options-general.php?page=speedy-search"><?php echo esc_html__('Switch to MySQL', 'speedy-search'); ?></a>
+    </div>
+    <?php
+  }
+
+  public function notice_150() {
+    ?>
+    <div class="notice notice-success is-dismissible speedy-search" style="padding-bottom: 10px;">
+      <p><?php echo esc_html__('Snappy Search has new features! You can now index WooCommerce orders. We also added a new Advanced Search template.', 'speedy-search'); ?></p>
+      
+      <a href="admin.php?page=speedy-search"><?php echo esc_html__('Adjust New Settings', 'speedy-search'); ?></a> | 
+      <a href="https://wordpress.org/plugins/speedy-search/#developers" target="_blank"><?php echo esc_html__('View Changelog', 'speedy-search'); ?></a>
     </div>
     <?php
   }

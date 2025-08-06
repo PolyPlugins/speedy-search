@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2025-08-06T03:35:42+00:00\n"
+"POT-Creation-Date: 2025-08-06T04:44:07+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: speedy-search\n"
@@ -312,27 +312,27 @@ msgstr ""
 
 #: includes/classes/Backend/Admin/Settings.php:77
 #: includes/classes/Backend/Admin/Settings.php:211
-#: js/frontend/advanced-stacked.js:273
+#: js/frontend/advanced-stacked.js:275
 #: js/frontend/advanced.js:270
-#: js/frontend/selector.js:255
+#: js/frontend/selector.js:265
 #: js/frontend/shortcode.js:258
 msgid "Posts"
 msgstr ""
 
 #: includes/classes/Backend/Admin/Settings.php:78
 #: includes/classes/Backend/Admin/Settings.php:217
-#: js/frontend/advanced-stacked.js:277
+#: js/frontend/advanced-stacked.js:279
 #: js/frontend/advanced.js:274
-#: js/frontend/selector.js:259
+#: js/frontend/selector.js:269
 #: js/frontend/shortcode.js:262
 msgid "Pages"
 msgstr ""
 
 #: includes/classes/Backend/Admin/Settings.php:81
 #: includes/classes/Backend/Admin/Settings.php:224
-#: js/frontend/advanced-stacked.js:281
+#: js/frontend/advanced-stacked.js:283
 #: js/frontend/advanced.js:262
-#: js/frontend/selector.js:247
+#: js/frontend/selector.js:257
 #: js/frontend/shortcode.js:250
 msgid "Products"
 msgstr ""
@@ -344,9 +344,9 @@ msgstr ""
 
 #: includes/classes/Backend/Admin/Settings.php:86
 #: includes/classes/Backend/Admin/Settings.php:238
-#: js/frontend/advanced-stacked.js:285
+#: js/frontend/advanced-stacked.js:287
 #: js/frontend/advanced.js:266
-#: js/frontend/selector.js:251
+#: js/frontend/selector.js:261
 #: js/frontend/shortcode.js:254
 msgid "Downloads"
 msgstr ""
@@ -386,73 +386,85 @@ msgstr ""
 msgid "Every Minute"
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:58
+#: includes/classes/Backend/Notices.php:61
 msgid "Speedy Search is now Snappy Search. We have change a lot including adding support for WooCommerce, EDD, and Pages. Indexes are also now updated when content is added, removed, or updated. We also added the ability to trigger reindexes and reverting the search to default when indexing. Try out the new features by visiting Snappy Search Settings."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:59
+#: includes/classes/Backend/Notices.php:62
 msgid "Try new features"
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:67
+#: includes/classes/Backend/Notices.php:70
 msgid "Snappy Search can now use MySQL databases, which means search indexes can be stored in your existing WordPress database for better performance."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:68
-#: includes/classes/Backend/Notices.php:84
-#: includes/classes/Backend/Notices.php:114
-#: includes/classes/Backend/Notices.php:135
+#: includes/classes/Backend/Notices.php:71
+#: includes/classes/Backend/Notices.php:87
+#: includes/classes/Backend/Notices.php:117
+#: includes/classes/Backend/Notices.php:138
 msgid "Switch to MySQL"
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:76
-#: includes/classes/Backend/Notices.php:106
-#: includes/classes/Backend/Notices.php:127
+#: includes/classes/Backend/Notices.php:79
+#: includes/classes/Backend/Notices.php:109
+#: includes/classes/Backend/Notices.php:130
 msgid "Starting with version 1.5.0, Snappy Search will include functionality offered by our "
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:78
-#: includes/classes/Backend/Notices.php:108
-#: includes/classes/Backend/Notices.php:129
+#: includes/classes/Backend/Notices.php:81
+#: includes/classes/Backend/Notices.php:111
+#: includes/classes/Backend/Notices.php:132
 msgid " plugin. As part of this update, the plugin will gain the ability to index WooCommerce orders, which introduces additional security considerations."
-msgstr ""
-
-#: includes/classes/Backend/Notices.php:80
-#: includes/classes/Backend/Notices.php:110
-#: includes/classes/Backend/Notices.php:131
-msgid "To support this securely and efficiently, we are "
-msgstr ""
-
-#: includes/classes/Backend/Notices.php:80
-#: includes/classes/Backend/Notices.php:110
-#: includes/classes/Backend/Notices.php:131
-msgid "discontinuing support for SQLite"
-msgstr ""
-
-#: includes/classes/Backend/Notices.php:80
-#: includes/classes/Backend/Notices.php:110
-#: includes/classes/Backend/Notices.php:131
-msgid ". Managing mixed database logic (SQLite and MySQL) adds unnecessary complexity and overhead, particularly when handling sensitive data like order information."
-msgstr ""
-
-#: includes/classes/Backend/Notices.php:82
-#: includes/classes/Backend/Notices.php:112
-#: includes/classes/Backend/Notices.php:133
-msgid "Before updating to 1.5.0, please ensure your site is using MySQL."
 msgstr ""
 
 #: includes/classes/Backend/Notices.php:83
 #: includes/classes/Backend/Notices.php:113
 #: includes/classes/Backend/Notices.php:134
+msgid "To support this securely and efficiently, we are "
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:83
+#: includes/classes/Backend/Notices.php:113
+#: includes/classes/Backend/Notices.php:134
+msgid "discontinuing support for SQLite"
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:83
+#: includes/classes/Backend/Notices.php:113
+#: includes/classes/Backend/Notices.php:134
+msgid ". Managing mixed database logic (SQLite and MySQL) adds unnecessary complexity and overhead, particularly when handling sensitive data like order information."
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:85
+#: includes/classes/Backend/Notices.php:115
+#: includes/classes/Backend/Notices.php:136
+msgid "Before updating to 1.5.0, please ensure your site is using MySQL."
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:86
+#: includes/classes/Backend/Notices.php:116
+#: includes/classes/Backend/Notices.php:137
 msgid "If your site is still using SQLite, search functionality will be automatically disabled after the update."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:95
+#: includes/classes/Backend/Notices.php:98
 msgid "Snappy Search has been disabled, because you are currently using SQLite. SQLite is no longer supported."
 msgstr ""
 
-#: includes/classes/Backend/Notices.php:124
+#: includes/classes/Backend/Notices.php:127
 msgid "Snappy Search Advanced Search has been disabled as it was causing issues as a dedicated page, so to fix these issues we put a page template in place of the dedicated page. This will allow you to customize the title and handle SEO as needed for it. Simply create a page and assign the Advanced Snappy Search template to it. You will need to re-enable Advanced Search, update your templates in your theme, and manually flush permalinks."
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:146
+msgid "Snappy Search has new features! You can now index WooCommerce orders. We also added a new Advanced Search template."
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:148
+msgid "Adjust New Settings"
+msgstr ""
+
+#: includes/classes/Backend/Notices.php:149
+msgid "View Changelog"
 msgstr ""
 
 #: includes/classes/Frontend/Advanced_Search.php:57
@@ -500,7 +512,7 @@ msgstr ""
 #: templates/snappy-search-advanced-search-form.php:34
 #: templates/snappy-search-form.php:25
 #: templates/snappy-search-mobile-form.php:25
-#: js/frontend/selector.js:204
+#: js/frontend/selector.js:214
 msgid "Popular Searches"
 msgstr ""
 
@@ -563,20 +575,20 @@ msgstr ""
 msgid "You can't have Advanced Search enabled if you have no enabled types to display!"
 msgstr ""
 
-#: js/frontend/advanced-stacked.js:193
+#: js/frontend/advanced-stacked.js:195
 msgid "Read more >"
 msgstr ""
 
-#: js/frontend/advanced-stacked.js:215
+#: js/frontend/advanced-stacked.js:217
 #: js/frontend/advanced.js:198
-#: js/frontend/selector.js:165
+#: js/frontend/selector.js:175
 #: js/frontend/shortcode.js:186
 msgid "An error occurred while searching."
 msgstr ""
 
-#: js/frontend/advanced-stacked.js:237
+#: js/frontend/advanced-stacked.js:239
 #: js/frontend/advanced.js:163
-#: js/frontend/selector.js:116
+#: js/frontend/selector.js:126
 #: js/frontend/shortcode.js:151
 msgid "No results found."
 msgstr ""
