@@ -96,8 +96,8 @@ class Backend_Loader {
    * @return void
    */
   public function load_background_worker() {
-    $admin = new Background_Worker($this->plugin, $this->version, $this->plugin_dir_url);
-    $admin->init();
+    $background_worker = new Background_Worker($this->plugin, $this->version, $this->plugin_dir_url);
+    $background_worker->init();
   }
   
   /**
@@ -106,8 +106,8 @@ class Backend_Loader {
    * @return void
    */
   public function load_index_updater() {
-    $admin = new Index_Updater($this->plugin, $this->version, $this->plugin_dir_url);
-    $admin->init();
+    $index_updater = new Index_Updater($this->plugin, $this->version, $this->plugin_dir_url);
+    $index_updater->init();
   }
   
   /**
@@ -116,8 +116,8 @@ class Backend_Loader {
    * @return void
    */
   public function load_reindexer() {
-    $admin = new Reindexer($this->plugin, $this->version, $this->plugin_dir_url);
-    $admin->init();
+    $reindexer = new Reindexer($this->plugin, $this->version, $this->plugin_dir_url);
+    $reindexer->init();
   }
   
   /**
@@ -126,8 +126,8 @@ class Backend_Loader {
    * @return void
    */
   public function load_notices() {
-    $admin = new Notices($this->plugin, $this->version, $this->plugin_dir_url);
-    $admin->init();
+    $notices = new Notices($this->plugin, $this->version, $this->plugin_dir_url);
+    $notices->init();
   }
 
 }
