@@ -50,6 +50,9 @@ class Notices {
       if ($this->version == '1.5.0') {
         $this->notice_150();
       }
+      if ($this->version == '1.5.1') {
+        $this->notice_151();
+      }
     }
 
     $this->maybe_show_sqlite_notice();
@@ -146,6 +149,17 @@ class Notices {
       <p><?php echo esc_html__('Snappy Search has new features! You can now index WooCommerce orders. We also added a new Advanced Search template.', 'speedy-search'); ?></p>
       
       <a href="admin.php?page=speedy-search"><?php echo esc_html__('Adjust New Settings', 'speedy-search'); ?></a> | 
+      <a href="https://wordpress.org/plugins/speedy-search/#developers" target="_blank"><?php echo esc_html__('View Changelog', 'speedy-search'); ?></a>
+    </div>
+    <?php
+  }
+
+  public function notice_151() {
+    ?>
+    <div class="notice notice-success is-dismissible speedy-search" style="padding-bottom: 10px;">
+      <p><?php echo esc_html__('Snappy Search has been updated to have better handling of indexing SKUs. Please Re-index if you would like to take advantage of it.', 'speedy-search'); ?></p>
+      
+      <a href="admin.php?page=speedy-search"><?php echo esc_html__('Settings', 'speedy-search'); ?></a> | 
       <a href="https://wordpress.org/plugins/speedy-search/#developers" target="_blank"><?php echo esc_html__('View Changelog', 'speedy-search'); ?></a>
     </div>
     <?php
