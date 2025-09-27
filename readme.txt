@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -99,6 +99,12 @@ By default it will index 10 posts per minute.
 
 
 == Changelog ==
+
+= 1.5.1 =
+* Added: Custom tokenizer for future use
+* Updated: Product indexing to handle SKUs with and without dashes.
+* Updated: TNTSearch from 5.0.1 to 5.0.2
+* Bugfix: Reindex will fail if you change available indexes
 
 = 1.5.0 =
 * Added: Snappy Search to WooCommerce orders

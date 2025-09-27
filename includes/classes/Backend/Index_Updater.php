@@ -85,8 +85,9 @@ class Index_Updater {
     );
 
     if ($post_type === 'product' && class_exists('WooCommerce')) {
-      $sku = get_post_meta($post_id, '_sku', true);
-      $data['sku'] = sanitize_text_field($sku);
+      $sku                    = get_post_meta($post_id, '_sku', true);
+      $data['sku']            = sanitize_text_field($sku);
+      $data['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
     }
 
     $index->insert($data);
