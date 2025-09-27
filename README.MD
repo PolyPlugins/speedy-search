@@ -83,6 +83,12 @@ By default, it will index 10 posts per minute.
 
 ## Changelog
 
+### 1.5.1
+* Added: Custom tokenizer for future use
+* Updated: Product indexing to handle SKUs with and without dashes.
+* Updated: TNTSearch from 5.0.1 to 5.0.2
+* Bugfix: Reindex will fail if you change available indexes
+
 ### 1.5.0
 * Added: Snappy Search to WooCommerce orders
 * Added: Order indexing
