@@ -3,43 +3,54 @@
 namespace TeamTNT\TNTSearch;
 
 use PDO;
-use TeamTNT\TNTSearch\Engines\RedisEngine;
+use TeamTNT\TNTSearch\Engines\EngineInterface;
 use TeamTNT\TNTSearch\Engines\SqliteEngine;
 use TeamTNT\TNTSearch\Exceptions\IndexNotFoundException;
+use TeamTNT\TNTSearch\Exceptions\InvalidEngineException;
 use TeamTNT\TNTSearch\Indexer\TNTIndexer;
 use TeamTNT\TNTSearch\Stemmer\NoStemmer;
+use TeamTNT\TNTSearch\Stemmer\StemmerInterface;
 use TeamTNT\TNTSearch\Support\Collection;
 use TeamTNT\TNTSearch\Support\Expression;
 use TeamTNT\TNTSearch\Support\Highlighter;
-use TeamTNT\TNTSearch\Support\Tokenizer;
-use TeamTNT\TNTSearch\Support\TokenizerInterface;
+use TeamTNT\TNTSearch\Tokenizer\Tokenizer;
+use TeamTNT\TNTSearch\Tokenizer\TokenizerInterface;
 
 class TNTSearch
 {
-    public $config;
-    public $tokenizer = null;
-    public $index = null;
-    public $stemmer = null;
-    protected $dbh = null;
-    public $engine;
+    public array $config;
+    public ?TokenizerInterface $tokenizer = null;
+    public ?PDO $index = null;
+    public ?StemmerInterface $stemmer = null;
+    protected ?PDO $dbh = null;
+    public EngineInterface $engine;
 
     /**
      * @param array $config
      *
+     * @throws InvalidEngineException
      * @see https://github.com/teamtnt/tntsearch#examples
      */
     public function loadConfig(array $config)
     {
         $this->config = $config;
-        $this->config['storage'] = rtrim($this->config['storage'], '/') . '/';
+
+        if (isset($this->config['storage'])) {
+            $this->config['storage'] = rtrim($this->config['storage'], '/') . '/';
+        }
 
         // Check if 'engine' key is set in the config
         if (!isset($this->config['engine'])) {
-            $this->config['engine'] = \TeamTNT\TNTSearch\Engines\SqliteEngine::class;
+            $this->config['engine'] = SqliteEngine::class;
         }
 
         // Create the engine instance based on the config
         $engine = $this->config['engine'];
+
+        if (!is_string($engine) || !is_a($engine, EngineInterface::class, true)) {
+            throw new InvalidEngineException();
+        }
+
         $this->engine = new $engine;
 
         $this->engine->loadConfig($config);
@@ -165,7 +176,7 @@ class TNTSearch
         $postfix = $expression->toPostfix("|" . $phrase);
 
         foreach ($postfix as $token) {
-            if ($token == '&') {
+            if ($token === '&') {
                 $left = array_pop($stack);
                 $right = array_pop($stack);
                 if (is_string($left)) {
@@ -185,7 +196,7 @@ class TNTSearch
                 }
                 $stack[] = array_values(array_intersect($left, $right));
             } else {
-                if ($token == '|') {
+                if ($token === '|') {
                     $left = array_pop($stack);
                     $right = array_pop($stack);
 
@@ -206,7 +217,7 @@ class TNTSearch
                     }
                     $stack[] = array_unique(array_merge($left, $right));
                 } else {
-                    if ($token == '~') {
+                    if ($token === '~') {
                         $left = array_pop($stack);
                         if (is_string($left)) {
                             $left = $this->getAllDocumentsForWhereKeywordNot($this->stemmer->stem($left), true)
@@ -322,24 +333,55 @@ class TNTSearch
         return $this->stemmer;
     }
 
+    private function isValidStemmer($stemmer)
+    {
+        if (is_object($stemmer)) {
+            return $stemmer instanceof StemmerInterface;
+        }
+
+        return is_string($stemmer) && class_exists($stemmer) && is_a($stemmer, StemmerInterface::class, true);
+    }
+
     public function setStemmer()
     {
         $stemmer = $this->getValueFromInfoTable('stemmer');
-        if ($stemmer) {
+
+        if ($this->isValidStemmer($stemmer)) {
             $this->stemmer = new $stemmer;
-        } else {
-            $this->stemmer = isset($this->config['stemmer']) ? new $this->config['stemmer'] : new NoStemmer;
+            return;
         }
+
+        if (isset($this->config['stemmer']) && $this->isValidStemmer($this->config['stemmer'])) {
+            $this->stemmer = new $this->config['stemmer'];
+            return;
+        }
+
+        $this->stemmer = new NoStemmer;
+    }
+
+    private function isValidTokenizer($tokenizer)
+    {
+        if (is_object($tokenizer)) {
+            return $tokenizer instanceof TokenizerInterface;
+        }
+
+        return is_string($tokenizer) && class_exists($tokenizer) && is_a($tokenizer, TokenizerInterface::class, true);
     }
 
     public function setTokenizer()
     {
         $tokenizer = $this->getValueFromInfoTable('tokenizer');
-        if ($tokenizer) {
+        if ($this->isValidTokenizer($tokenizer)) {
             $this->tokenizer = new $tokenizer;
-        } else {
-            $this->tokenizer = isset($this->config['tokenizer']) ? new $this->config['tokenizer'] : new Tokenizer;
+            return;
         }
+
+        if (isset($this->config['tokenizer']) && $this->isValidTokenizer($this->config['tokenizer'])) {
+            $this->tokenizer = new $this->config['tokenizer'];
+            return;
+        }
+
+        $this->tokenizer = new Tokenizer;
     }
 
     /**
@@ -347,7 +389,7 @@ class TNTSearch
      */
     public function isFileSystemIndex()
     {
-        return $this->getValueFromInfoTable('driver') == 'filesystem';
+        return $this->getValueFromInfoTable('driver') === 'filesystem';
     }
 
     public function getValueFromInfoTable($value)
@@ -357,7 +399,11 @@ class TNTSearch
 
     public function filesystemMapIdsToPaths($docs)
     {
-        return $this->engine->filesystemMapIdsToPaths($docs);
+        if ($this->engine instanceof SqliteEngine) {
+            return $this->engine->filesystemMapIdsToPaths($docs);
+        }
+
+        return $docs;
     }
 
     public function info($str)
