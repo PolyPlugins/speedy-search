@@ -3,48 +3,54 @@
 namespace TeamTNT\TNTSearch\Engines;
 
 use PDO;
+use PDOStatement;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
 use TeamTNT\TNTSearch\Exceptions\IndexNotFoundException;
+use TeamTNT\TNTSearch\FileReaders\FileReaderInterface;
+use TeamTNT\TNTSearch\Stemmer\NoStemmer;
+use TeamTNT\TNTSearch\Stemmer\StemmerInterface;
 use TeamTNT\TNTSearch\Support\Collection;
+use TeamTNT\TNTSearch\Tokenizer\Tokenizer;
+use TeamTNT\TNTSearch\Tokenizer\TokenizerInterface;
 
 class SqliteEngine implements EngineInterface
 {
     use EngineTrait;
 
-    public $indexName;
-    public $config;
-    public $index;
-    public $stemmer;
-    public $dbh;
-    public $query;
-    public $disableOutput = false;
-    public $primaryKey;
-    protected $excludePrimaryKey = true;
-    public $decodeHTMLEntities;
-    public $tokenizer;
-    public $stopWords = [];
-    public $statementsPrepared = false;
-    protected $updateInfoTableStmt;
-    protected $insertWordlistStmt;
-    protected $selectWordlistStmt;
-    protected $updateWordlistStmt;
-    public $steps = 1000;
-    public $inMemory = true;
-    protected $inMemoryTerms = [];
-    public $filereader = null;
-    public $asYouType = false;
-    public $fuzziness = false;
-    public $fuzzy_prefix_length = 2;
-    public $fuzzy_max_expansions = 50;
-    public $fuzzy_distance = 2;
-    public $fuzzy_no_limit = false;
-    public $maxDocs = 500;
+    public string $indexName;
+    public array $config;
+    public PDO $index;
+    public StemmerInterface $stemmer;
+    public PDO $dbh;
+    public string $query;
+    public bool $disableOutput = false;
+    public string $primaryKey;
+    protected bool $excludePrimaryKey = true;
+    public bool $decodeHTMLEntities = false;
+    public TokenizerInterface $tokenizer;
+    public array $stopWords = [];
+    public bool $statementsPrepared = false;
+    protected PDOStatement $updateInfoTableStmt;
+    protected PDOStatement $insertWordlistStmt;
+    protected PDOStatement $selectWordlistStmt;
+    protected PDOStatement $updateWordlistStmt;
+    public int $steps = 1000;
+    public bool $inMemory = true;
+    protected array $inMemoryTerms = [];
+    public ?FileReaderInterface $filereader = null;
+    public bool $asYouType = false;
+    public bool $fuzziness = false;
+    public int $fuzzy_prefix_length = 2;
+    public int $fuzzy_max_expansions = 50;
+    public int $fuzzy_distance = 2;
+    public bool $fuzzy_no_limit = false;
+    public int $maxDocs = 500;
 
     /**
      * @param string $indexName
-     *
-     * @return TNTIndexer
+     * @return $this
+     * @throws \Exception
      */
     public function createIndex(string $indexName)
     {
@@ -87,9 +93,16 @@ class SqliteEngine implements EngineInterface
                     key TEXT,
                     value TEXT)");
 
-        $this->index->exec("INSERT INTO info ( 'key', 'value') values ( 'total_documents', 0)");
-        $this->index->exec("INSERT INTO info ( 'key', 'value') values ( 'stemmer', 'TeamTNT\TNTSearch\Stemmer\NoStemmer')");
-        $this->index->exec("INSERT INTO info ( 'key', 'value') values ( 'tokenizer', 'TeamTNT\TNTSearch\Support\Tokenizer')");
+        $infoStatement = $this->index->prepare("INSERT INTO info (`key`, `value`) VALUES (:key, :value);");
+        $infoValues = [
+            [':key' => 'total_documents', ':value' => 0],
+            [':key' => 'stemmer', ':value' => NoStemmer::class],
+            [':key' => 'tokenizer', ':value' => Tokenizer::class],
+        ];
+
+        foreach ($infoValues as $value) {
+            $infoStatement->execute($value);
+        }
 
         $this->index->exec("CREATE INDEX IF NOT EXISTS 'main'.'term_id_index' ON doclist ('term_id' COLLATE BINARY);");
         $this->index->exec("CREATE INDEX IF NOT EXISTS 'main'.'doc_id_index' ON doclist ('doc_id');");
@@ -102,9 +115,12 @@ class SqliteEngine implements EngineInterface
             $this->setTokenizer(new $this->config['tokenizer']);
         }
 
-        if (!$this->dbh) {
-            $connector = $this->createConnector($this->config);
-            $this->dbh = $connector->connect($this->config);
+        if (!isset($this->dbh)) {
+            $dbh = $this->createConnector($this->config)->connect($this->config);
+
+            if ($dbh instanceof PDO) {
+                $this->dbh = $dbh;
+            }
         }
 
         return $this;
@@ -122,12 +138,6 @@ class SqliteEngine implements EngineInterface
         if (!isset($this->config['wal'])) {
             $this->config['wal'] = true;
         }
-    }
-
-    public function setStemmer($stemmer)
-    {
-        $this->stemmer = $stemmer;
-        $this->updateInfoTable('stemmer', get_class($stemmer));
     }
 
     public function updateInfoTable(string $key, $value)
@@ -163,16 +173,25 @@ class SqliteEngine implements EngineInterface
 
             $this->processDocument(new Collection($row));
 
-            if ($counter % $this->steps == 0) {
+            if ($counter % $this->steps === 0) {
                 $this->info("Processed {$counter} rows");
             }
-            if ($counter % 10000 == 0) {
+
+            if ($counter % 10000 === 0) {
                 $this->index->commit();
                 $this->index->beginTransaction();
                 $this->info("Committed");
             }
         }
-        $this->index->commit();
+
+        if ($counter % $this->steps !== 0) {
+            $this->info("Processed {$counter} rows");
+        }
+
+        if ($counter % 10000 !== 0) {
+            $this->index->commit();
+            $this->info("Committed");
+        }
 
         $this->updateInfoTable('total_documents', $counter);
 
@@ -187,12 +206,12 @@ class SqliteEngine implements EngineInterface
             $row->forget($this->getPrimaryKey());
         }
 
-        $stems = $row->map(function ($columnContent, $columnName) use ($row) {
-            if (!is_string($columnContent) || trim($columnContent) === '') {
+        $stems = $row->map(function ($columnContent) {
+            if (trim((string)$columnContent) === '') {
                 return [];
             }
 
-            return $this->stemText($columnContent);
+            return $this->stemText((string)$columnContent);
         });
 
         $this->saveToIndex($stems, $documentId);
@@ -234,7 +253,8 @@ class SqliteEngine implements EngineInterface
     public function saveWordlist(Collection $stems)
     {
         $terms = [];
-        $stems->map(function ($column, $key) use (&$terms) {
+
+        $stems->map(function ($column) use (&$terms) {
             foreach ($column as $term) {
                 if (array_key_exists($term, $terms)) {
                     $terms[$term]['hits']++;
@@ -250,7 +270,6 @@ class SqliteEngine implements EngineInterface
         });
 
         foreach ($terms as $key => $term) {
-
             try {
                 $this->insertWordlistStmt->bindParam(":keyword", $key);
                 $this->insertWordlistStmt->bindParam(":hits", $term['hits']);
@@ -298,13 +317,12 @@ class SqliteEngine implements EngineInterface
         $insert = 'INSERT INTO doclist (term_id, doc_id, hit_count) VALUES (:id, :doc, :hits)';
         $stmt = $this->index->prepare($insert);
 
-        foreach ($terms as $key => $term) {
-
+        foreach ($terms as $term) {
             $stmt->bindValue(':id', $term['id']);
             $stmt->bindValue(':doc', $docId);
             $stmt->bindValue(':hits', $term['hits']);
             try {
-                $res = $stmt->execute();
+                $stmt->execute();
             } catch (\Exception $e) {
                 //we have a duplicate
                 echo $e->getMessage();
@@ -314,31 +332,6 @@ class SqliteEngine implements EngineInterface
 
     public function saveHitList(array $stems, int $docId, array $termsList)
     {
-        return;
-        $fieldCounter = 0;
-        $fields = [];
-
-        $insert = "INSERT INTO hitlist (term_id, doc_id, field_id, position, hit_count)
-                   VALUES (:term_id, :doc_id, :field_id, :position, :hit_count)";
-        $stmt = $this->index->prepare($insert);
-
-        foreach ($stems as $field => $terms) {
-            $fields[$fieldCounter] = $field;
-            $positionCounter = 0;
-            $termCounts = array_count_values($terms);
-            foreach ($terms as $term) {
-                if (isset($termsList[$term])) {
-                    $stmt->bindValue(':term_id', $termsList[$term]['id']);
-                    $stmt->bindValue(':doc_id', $docId);
-                    $stmt->bindValue(':field_id', $fieldCounter);
-                    $stmt->bindValue(':position', $positionCounter);
-                    $stmt->bindValue(':hit_count', $termCounts[$term]);
-                    $stmt->execute();
-                }
-                $positionCounter++;
-            }
-            $fieldCounter++;
-        }
     }
 
     public function readDocumentsFromFileSystem()

@@ -132,7 +132,12 @@ class Utils {
     $tnt        = TNTSearch::get_instance()->tnt();
     $index_name = self::get_index_name($post_type);
 
-    $tnt->selectIndex($index_name);
+    try {
+      $tnt->selectIndex($index_name);
+    } catch (\Exception $e) {
+      return;
+    }
+
     $tnt->engine->flushIndex($index_name);
   }
   

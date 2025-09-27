@@ -4,6 +4,7 @@
 [ ] Plugin Scan
 
 # 1.6.0
+[ ] Add utils for version and plugin_dir_url using static property to cache
 [ ] Push featured to top of list and add a badge for "Featured"
 [ ] Handling indexing categories
 [ ] Add scroll to load more results
@@ -21,6 +22,12 @@
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
+
+# 1.5.1
+[X] Add custom tokenizer for future use
+[X] Update product indexing to handle SKUs with and without dashes.
+[X] Updated TNTSearch from 5.0.1 to 5.0.2
+[X] Fix reindex fail if you change available indexes
 
 # 1.5.0
 [X] Now that MySQL is integrated add support for Admin Snappy Search

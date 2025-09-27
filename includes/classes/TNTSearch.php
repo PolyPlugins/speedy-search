@@ -71,7 +71,7 @@ class TNTSearch {
         'password'  => DB_PASSWORD,
         'storage'   => $this->index_path,
         'stemmer'   => \TeamTNT\TNTSearch\Stemmer\PorterStemmer::class,
-        'tokenizer' => \TeamTNT\TNTSearch\Support\Tokenizer::class
+        // 'tokenizer' => \PolyPlugins\Speedy_Search\WordPress_Tokenizer::class
       ));
     } else {
       $this->tnt->loadConfig(array(

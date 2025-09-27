@@ -193,8 +193,9 @@ class Background_Worker {
             continue;
           }
 
-          $sku         = get_post_meta($post_id, '_sku', true);
-          $args['sku'] = sanitize_text_field($sku);
+          $sku                    = get_post_meta($post_id, '_sku', true);
+          $args['sku']            = sanitize_text_field($sku);
+          $args['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
         }
 
         $index->insert($args);

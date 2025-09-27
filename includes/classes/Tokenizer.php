@@ -1,5 +1,9 @@
 <?php
-namespace TeamTNT\TNTSearch\Support;
+
+namespace PolyPlugins\Speedy_Search;
+
+use TeamTNT\TNTSearch\Tokenizer\AbstractTokenizer;
+use TeamTNT\TNTSearch\Tokenizer\TokenizerInterface;
 
 class Tokenizer extends AbstractTokenizer implements TokenizerInterface
 {
@@ -7,7 +11,11 @@ class Tokenizer extends AbstractTokenizer implements TokenizerInterface
 
     public function tokenize($text, $stopwords = [])
     {
-        $text  = mb_strtolower($text);
+        if (!is_scalar($text)) {
+            return [];
+        }
+
+        $text  = mb_strtolower((string)$text);
         $split = preg_split($this->getPattern(), $text, -1, PREG_SPLIT_NO_EMPTY);
         return array_diff($split, $stopwords);
     }

@@ -13,10 +13,17 @@ namespace TeamTNT\TNTSearch\Engines;
 use PDO;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+use TeamTNT\TNTSearch\Stemmer\NoStemmer;
 use TeamTNT\TNTSearch\Support\Collection;
+use TeamTNT\TNTSearch\Tokenizer\Tokenizer;
 
 class MysqlEngine extends SqliteEngine
 {
+    /**
+     * @param string $indexName
+     * @return $this
+     * @throws \Exception
+     */
     public function createIndex(string $indexName)
     {
         $this->setIndexName($indexName);
@@ -63,11 +70,16 @@ class MysqlEngine extends SqliteEngine
                     `value` VARCHAR(255));"
         );
 
-        $this->index->exec("INSERT INTO {$this->indexName}_info ( `key`, `value`) values 
-            ('total_documents', 0), 
-            ('stemmer', 'TeamTNT\TNTSearch\Stemmer\NoStemmer'), 
-            ('tokenizer', 'TeamTNT\TNTSearch\Support\Tokenizer');"
-        );
+        $infoStatement = $this->index->prepare("INSERT INTO {$this->indexName}_info (`key`, `value`) VALUES (:key, :value);");
+        $infoValues = [
+            [':key' => 'total_documents', ':value' => 0],
+            [':key' => 'stemmer', ':value' => NoStemmer::class],
+            [':key' => 'tokenizer', ':value' => Tokenizer::class],
+        ];
+
+        foreach ($infoValues as $value) {
+            $infoStatement->execute($value);
+        }
 
         $this->index->exec("ALTER TABLE {$this->indexName}_doclist ADD INDEX idx_term_id_hit_count (`term_id`, `hit_count` DESC);");
         $this->index->exec("ALTER TABLE {$this->indexName}_doclist ADD INDEX idx_doc_id (`doc_id`);");
@@ -80,9 +92,12 @@ class MysqlEngine extends SqliteEngine
             $this->setTokenizer(new $this->config['tokenizer']);
         }
 
-        if (!$this->dbh) {
-            $connector = $this->createConnector($this->config);
-            $this->dbh = $connector->connect($this->config);
+        if (!isset($this->dbh)) {
+            $dbh = $this->createConnector($this->config)->connect($this->config);
+
+            if ($dbh instanceof PDO) {
+                $this->dbh = $dbh;
+            }
         }
 
         return $this;
@@ -90,7 +105,7 @@ class MysqlEngine extends SqliteEngine
 
     public function selectIndex(string $indexName)
     {
-        if ($this->index === null || $this->indexName != $indexName) {
+        if (!isset($this->index) || $this->indexName !== $indexName) {
             $this->setIndexName($indexName);
             $this->index = new PDO('mysql:dbname='.$this->config['database'].';host='.$this->config['host'], $this->config['username'], $this->config['password']);
             $this->index->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -142,7 +157,7 @@ class MysqlEngine extends SqliteEngine
     public function saveWordlist(Collection $stems)
     {
         $terms = [];
-        $stems->map(function ($column, $key) use (&$terms) {
+        $stems->map(function ($column) use (&$terms) {
             foreach ($column as $term) {
                 if (array_key_exists($term, $terms)) {
                     $terms[$term]['hits']++;
@@ -184,7 +199,7 @@ class MysqlEngine extends SqliteEngine
     public function saveDoclist(array $terms, int $docId)
     {
         $insertRows = [];
-        foreach ($terms as $key => $term) {
+        foreach ($terms as $term) {
             $insertRows[] = '(' . $this->index->quote($term['id']) . ', ' . $this->index->quote($docId) . ', ' . $this->index->quote($term['hits']) . ')';
         }
 
@@ -194,31 +209,6 @@ class MysqlEngine extends SqliteEngine
 
     public function saveHitList(array $stems, int $docId, array $termsList)
     {
-        return;
-        $fieldCounter = 0;
-        $fields = [];
-
-        $insert = "INSERT INTO {$this->indexName}_hitlist (term_id, doc_id, field_id, position, hit_count)
-                   VALUES (:term_id, :doc_id, :field_id, :position, :hit_count)";
-        $stmt = $this->index->prepare($insert);
-
-        foreach ($stems as $field => $terms) {
-            $fields[$fieldCounter] = $field;
-            $positionCounter = 0;
-            $termCounts = array_count_values($terms);
-            foreach ($terms as $term) {
-                if (isset($termsList[$term])) {
-                    $stmt->bindValue(':term_id', $termsList[$term]['id']);
-                    $stmt->bindValue(':doc_id', $docId);
-                    $stmt->bindValue(':field_id', $fieldCounter);
-                    $stmt->bindValue(':position', $positionCounter);
-                    $stmt->bindValue(':hit_count', $termCounts[$term]);
-                    $stmt->execute();
-                }
-                $positionCounter++;
-            }
-            $fieldCounter++;
-        }
     }
 
     public function delete(int $documentId)
