@@ -65,8 +65,13 @@ class Enqueue {
     }
 
     if ($hook_suffix === 'woocommerce_page_wc-orders') {
-      $this->enqueue_order_styles();
-      $this->enqueue_order_scripts();
+      $order_options  = Utils::get_option('orders');
+      $orders_enabled = isset($order_options['enabled']) ? $order_options['enabled'] : 0;
+
+      if ($orders_enabled) {
+        $this->enqueue_order_styles();
+        $this->enqueue_order_scripts();
+      }
     }
   }
   
