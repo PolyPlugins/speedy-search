@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.5.1
+Stable tag: 1.5.2
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -99,6 +99,10 @@ By default it will index 10 posts per minute.
 
 
 == Changelog ==
+
+= 1.5.2 =
+* Bugfix: WooCommerce orders admin will sometimes close if opened in new tab
+* Bugfix: Searching orders will fail if orders were not indexed
 
 = 1.5.1 =
 * Added: Custom tokenizer for future use

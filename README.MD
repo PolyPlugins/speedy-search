@@ -83,6 +83,10 @@ By default, it will index 10 posts per minute.
 
 ## Changelog
 
+### 1.5.2
+* Bugfix: WooCommerce orders admin will sometimes close if opened in new tab
+* Bugfix: Searching orders will fail if orders were not indexed
+
 ### 1.5.1
 * Added: Custom tokenizer for future use
 * Updated: Product indexing to handle SKUs with and without dashes.

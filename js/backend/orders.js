@@ -20,7 +20,6 @@ jQuery(document).ready(function ($) {
   
   function init() {
     listener();
-    close();
   }
 
   function listener() {
