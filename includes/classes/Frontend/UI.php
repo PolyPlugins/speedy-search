@@ -2,6 +2,8 @@
 
 namespace PolyPlugins\Speedy_Search\Frontend;
 
+if (!defined('ABSPATH')) exit;
+
 class UI {
 
   /**

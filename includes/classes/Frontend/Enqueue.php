@@ -5,6 +5,8 @@ namespace PolyPlugins\Speedy_Search\Frontend;
 use PolyPlugins\Speedy_Search\Backend\DB;
 use PolyPlugins\Speedy_Search\Utils;
 
+if (!defined('ABSPATH')) exit;
+
 class Enqueue {
 
   /**
