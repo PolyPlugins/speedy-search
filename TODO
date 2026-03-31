@@ -3,9 +3,6 @@
 [ ] Update Screenshots
 [ ] Plugin Scan
 
-# Test
-[] Custom product fields
-
 # 1.7.0
 [ ] Have it so when you click in it, it shows the full search filled with popular search terms, products, posts, ect.
 [ ] Add utils for version and plugin_dir_url using static property to cache
@@ -28,6 +25,7 @@
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
 
 # 1.6.0
+[X] Custom product fields
 [X] Produc visibility
 [X] When products go out of stock clear cache
 [X] Add out of stock badges
