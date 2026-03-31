@@ -80,6 +80,7 @@ class Settings {
     if (class_exists('WooCommerce')) {
       add_submenu_page('speedy-search', __('Products', 'speedy-search'), __('Products', 'speedy-search'), 'manage_options', 'speedy-search-products', array($this, 'redirect_to_products_tab'));
       add_submenu_page('speedy-search', __('Orders', 'speedy-search'), __('Orders', 'speedy-search'), 'manage_options', 'speedy-search-orders', array($this, 'redirect_to_orders_tab'));
+      add_submenu_page('speedy-search', __('Filters', 'speedy-search'), __('Filters', 'speedy-search'), 'manage_options', 'speedy-search-filters', array($this, 'redirect_to_filters_tab'));
     }
 
     if (class_exists('Easy_Digital_Downloads')) {
@@ -154,6 +155,7 @@ class Settings {
     $field_classes = array(
       'advanced'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Advanced',
       'downloads' => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Downloads',
+      'filters'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Filters',
       'general'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\General',
       'pages'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Pages',
       'popular'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Popular',
@@ -230,6 +232,12 @@ class Settings {
                       <?php esc_html_e('Orders', 'speedy-search'); ?>
                     </a>
                   </li>
+                  <li>
+                    <a href="javascript:void(0);" data-section="filters">
+                      <i class="bi bi-funnel-fill"></i>
+                      <?php esc_html_e('Filters', 'speedy-search'); ?>
+                    </a>
+                  </li>
                 <?php endif; ?>
                 <?php if (class_exists('Easy_Digital_Downloads')) : ?>
                   <li>
@@ -241,7 +249,7 @@ class Settings {
                 <?php endif; ?>
                 <li>
                   <a href="javascript:void(0);" data-section="advanced">
-                    <i class="bi bi-funnel-fill"></i>
+                    <i class="bi bi-sliders"></i>
                     <?php esc_html_e('Advanced', 'speedy-search'); ?>
                   </a>
                 </li>
@@ -298,6 +306,11 @@ class Settings {
                 <div class="tab orders" style="display: none;">
                   <?php
                   do_settings_sections('speedy_search_orders_polyplugins');
+                  ?>
+                </div>
+                <div class="tab filters" style="display: none;">
+                  <?php
+                  do_settings_sections('speedy_search_filters_polyplugins');
                   ?>
                 </div>
               <?php endif; ?>
@@ -360,6 +373,12 @@ class Settings {
 
   public function redirect_to_orders_tab() {
     wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=orders'));
+    
+    exit;
+  }
+
+  public function redirect_to_filters_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=filters'));
     
     exit;
   }
