@@ -16,6 +16,7 @@
 [ ] Add logging class from our other plugins
 
 # General
+[ ] When a product has variations have a popup list all the options to choose from
 [ ] Add filtering by category
 [ ] Add scroll to load more results
 [ ] Add additional ordering like by top seller for products
