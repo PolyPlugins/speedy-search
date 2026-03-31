@@ -498,15 +498,8 @@ class API {
         if (!empty($custom_fields)) {
           foreach ($custom_fields as $custom_field) {
             $meta_key   = sanitize_key($custom_field);
-            $meta_value = get_post_meta($post->ID, $meta_key, true);
-
-            if (is_array($meta_value)) {
-              $meta_value = implode(', ', array_map('sanitize_text_field', $meta_value));
-            } else {
-              $meta_value = sanitize_text_field($meta_value);
-            }
-
-            $product_custom_fields[$meta_key] = $meta_value;
+            $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
+            $product_custom_fields[$meta_key] = $meta_values;
           }
         }
         
@@ -711,6 +704,66 @@ class API {
 
   public function check_permissions() {
     return current_user_can('manage_woocommerce');
+  }
+
+  /**
+   * Get custom field values from a product and its variations
+   *
+   * @param int $product_id
+   * @param string $meta_key
+   * @param mixed $product
+   * @return array
+   */
+  private function get_product_custom_field_values($product_id, $meta_key, $product) {
+    $values = $this->normalize_custom_field_values(get_post_meta($product_id, $meta_key, true));
+
+    if ($product && $product->is_type('variable')) {
+      $variation_ids = $product->get_children();
+
+      if (!empty($variation_ids)) {
+        foreach ($variation_ids as $variation_id) {
+          $variation_values = $this->normalize_custom_field_values(get_post_meta($variation_id, $meta_key, true));
+
+          if (!empty($variation_values)) {
+            $values = array_merge($values, $variation_values);
+          }
+        }
+      }
+    }
+
+    return array_values(array_unique($values));
+  }
+
+  /**
+   * Normalize custom field values to a sanitized array
+   *
+   * @param mixed $meta_value
+   * @return array
+   */
+  private function normalize_custom_field_values($meta_value) {
+    $values = array();
+
+    if (is_array($meta_value)) {
+      foreach ($meta_value as $value) {
+        if (is_array($value)) {
+          continue;
+        }
+
+        $sanitized_value = sanitize_text_field((string) $value);
+
+        if ($sanitized_value !== '') {
+          $values[] = $sanitized_value;
+        }
+      }
+    } else {
+      $sanitized_value = sanitize_text_field((string) $meta_value);
+
+      if ($sanitized_value !== '') {
+        $values[] = $sanitized_value;
+      }
+    }
+
+    return $values;
   }
 
 }

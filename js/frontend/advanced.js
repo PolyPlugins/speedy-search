@@ -429,6 +429,20 @@ jQuery(document).ready(function ($) {
       });
   }
 
+  function normalizeCustomFieldValues(rawValue) {
+    if (Array.isArray(rawValue)) {
+      return $.grep($.map(rawValue, function (value) {
+        return String(value || '').trim();
+      }), function (value) {
+        return !!value;
+      });
+    }
+
+    let value = String(rawValue || '').trim();
+
+    return value ? [value] : [];
+  }
+
   function populateCustomFieldFilters($filters, products) {
     let fieldValues = {};
     let selectedValues = {};
@@ -449,9 +463,9 @@ jQuery(document).ready(function ($) {
 
       $.each(item.custom_fields, function (rawKey, rawValue) {
         let key = normalizeCustomFieldKey(rawKey);
-        let value = String(rawValue || '').trim();
+        let values = normalizeCustomFieldValues(rawValue);
 
-        if (!key || !value) {
+        if (!key || !values.length) {
           return;
         }
 
@@ -459,7 +473,9 @@ jQuery(document).ready(function ($) {
           fieldValues[key] = {};
         }
 
-        fieldValues[key][value] = true;
+        $.each(values, function (_, value) {
+          fieldValues[key][value] = true;
+        });
       });
     });
 
@@ -497,9 +513,9 @@ jQuery(document).ready(function ($) {
     $filters.find('.filter-custom-field').each(function () {
       let selected = String($(this).val() || '').trim();
       let fieldKey = normalizeCustomFieldKey($(this).data('field-key'));
-      let itemValue = String(productCustomFields[fieldKey] || '').trim();
+      let itemValues = normalizeCustomFieldValues(productCustomFields[fieldKey]);
 
-      if (selected && itemValue !== selected) {
+      if (selected && $.inArray(selected, itemValues) === -1) {
         isMatch = false;
         return false;
       }
