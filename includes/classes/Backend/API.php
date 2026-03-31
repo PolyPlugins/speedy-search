@@ -199,6 +199,16 @@ class API {
    * @return void
    */
   public function get_search(WP_REST_Request $request) {
+    $get_search_query = $request->get_param('search');
+    $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
+    $search_key       = strtolower(trim($search_query));
+    $cache_key        = 'speedy_search_combined_' . md5($search_key);
+    $cached_results   = wp_cache_get($cache_key, 'speedy_search_api');
+
+    if ($cached_results !== false) {
+      return new WP_REST_Response($cached_results, 200);
+    }
+
     $results = array();
     $types   = array(
       'posts' => array(
@@ -240,6 +250,8 @@ class API {
         $results[$type] = array();
       }
     }
+
+    wp_cache_set($cache_key, $results, 'speedy_search_api', 600);
 
     return new WP_REST_Response($results, 200);
   }
