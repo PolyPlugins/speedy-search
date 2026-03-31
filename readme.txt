@@ -111,6 +111,7 @@ By default it will index 10 posts per minute.
 * Added: Handling to clear cache when a product goes out of stock
 * Added: Handling clearing cache when posts, products, ect are updated / deleted
 * Added: Handling for when a products visibility is set to hidden
+* Added: Suffixes to global variables
 * Added: Notice in settings when no object cache is detected
 
 = 1.5.2 =
