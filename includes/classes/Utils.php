@@ -45,6 +45,71 @@ class Utils {
   }
 
   /**
+   * Get API cache value
+   *
+   * @param  string $key Cache key
+   * @return mixed
+   */
+  public static function get_api_cache($key) {
+    return wp_cache_get($key, 'speedy_search_api');
+  }
+
+  /**
+   * Set API cache value and register the key
+   *
+   * @param  string $key Cache key
+   * @param  mixed  $value Cache value
+   * @param  int    $expiration Cache expiration in seconds
+   * @return void
+   */
+  public static function set_api_cache($key, $value, $expiration = 600) {
+    wp_cache_set($key, $value, 'speedy_search_api', $expiration);
+
+    $keys = get_option('speedy_search_api_cache_keys', array());
+
+    if (!is_array($keys)) {
+      $keys = array();
+    }
+
+    $keys[$key] = time();
+
+    update_option('speedy_search_api_cache_keys', $keys);
+  }
+
+  /**
+   * Clear API cache group
+   *
+   * @return void
+   */
+  public static function clear_api_cache() {
+    $did_flush_group = false;
+
+    if (function_exists('wp_cache_flush_group')) {
+      if (function_exists('wp_cache_supports')) {
+        if (wp_cache_supports('flush_group')) {
+          wp_cache_flush_group('speedy_search_api');
+          $did_flush_group = true;
+        }
+      } else {
+        wp_cache_flush_group('speedy_search_api');
+        $did_flush_group = true;
+      }
+    }
+
+    if (!$did_flush_group) {
+      $keys = get_option('speedy_search_api_cache_keys', array());
+
+      if (is_array($keys) && !empty($keys)) {
+        foreach ($keys as $key => $timestamp) {
+          wp_cache_delete($key, 'speedy_search_api');
+        }
+      }
+    }
+
+    delete_option('speedy_search_api_cache_keys');
+  }
+
+  /**
    * Get speedy search indexes
    *
    * @return array $options The speedy search indexes options

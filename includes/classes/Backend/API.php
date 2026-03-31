@@ -203,7 +203,7 @@ class API {
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
     $search_key       = strtolower(trim($search_query));
     $cache_key        = 'speedy_search_combined_' . md5($search_key);
-    $cached_results   = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -251,7 +251,7 @@ class API {
       }
     }
 
-    wp_cache_set($cache_key, $results, 'speedy_search_api', 600);
+    Utils::set_api_cache($cache_key, $results, 600);
 
     return new WP_REST_Response($results, 200);
   }
@@ -285,7 +285,7 @@ class API {
     $cache_key = 'speedy_search_posts_' . md5($search_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -327,7 +327,7 @@ class API {
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
+      Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -362,7 +362,7 @@ class API {
     $cache_key = 'speedy_search_pages_' . md5($search_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -404,7 +404,7 @@ class API {
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
+      Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -442,7 +442,7 @@ class API {
     $cache_key = 'speedy_search_products_' . md5($search_query . '|' . (int) $out_of_stock_last);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -533,7 +533,7 @@ class API {
         return $b['average_rating'] <=> $a['average_rating'];
       });
 
-      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
+      Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -568,7 +568,7 @@ class API {
     $cache_key = 'speedy_search_downloads_' . md5($search_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -613,7 +613,7 @@ class API {
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
+      Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -648,7 +648,7 @@ class API {
     $cache_key = 'speedy_search_orders_' . md5($search_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -697,7 +697,7 @@ class API {
       );
     }
 
-    wp_cache_set($cache_key, $orders_data, 'speedy_search_api', 600);
+    Utils::set_api_cache($cache_key, $orders_data, 600);
 
     return new WP_REST_Response($orders_data, 200);
   }
