@@ -208,6 +208,7 @@ jQuery(document).ready(function ($) {
         let price = "";
         let rating = "";
         let featuredBadge = "";
+        let stockBadge = "";
         let productAction = "";
 
         if (item.thumbnail) {
@@ -226,6 +227,10 @@ jQuery(document).ready(function ($) {
           featuredBadge = '<div class="featured-badge">' + __("Featured", "speedy-search") + '</div>';
         }
 
+        if (endpoint === 'product' && item.is_in_stock === false) {
+          stockBadge = '<div class="stock-badge out-of-stock-badge">' + __("Out of stock", "speedy-search") + '</div>';
+        }
+
         if (endpoint === 'product') {
           let actionLabel = item.is_variable ? __("Select Options", "speedy-search") : __("Add to Cart", "speedy-search");
           let actionUrl = item.is_variable ? item.permalink : getCurrentAddToCartUrl(item.id);
@@ -242,7 +247,7 @@ jQuery(document).ready(function ($) {
         return `
           <div class="instant-search-result grid-item${hiddenClass}">
             <a href="${item.permalink}" class="permalink-result">
-              ${imageHTML ? `<div class="image-wrapper">${imageHTML}${featuredBadge}</div>` : ''}
+              ${imageHTML ? `<div class="image-wrapper">${imageHTML}${featuredBadge}${stockBadge}</div>` : ''}
               <div class="search-content">
                 <h2 class="title-result">${item.title}</h2>
                 ${rating}

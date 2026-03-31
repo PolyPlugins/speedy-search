@@ -324,6 +324,25 @@
   margin-bottom: 0;
 }
 
+.speedy-search-container .stock-badge {
+  display: inline-block;
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 2;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 999px;
+  margin-bottom: 0;
+}
+
+.speedy-search-container .out-of-stock-badge {
+  background: #a10000;
+}
+
 .speedy-search-container .excerpt-result {
   margin: 0;
   font-size: 14px;

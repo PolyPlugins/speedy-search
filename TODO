@@ -8,7 +8,6 @@
 
 # 1.6.0
 [ ] Visibility
-[ ] Add out of stock badges
 [ ] When products go out of stock clear cache
 
 # 1.7.0
@@ -32,6 +31,7 @@
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
 
 # 1.6.0
+[X] Add out of stock badges
 [X] Add option to filter out of stock to end of list
 [X] Add add to cart button
 [X] Push featured to top of list and add a badge for "Featured"
