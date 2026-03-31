@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search\Backend\Admin\Fields;
 
 use PolyPlugins\Speedy_Search\Utils;
 
+if (!defined('ABSPATH')) exit;
+
 class Orders {
 
   /**

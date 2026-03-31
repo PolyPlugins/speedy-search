@@ -2,6 +2,8 @@
 use PolyPlugins\Speedy_Search\Backend\DB;
 use PolyPlugins\Speedy_Search\Utils;
 
+if (!defined('ABSPATH')) exit;
+
 $is_indexing        = Utils::is_indexing();
 $popular_options    = Utils::get_option('popular');
 $popular_enabled    = isset($popular_options['enabled']) ? $popular_options['enabled'] : 0;

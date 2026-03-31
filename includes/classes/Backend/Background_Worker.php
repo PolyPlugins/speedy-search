@@ -6,6 +6,8 @@ use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
 use WP_Query;
 
+if (!defined('ABSPATH')) exit;
+
 class Background_Worker {
 
   private $tnt;

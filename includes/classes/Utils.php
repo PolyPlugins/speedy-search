@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search;
 
 use PolyPlugins\Speedy_Search\TNTSearch;
 
+if (!defined('ABSPATH')) exit;
+
 class Utils {
 
   /**
@@ -181,7 +183,7 @@ class Utils {
     $path = rtrim($index_path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
 
     if (file_exists($path)) {
-      return unlink($path);
+      return wp_delete_file($path);
     }
 
     return false;

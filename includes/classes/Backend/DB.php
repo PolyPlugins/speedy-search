@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search\Backend;
 
 use PolyPlugins\Speedy_Search\Utils;
 
+if (!defined('ABSPATH')) exit;
+
 class DB {
 
   const TABLE_NAME = 'ss_term_logs';

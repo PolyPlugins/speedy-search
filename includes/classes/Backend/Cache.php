@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search\Backend;
 
 use PolyPlugins\Speedy_Search\Utils;
 
+if (!defined('ABSPATH')) exit;
+
 class Cache {
 
   private $plugin;

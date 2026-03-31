@@ -2,6 +2,8 @@
 
 namespace PolyPlugins\Speedy_Search;
 
+if (!defined('ABSPATH')) exit;
+
 class Dependency_Loader {
 
   /**

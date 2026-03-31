@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search\Backend\Admin;
 
 use PolyPlugins\Speedy_Search\Utils;
 
+if (!defined('ABSPATH')) exit;
+
 class Settings {
 
   /**

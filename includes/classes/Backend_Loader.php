@@ -12,6 +12,8 @@ use PolyPlugins\Speedy_Search\Backend\Index_Updater;
 use PolyPlugins\Speedy_Search\Backend\Notices;
 use PolyPlugins\Speedy_Search\Backend\Reindexer;
 
+if (!defined('ABSPATH')) exit;
+
 class Backend_Loader {
 
   /**

@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Snappy Search
  * Description: A fast, lightweight search plugin powered by TNTSearch, indexing posts for instant, accurate results.
- * Version: 1.5.2
+ * Version: 1.6.0
  * Requires at least: 6.5
  * Requires PHP: 7.4
  * Author: Poly Plugins

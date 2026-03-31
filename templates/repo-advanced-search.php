@@ -1,4 +1,4 @@
-
+<?php if (!defined('ABSPATH')) exit; ?>
 <div class="bootstrap-wrapper">
   <div class="row page_breadcrumb mayosis-global-breadcrumb-style">
     <div class="container">

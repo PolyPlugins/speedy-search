@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search;
 
 use TeamTNT\TNTSearch\TNTSearch as TNTSearchEngine;
 
+if (!defined('ABSPATH')) exit;
+
 class TNTSearch {
   
   private $index_path;
@@ -130,7 +132,11 @@ class TNTSearch {
    * @return void
    */
   private function create_index_path() {
-    mkdir($this->index_path, 0755, true);
+    $wp_filesystem = $this->get_wp_filesystem();
+
+    if ($wp_filesystem) {
+      $wp_filesystem->mkdir($this->index_path, 0755, true);
+    }
   }
   
   /**
@@ -139,7 +145,30 @@ class TNTSearch {
    * @return void
    */
   private function secure_index_path() {
-    file_put_contents($this->index_path . '.htaccess', "Deny from all\n");
+    $wp_filesystem = $this->get_wp_filesystem();
+
+    if ($wp_filesystem) {
+      $wp_filesystem->put_contents($this->index_path . '.htaccess', "Deny from all\n", FS_CHMOD_FILE);
+    }
+  }
+
+  /**
+   * Get initialized WordPress filesystem object
+   *
+   * @return WP_Filesystem_Base|false
+   */
+  private function get_wp_filesystem() {
+    global $wp_filesystem;
+
+    if (!function_exists('WP_Filesystem')) {
+      require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
+
+    if (!$wp_filesystem) {
+      WP_Filesystem();
+    }
+
+    return $wp_filesystem ? $wp_filesystem : false;
   }
 
 }

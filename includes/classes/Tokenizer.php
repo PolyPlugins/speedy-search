@@ -5,6 +5,8 @@ namespace PolyPlugins\Speedy_Search;
 use TeamTNT\TNTSearch\Tokenizer\AbstractTokenizer;
 use TeamTNT\TNTSearch\Tokenizer\TokenizerInterface;
 
+if (!defined('ABSPATH')) exit;
+
 class Tokenizer extends AbstractTokenizer implements TokenizerInterface
 {
     static protected $pattern = '/[^\p{L}\p{N}\p{Pc}\p{Pd}@]+/u';
