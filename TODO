@@ -7,6 +7,7 @@
 [] Custom product fields
 
 # 1.7.0
+[ ] Have it so when you click in it, it shows the full search filled with popular search terms, products, posts, ect.
 [ ] Add utils for version and plugin_dir_url using static property to cache
 [ ] Handling indexing categories
 [ ] Add analytics for 0 search items and top searches

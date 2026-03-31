@@ -18,7 +18,8 @@ namespace PolyPlugins\Speedy_Search;
 
 if (!defined('ABSPATH')) exit;
 
-require plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
+$speedy_search_autoloader = require plugin_dir_path( __FILE__ ) . 'vendor/autoload.php';
+Utils::prevent_predis_autoload_conflict($speedy_search_autoloader);
 
 register_activation_hook(__FILE__, array(__NAMESPACE__ . '\Activation', 'init'));
 register_deactivation_hook(__FILE__, array(__NAMESPACE__ . '\Deactivation', 'init'));

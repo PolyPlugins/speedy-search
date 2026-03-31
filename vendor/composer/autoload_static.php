@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInitf34deda312dc74f4c9ca1ea4737e6212
+class ComposerStaticInit483279d8693874ef2a63a181ea3d45a0
 {
     public static $files = array (
         '290dd4ba42f11019134caca05dbefe3f' => __DIR__ . '/..' . '/teamtnt/tntsearch/helper/helpers.php',
@@ -49,9 +49,9 @@ class ComposerStaticInitf34deda312dc74f4c9ca1ea4737e6212
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInitf34deda312dc74f4c9ca1ea4737e6212::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInitf34deda312dc74f4c9ca1ea4737e6212::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInitf34deda312dc74f4c9ca1ea4737e6212::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInit483279d8693874ef2a63a181ea3d45a0::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInit483279d8693874ef2a63a181ea3d45a0::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInit483279d8693874ef2a63a181ea3d45a0::$classMap;
 
         }, null, ClassLoader::class);
     }

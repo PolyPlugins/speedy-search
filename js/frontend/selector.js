@@ -52,6 +52,7 @@ jQuery(document).ready(function ($) {
     if (!$searchInput.length || !$searchForm.length) return;
 
     $searchForm.after(initialSearchForm);
+    initMobileFilterToggle();
     bindFilterEvents();
     toggleProductFiltersVisibility();
 
@@ -342,6 +343,30 @@ jQuery(document).ready(function ($) {
     });
   }
 
+  function initMobileFilterToggle() {
+    if (!filters_enabled || !products_enabled || !has_active_product_filters) {
+      return;
+    }
+
+    let $filters = $('.snappy-product-filters');
+
+    if (!$filters.length) {
+      return;
+    }
+
+    $filters.addClass('mobile-collapsible');
+    $filters.removeClass('is-open');
+    $filters.find('.product-filters-toggle').attr('role', 'button').attr('tabindex', '0').attr('aria-expanded', 'false');
+
+    $(document).off('click.snappyFilterToggle', '.product-filters-toggle');
+    $(document).on('click.snappyFilterToggle', '.product-filters-toggle', function () {
+      let $panel = $(this).closest('.snappy-product-filters');
+      let isOpen = $panel.hasClass('is-open');
+      $panel.toggleClass('is-open', !isOpen);
+      $(this).attr('aria-expanded', isOpen ? 'false' : 'true');
+    });
+  }
+
   function updatePriceRangeTrack($filters, minPrice, maxPrice, minBound, maxBound) {
     if (maxBound <= minBound) {
       $filters.find('.dual-range-fill').css({ left: '0%', right: '0%' });
@@ -520,7 +545,14 @@ jQuery(document).ready(function ($) {
     if (filters_enabled && products_enabled && has_active_product_filters) {
       filtersHTML = `
         <div class="snappy-product-filters">
-          <h4>${__('Filter Products', 'speedy-search')}</h4>
+          <h4 class="product-filters-toggle">
+            <span>${__('Filter Products', 'speedy-search')}</span>
+            <span class="product-filters-caret" aria-hidden="true">
+              <i class="fas fa-chevron-down toggle-caret-down"></i>
+              <i class="fas fa-chevron-up toggle-caret-up"></i>
+            </span>
+          </h4>
+          <div class="product-filters-body">
           ${rating_filter_enabled ? `
           <label>${__('Rating', 'speedy-search')}</label>
           <select class="filter-rating">
@@ -541,6 +573,7 @@ jQuery(document).ready(function ($) {
             <input type="range" class="filter-price-max" step="1" value="0">
           </div>
           <p class="price-range-text"><span class="filter-price-min-label">0.00</span> - <span class="filter-price-max-label">0.00</span></p>` : ''}
+          </div>
         </div>
       `;
     }

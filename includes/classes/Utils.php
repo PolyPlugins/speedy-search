@@ -492,4 +492,19 @@ class Utils {
     return $document;
   }
 
+  public static function prevent_predis_autoload_conflict($autoloader) {
+    if (!is_object($autoloader) || !method_exists($autoloader, 'loadClass')) {
+      return;
+    }
+
+    spl_autoload_unregister(array($autoloader, 'loadClass'));
+    spl_autoload_register(function ($class) use ($autoloader) {
+      if (strpos($class, 'Predis\\') === 0) {
+        return false;
+      }
+
+      return $autoloader->loadClass($class);
+    }, true, true);
+  }
+
 }
