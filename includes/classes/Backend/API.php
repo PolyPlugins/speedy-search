@@ -476,6 +476,11 @@ class API {
 
       foreach ($posts as $post) {
         $product = wc_get_product($post->ID);
+
+        if ($product && $product->get_catalog_visibility() === 'hidden') {
+          continue;
+        }
+
         $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
         $is_featured = $product ? $product->is_featured() : false;
         $is_variable = $product ? $product->is_type('variable') : false;
