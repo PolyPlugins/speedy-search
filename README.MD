@@ -86,6 +86,8 @@ By default, it will index 10 posts per minute.
 ### 1.6.0
 * Added: Rating, Price Range, and Custom Product Field filters for products
 * Added: Star ratings to product tab
+* Added: Add to Cart / Select Options button to products tab
+* Added: Option to filter out of stock products to end of list
 * Added: Singular endpoint to fetch all posts, pages, ect to reduce the number of requests per search
 * Added: Notice in settings when no object cache is detected
 

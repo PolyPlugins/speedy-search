@@ -576,6 +576,12 @@ class Settings {
 			$sanitary_values['products']['result_limit'] = sanitize_text_field($input['products']['result_limit']);
 		}
 
+    if (isset($input['products']['out_of_stock_last']) && $input['products']['out_of_stock_last']) {
+      $sanitary_values['products']['out_of_stock_last'] = $input['products']['out_of_stock_last'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['out_of_stock_last'] = false;
+    }
+
     if (isset($input['orders']['enabled']) && $input['orders']['enabled']) {
       $sanitary_values['orders']['enabled'] = $input['orders']['enabled'] === 'on' ? true : false;
     } else {

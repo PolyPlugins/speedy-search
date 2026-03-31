@@ -85,6 +85,14 @@ class Products {
 		);
 
 		add_settings_field(
+			'products_out_of_stock_last',
+			__('Out Of Stock Last?', 'speedy-search'),
+			array($this, 'products_out_of_stock_last_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
 			'products_batch',
 		  __('Batch', 'speedy-search'),
 			array($this, 'products_batch_render'),
@@ -159,6 +167,22 @@ class Products {
     <input type="number" name="speedy_search_settings_polyplugins[products][result_limit]" value="<?php echo esc_html($option); ?>">
     <p><strong><?php esc_html_e('How many products would you like to show?', 'speedy-search'); ?></strong></p>
 	  <?php
+	}
+
+  /**
+	 * Render Out Of Stock Last Field
+	 *
+	 * @return void
+	 */
+	public function products_out_of_stock_last_render() {
+		$options = Utils::get_option('products');
+    $option  = isset($options['out_of_stock_last']) ? $options['out_of_stock_last'] : false;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][out_of_stock_last]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Move out of stock products to the end of results.', 'speedy-search'); ?></strong></p>
+		<?php
 	}
 
 }

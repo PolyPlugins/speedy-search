@@ -420,6 +420,7 @@ class API {
 		$options          = Utils::get_option('products');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $out_of_stock_last = isset($options['out_of_stock_last']) ? (bool) $options['out_of_stock_last'] : false;
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
     $get_search_query = $request->get_param('search');
@@ -438,7 +439,7 @@ class API {
     }
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_products_' . md5($search_query);
+    $cache_key = 'speedy_search_products_' . md5($search_query . '|' . (int) $out_of_stock_last);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
@@ -478,6 +479,7 @@ class API {
         $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
         $is_featured = $product ? $product->is_featured() : false;
         $is_variable = $product ? $product->is_type('variable') : false;
+        $is_in_stock = $product ? $product->is_in_stock() : true;
         $add_to_cart_url = $product ? $product->add_to_cart_url() : get_permalink($post->ID);
         $product_custom_fields = array();
 
@@ -511,6 +513,7 @@ class API {
           'rating'         => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
           'is_featured'    => (bool) $is_featured,
           'is_variable'    => (bool) $is_variable,
+          'is_in_stock'    => (bool) $is_in_stock,
           'add_to_cart_url' => esc_url_raw($add_to_cart_url),
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
@@ -518,7 +521,11 @@ class API {
         $posts_data[] = $data;
       }
 
-      usort($posts_data, function($a, $b) {
+      usort($posts_data, function($a, $b) use ($out_of_stock_last) {
+        if ($out_of_stock_last && $a['is_in_stock'] !== $b['is_in_stock']) {
+          return $a['is_in_stock'] ? -1 : 1;
+        }
+
         if ($a['is_featured'] !== $b['is_featured']) {
           return $a['is_featured'] ? -1 : 1;
         }
