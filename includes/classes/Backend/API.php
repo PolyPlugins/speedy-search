@@ -84,6 +84,18 @@ class API {
         )
       );
 	  }
+
+    if ($posts_enabled || $pages_enabled || $products_enabled || $downloads_enabled) {
+      register_rest_route(
+        'speedy-search/v1',
+        '/search/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_search'),
+          'permission_callback' => '__return_true',
+        )
+      );
+    }
     
     $orders         = Utils::get_option('orders');
     $orders_enabled = isset($orders['enabled']) ? $orders['enabled'] : 0;
@@ -166,7 +178,71 @@ class API {
         )
       );
 	  }
+
+    if ($posts_enabled || $pages_enabled || $products_enabled || $downloads_enabled) {
+      register_rest_route(
+        'snappy-search/v1',
+        '/search/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_search'),
+          'permission_callback' => '__return_true',
+        )
+      );
+    }
 	}
+
+  /**
+   * Get combined search results
+   *
+   * @param  mixed $request
+   * @return void
+   */
+  public function get_search(WP_REST_Request $request) {
+    $results = array();
+    $types   = array(
+      'posts' => array(
+        'option' => 'posts',
+        'method' => 'get_posts',
+      ),
+      'pages' => array(
+        'option' => 'pages',
+        'method' => 'get_pages',
+      ),
+      'products' => array(
+        'option' => 'products',
+        'method' => 'get_products',
+      ),
+      'downloads' => array(
+        'option' => 'downloads',
+        'method' => 'get_downloads',
+      ),
+    );
+
+    foreach ($types as $type => $args) {
+      $options = Utils::get_option($args['option']);
+      $enabled = isset($options['enabled']) ? $options['enabled'] : false;
+
+      if (!$enabled) {
+        $results[$type] = array();
+        continue;
+      }
+
+      $response = call_user_func(array($this, $args['method']), $request);
+
+      if ($response instanceof WP_REST_Response) {
+        if ($response->get_status() >= 400) {
+          return $response;
+        }
+
+        $results[$type] = $response->get_data();
+      } else {
+        $results[$type] = array();
+      }
+    }
+
+    return new WP_REST_Response($results, 200);
+  }
   
   /**
    * Get posts

@@ -15,7 +15,6 @@ jQuery(document).ready(function ($) {
   let downloads_enabled      = snappy_search_object.options?.downloads?.enabled ?? false;
   let advanced_enabled_types = snappy_search_object.options?.advanced?.enabled_types ?? [];
   let currency               = snappy_search_object.currency ?? '$';
-  let ajaxCalls              = 0;
 
   const $searchInput      = $(selector);
   const $searchForm       = $searchInput.closest("form");
@@ -123,16 +122,7 @@ jQuery(document).ready(function ($) {
   function performSearch(query, $container) {
     const $sections = $container.find('.instant-search-section');
 
-    ajaxCalls = $sections.length;
-
     $sections.each(function () {
-      let $section = $(this);
-      let type = $section.data('type');
-
-      let typeObj = postTypes.find(t => t.type === type);
-      let label = typeObj ? typeObj.label : type;
-
-      
       let $result = $(".speedy-search-container .instant-search-result");
 
       if ($result.length) {
@@ -143,78 +133,96 @@ jQuery(document).ready(function ($) {
       }
 
       // $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
-
-      fetchResults(query, type, label, $section);
     });
+
+    fetchResults(query, $container);
   }
 
-  function fetchResults(query, endpoint, label, $section) {
+  function fetchResults(query, $container) {
     $.ajax({
-      url: "/wp-json/speedy-search/v1/" + endpoint + "s/",
+      url: "/wp-json/speedy-search/v1/search/",
       data: { search: query },
       dataType: "json",
       success: function (data) {
-        $section.empty();
+        const $sections = $container.find('.instant-search-section');
 
-        const isDefaultType = endpoint === default_result_type;
-        const initialLimit = isDefaultType ? data.length : 4;
-        const showMore = !isDefaultType && data.length > initialLimit;
+        $sections.each(function () {
+          let $section = $(this);
+          let endpoint = $section.data('type');
+          let endpointKey = endpoint + 's';
+          let items = Array.isArray(data[endpointKey]) ? data[endpointKey] : [];
 
-        const results = $.map(data, function (item, index) {
-          let imageHTML = "";
-          let price = "";
-          let rating = "";
+          $section.empty();
 
-          if (item.thumbnail) {
-            imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
+          if (!items.length) {
+            $section.append("<p>" + __("No results found.", "speedy-search") + "</p>");
+            return;
           }
 
-          if (item.price) {
-            price = '<p class="price-result">' + currency + item.price + "</p>";
+          const isDefaultType = endpoint === default_result_type;
+          const initialLimit = isDefaultType ? items.length : 4;
+          const showMore = !isDefaultType && items.length > initialLimit;
+
+          const results = $.map(items, function (item, index) {
+            let imageHTML = "";
+            let price = "";
+            let rating = "";
+
+            if (item.thumbnail) {
+              imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
+            }
+
+            if (item.price) {
+              price = '<p class="price-result">' + currency + item.price + "</p>";
+            }
+
+            if (item.rating && endpoint === 'product') {
+              rating = '<div class="rating-result"><div class="woocommerce">' + item.rating + "</div></div>";
+            }
+
+            // Add class to hide results after the limit
+            const hiddenClass = index >= initialLimit ? ' hidden-result' : '';
+
+            return `
+              <div class="instant-search-result grid-item${hiddenClass}">
+                <a href="${item.permalink}" class="permalink-result">
+                  ${imageHTML ? `<div class="image-wrapper">${imageHTML}</div>` : ''}
+                  <div class="search-content">
+                    <h2 class="title-result">${item.title}</h2>
+                    ${rating}
+                    ${price}
+                    <p class="excerpt-result">${item.excerpt}</p>
+                    ${
+                    endpoint === 'post' ? `
+                      <div class="read-more">
+                        ${__("Read more >", "speedy-search")}
+                      </div>` : ''
+                    }
+                  </div>
+                </a>
+              </div>
+            `;
+          }).join("");
+
+          $section.append(results);
+
+          if (showMore) {
+            const readMoreBtn = `
+              <div class="instant-search-result grid-item more-results">
+                <button class="show-all-results">${__("Show all " + endpoint + " results", "speedy-search")}</button>
+              </div>
+            `;
+            $section.append(readMoreBtn);
           }
-
-          if (item.rating && endpoint === 'product') {
-            rating = '<div class="rating-result"><div class="woocommerce">' + item.rating + "</div></div>";
-          }
-
-          // Add class to hide results after the limit
-          const hiddenClass = index >= initialLimit ? ' hidden-result' : '';
-
-          return `
-            <div class="instant-search-result grid-item${hiddenClass}">
-              <a href="${item.permalink}" class="permalink-result">
-                ${imageHTML ? `<div class="image-wrapper">${imageHTML}</div>` : ''}
-                <div class="search-content">
-                  <h2 class="title-result">${item.title}</h2>
-                  ${rating}
-                  ${price}
-                  <p class="excerpt-result">${item.excerpt}</p>
-                  ${
-                  endpoint === 'post' ? `
-                    <div class="read-more">
-                      ${__("Read more >", "speedy-search")}
-                    </div>` : ''
-                  }
-                </div>
-              </a>
-            </div>
-          `;
-        }).join("");
-
-        $section.append(results);
-
-        if (showMore) {
-          const readMoreBtn = `
-            <div class="instant-search-result grid-item more-results">
-              <button class="show-all-results">${__("Show all " + endpoint + " results", "speedy-search")}</button>
-            </div>
-          `;
-          $section.append(readMoreBtn);
-        }
+        });
       },
-      error: function (xhr, status, error) {
-        $section.empty();
-        $section.append("<p>" + __("An error occurred while searching.", "speedy-search") + "</p>");
+      error: function () {
+        const $sections = $container.find('.instant-search-section');
+
+        $sections.each(function () {
+          $(this).empty();
+          $(this).append("<p>" + __("An error occurred while searching.", "speedy-search") + "</p>");
+        });
       }
     })
     .always(function() {
@@ -222,22 +230,18 @@ jQuery(document).ready(function ($) {
       $(".speedy-search-container .snappy-search-close").show();
       $(".speedy-search-container .loader").hide();
 
-      ajaxCalls--;
+      let allEmpty = true;
+      
+      $(".advanced-search .instant-search-section").each(function () {
+        if ($(this).find('.instant-search-result').length > 0) {
+          allEmpty = false;
 
-      if (ajaxCalls === 0) {
-        let allEmpty = true;
-        
-        $(".advanced-search .instant-search-section").each(function () {
-          if ($(this).children().length > 0) {
-            allEmpty = false;
-
-            return false;
-          }
-        });
-
-        if (allEmpty) {
-          $(".advanced-search .instant-search-section").first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
+          return false;
         }
+      });
+
+      if (allEmpty) {
+        $(".advanced-search .instant-search-section").first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
       }
     });
   }

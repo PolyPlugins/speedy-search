@@ -129,13 +129,6 @@ jQuery(document).ready(function ($) {
     const $sections = $container.find('.instant-search-section');
 
     $sections.each(function () {
-      let $section = $(this);
-      let type = $section.data('type');
-
-      let typeObj = postTypes.find(t => t.type === type);
-      let label = typeObj ? typeObj.label : type;
-
-      
       let $result = $(".speedy-search-container .instant-search-result");
 
       if ($result.length) {
@@ -144,25 +137,36 @@ jQuery(document).ready(function ($) {
         $(".speedy-search-container .snappy-search-close").hide();
         $(".speedy-search-container .loader").show();
       }
-
-      // $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
-
-      fetchResults(query, type, label, $section);
     });
+
+    fetchResults(query, $container);
   }
 
-  function fetchResults(query, endpoint, label, $section) {
+  function fetchResults(query, $container) {
     $.ajax({
-      url: "/wp-json/speedy-search/v1/" + endpoint + "s/",
+      url: "/wp-json/speedy-search/v1/search/",
       data: { search: query },
       dataType: "json",
       success: function (data) {
-        $section.empty();
+        const $sections = $container.find('.instant-search-section');
+        let hasResults = false;
 
-        if (!data.length) {
-          $section.append("<p>" + __("No results found.", "speedy-search") + "</p>");
-        } else {
-          const results = $.map(data, function (item) {
+        $sections.each(function () {
+          let $section = $(this);
+          let endpoint = $section.data('type');
+          let endpointKey = endpoint + 's';
+          let items = Array.isArray(data[endpointKey]) ? data[endpointKey] : [];
+
+          $section.empty();
+
+          if (!items.length) {
+            $section.append("<p>" + __("No results found.", "speedy-search") + "</p>");
+            return;
+          }
+
+          hasResults = true;
+
+          const results = $.map(items, function (item) {
             let imageHTML = "";
             let price = "";
 
@@ -191,11 +195,19 @@ jQuery(document).ready(function ($) {
           }).join("");
 
           $section.append(results);
+        });
+
+        if (!hasResults && $sections.length) {
+          $sections.first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
         }
       },
-      error: function (xhr, status, error) {
-        $section.empty();
-        $section.append("<p>" + __("An error occurred while searching.", "speedy-search") + "</p>");
+      error: function () {
+        const $sections = $container.find('.instant-search-section');
+
+        $sections.each(function () {
+          $(this).empty();
+          $(this).append("<p>" + __("An error occurred while searching.", "speedy-search") + "</p>");
+        });
       }
     })
     .always(function() {

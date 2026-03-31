@@ -98,35 +98,35 @@ jQuery(document).ready(function ($) {
   function performSearch(query) {
     // Show "Searching..." in each existing section
     $('.instant-search-section').each(function () {
-      let $resultType = $(this).data('type');
-
-      // Find the matching post type object
-      let typeObj = postTypes.find(function (t) {
-        return t.type === $resultType;
-      });
-
-      // Fallback if not found
-      let label = typeObj ? typeObj.label : $resultType;
-
-      $(this).html('<p>' + __("Searching " + $resultType + "...", "speedy-search") + '</p>');
-
-      fetchResults(query, $resultType, label);
+      $(this).html('<p>' + __("Searching...", "speedy-search") + '</p>');
     });
+
+    fetchResults(query);
   }
 
-  function fetchResults(query, endpoint, label) {
+  function fetchResults(query) {
     $.ajax({
-      url: "/wp-json/speedy-search/v1/" + endpoint + "s/",
+      url: "/wp-json/speedy-search/v1/search/",
       data: { search: query },
       dataType: "json",
       success: function (data) {
-        if (!data.length) {
-          $('.instant-search-section[data-type="' + endpoint + '"]').empty();
-          $('.instant-search-section[data-type="' + endpoint + '"]').append(
-            "<p>" + __("No results found.", "speedy-search") + "</p>"
-          );
-        } else {
-          const results = $.map(data, function (item) {
+        let hasResults = false;
+
+        $('.instant-search-section').each(function () {
+          let endpoint = $(this).data('type');
+          let endpointKey = endpoint + 's';
+          let items = Array.isArray(data[endpointKey]) ? data[endpointKey] : [];
+
+          $(this).empty();
+
+          if (!items.length) {
+            $(this).append("<p>" + __("No results found.", "speedy-search") + "</p>");
+            return;
+          }
+
+          hasResults = true;
+
+          const results = $.map(items, function (item) {
             let imageHTML = "";
             let price = "";
 
@@ -162,19 +162,22 @@ jQuery(document).ready(function ($) {
             );
           }).join("");
 
-          $('.instant-search-section[data-type="' + endpoint + '"]').empty();
-          $('.instant-search-section[data-type="' + endpoint + '"]')
-            .append(results);
+          $(this).append(results);
+        });
+
+        if (!hasResults && $('.instant-search-section').length) {
+          $('.instant-search-section').first().html("<p>" + __("No results found.", "speedy-search") + "</p>");
         }
       },
-      error: function (xhr, status, error) {
-        $('.instant-search-section[data-type="' + endpoint + '"]').empty();
-        $('.instant-search-section[data-type="' + endpoint + '"]')
-          .append(
+      error: function () {
+        $('.instant-search-section').each(function () {
+          $(this).empty();
+          $(this).append(
             "<p>" +
               __("An error occurred while searching.", "speedy-search") +
             "</p>"
           );
+        });
       },
     });
   }
