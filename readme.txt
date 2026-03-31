@@ -7,20 +7,20 @@ Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
-A fast, lightweight search plugin powered by TNTSearch, indexing posts for instant, accurate results.
+A fast, lightweight search plugin powered by TNTSearch, indexing posts for near instant, accurate results.
 
 
 == Description ==
-Snappy Search is a powerful and lightweight AJAX search plugin that enhances your site's search functionality with lightning fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for instant, accurate, and efficient searching. Say goodbye to slow searches, this plugin ensures a seamless user experience with improved relevancy. Perfect for blogs, news sites, and content heavy websites. For even faster search performance, install our [Snappy Search Enhancements](https://www.polyplugins.com/product/snappy-search-enhancements/) MU plugin to disable unnecessary plugins during search requests.
+Snappy Search is a powerful and lightweight AJAX search plugin that enhances your site's search functionality with lightning fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for near instant, accurate, and efficient searching. Say goodbye to slow searches, this plugin ensures a seamless user experience with improved relevancy. Perfect for blogs, news sites, and content heavy websites. For even faster search performance, install our [Snappy Search Enhancements](https://www.polyplugins.com/product/snappy-search-enhancements/) MU plugin to disable unnecessary plugins during search requests.
 
 
 == Currently Supports ==
 
-* Instantly searching WooCommerce products
-* Instantly searching Easy Digital Downloads downloads
-* Instantly searching WordPress posts
-* Instantly searching WordPress pages
-* Instantly searching through WooCommerce orders
+* Searching WooCommerce products
+* Searching Easy Digital Downloads downloads
+* Searching WordPress posts
+* Searching WordPress pages
+* Searching through WooCommerce orders
 * Advanced repo search for finding plugins and themes. [Demo](https://www.polyplugins.com/repo-search/)
 
 

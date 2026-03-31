@@ -200,6 +200,7 @@ class Background_Worker {
           $args['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
         }
 
+        $args = Utils::sanitize_index_document($args, 255);
         $index->insert($args);
 
         $progress++;
@@ -250,6 +251,7 @@ class Background_Worker {
     $args = array(
       'limit'     => $batch,
       'offset'    => $progress - 1,
+      'type'      => 'shop_order',
       'orderby'   => 'date',
       'order'     => 'ASC',
       'return'    => 'objects',
@@ -262,10 +264,13 @@ class Background_Worker {
 
       foreach ($orders as $order) {
         $order_id = $order->get_id();
+        $order_number = method_exists($order, 'get_order_number')
+          ? $order->get_order_number()
+          : $order_id;
 
         $args = array(
           'id'                  => intval($order_id),
-          'order_number'        => sanitize_text_field($order->get_order_number()),
+          'order_number'        => sanitize_text_field((string) $order_number),
           'billing_first_name'  => sanitize_text_field($order->get_billing_first_name()),
           'billing_last_name'   => sanitize_text_field($order->get_billing_last_name()),
           'billing_address_1'   => sanitize_text_field($order->get_billing_address_1()),

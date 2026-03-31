@@ -4,7 +4,7 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit528ca78a892040819c4ffcaaa2e20d4f
+class ComposerStaticInitf34deda312dc74f4c9ca1ea4737e6212
 {
     public static $files = array (
         '290dd4ba42f11019134caca05dbefe3f' => __DIR__ . '/..' . '/teamtnt/tntsearch/helper/helpers.php',
@@ -17,6 +17,7 @@ class ComposerStaticInit528ca78a892040819c4ffcaaa2e20d4f
         ),
         'P' => 
         array (
+            'Psr\\Http\\Message\\' => 17,
             'Predis\\' => 7,
             'PolyPlugins\\Speedy_Search\\' => 26,
         ),
@@ -26,6 +27,10 @@ class ComposerStaticInit528ca78a892040819c4ffcaaa2e20d4f
         'TeamTNT\\TNTSearch\\' => 
         array (
             0 => __DIR__ . '/..' . '/teamtnt/tntsearch/src',
+        ),
+        'Psr\\Http\\Message\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/psr/http-message/src',
         ),
         'Predis\\' => 
         array (
@@ -44,9 +49,9 @@ class ComposerStaticInit528ca78a892040819c4ffcaaa2e20d4f
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit528ca78a892040819c4ffcaaa2e20d4f::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit528ca78a892040819c4ffcaaa2e20d4f::$prefixDirsPsr4;
-            $loader->classMap = ComposerStaticInit528ca78a892040819c4ffcaaa2e20d4f::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitf34deda312dc74f4c9ca1ea4737e6212::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitf34deda312dc74f4c9ca1ea4737e6212::$prefixDirsPsr4;
+            $loader->classMap = ComposerStaticInitf34deda312dc74f4c9ca1ea4737e6212::$classMap;
 
         }, null, ClassLoader::class);
     }

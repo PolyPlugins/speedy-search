@@ -7,6 +7,7 @@ $baseDir = dirname($vendorDir);
 
 return array(
     'TeamTNT\\TNTSearch\\' => array($vendorDir . '/teamtnt/tntsearch/src'),
+    'Psr\\Http\\Message\\' => array($vendorDir . '/psr/http-message/src'),
     'Predis\\' => array($vendorDir . '/predis/predis/src'),
     'PolyPlugins\\Speedy_Search\\' => array($baseDir . '/includes/classes'),
 );

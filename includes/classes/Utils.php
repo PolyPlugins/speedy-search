@@ -431,4 +431,65 @@ class Utils {
     }
   }
 
+  /**
+   * Strip shortcodes and oversized tokens from plain text.
+   *
+   * @param string $value            Text to sanitize.
+   * @param int    $max_token_length Maximum token length allowed.
+   * @return string
+   */
+  public static function sanitize_index_text($value, $max_token_length = 255) {
+    if (!is_string($value) || $value === '') {
+      return $value;
+    }
+
+    if (function_exists('strip_shortcodes')) {
+      $value = strip_shortcodes($value);
+    }
+
+    // Remove shortcode-like wrappers even if shortcode tags are not registered.
+    $value = preg_replace('/\[(?:\/)?[a-zA-Z0-9_-]+(?:\s[^\]]*)?\]/', ' ', $value);
+
+    $max_token_length = is_numeric($max_token_length) ? (int) $max_token_length : 255;
+
+    if ($max_token_length < 1) {
+      return $value;
+    }
+
+    $min_oversized_length = $max_token_length + 1;
+    $pattern              = '/\S{' . $min_oversized_length . ',}/u';
+    $sanitized            = preg_replace($pattern, ' ', (string) $value);
+
+    // Fallback if unicode mode fails for edge-case invalid UTF-8.
+    if ($sanitized === null) {
+      $pattern   = '/\S{' . $min_oversized_length . ',}/';
+      $sanitized = preg_replace($pattern, ' ', (string) $value);
+    }
+
+    return is_string($sanitized) ? $sanitized : $value;
+  }
+
+  /**
+   * Strip oversized tokens from each string field in an index document.
+   *
+   * @param array $document          Key/value data passed to TNTSearch insert.
+   * @param int   $max_token_length  Maximum token length allowed.
+   * @return array
+   */
+  public static function sanitize_index_document($document, $max_token_length = 255) {
+    if (!is_array($document)) {
+      return $document;
+    }
+
+    foreach ($document as $key => $value) {
+      if (!is_string($value)) {
+        continue;
+      }
+
+      $document[$key] = self::sanitize_index_text($value, $max_token_length);
+    }
+
+    return $document;
+  }
+
 }

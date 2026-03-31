@@ -92,6 +92,7 @@ class Index_Updater {
       $data['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
     }
 
+    $data = Utils::sanitize_index_document($data, 255);
     $index->insert($data);
   }
 
@@ -239,6 +240,7 @@ class Index_Updater {
       'shipping_city'       => sanitize_text_field($order->get_shipping_city()),
     );
 
+    $args = Utils::sanitize_index_document($args, 255);
     $index->insert($args);
   }
 
