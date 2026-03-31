@@ -267,6 +267,7 @@
 
 .speedy-search-container .image-wrapper {
   flex: 0 0 100px;
+  position: relative;
 }
 
 .speedy-search-container .image-wrapper img {
@@ -288,6 +289,22 @@
 .speedy-search-container .price-result {
   font-weight: bold;
   margin: 0 0 5px;
+}
+
+.speedy-search-container .featured-badge {
+  display: inline-block;
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  background: #222;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-bottom: 0;
 }
 
 .speedy-search-container .excerpt-result {

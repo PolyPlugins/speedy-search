@@ -472,11 +472,11 @@ class API {
       ));
 
       $posts_data = array();
-      $rated = array();
-      $unrated = array();
 
       foreach ($posts as $post) {
+        $product = wc_get_product($post->ID);
         $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
+        $is_featured = $product ? $product->is_featured() : false;
         $product_custom_fields = array();
 
         $tags = array(
@@ -507,22 +507,20 @@ class API {
           'excerpt'        => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
           'average_rating' => $average_rating ? (float) $average_rating : 0,
           'rating'         => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
+          'is_featured'    => (bool) $is_featured,
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
         );
-
-        if ($average_rating > 0) {
-          $rated[] = $data;
-        } else {
-          $unrated[] = $data;
-        }
+        $posts_data[] = $data;
       }
 
-      usort($rated, function($a, $b) {
+      usort($posts_data, function($a, $b) {
+        if ($a['is_featured'] !== $b['is_featured']) {
+          return $a['is_featured'] ? -1 : 1;
+        }
+
         return $b['average_rating'] <=> $a['average_rating'];
       });
-
-      $posts_data = array_merge($rated, $unrated);
 
       wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
 

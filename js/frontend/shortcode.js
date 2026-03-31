@@ -187,6 +187,8 @@ jQuery(document).ready(function ($) {
       const results = $.map(items, function (item) {
         let imageHTML = "";
         let price = "";
+        let rating = "";
+        let featuredBadge = "";
 
         if (item.thumbnail) {
           imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
@@ -196,14 +198,24 @@ jQuery(document).ready(function ($) {
           price = '<p class="price-result">' + currency + item.price + "</p>";
         }
 
+        if (item.rating && endpoint === 'product') {
+          rating = '<div class="rating-result"><div class="woocommerce">' + item.rating + "</div></div>";
+        }
+
+        if (item.is_featured && endpoint === 'product') {
+          featuredBadge = '<div class="featured-badge">' + __("Featured", "speedy-search") + '</div>';
+        }
+
         return `
           <div class="instant-search-result">
             <a href="${item.permalink}" class="permalink-result">
               <div class="image-wrapper">
                 ${imageHTML}
+                ${featuredBadge}
               </div>
               <div class="search-content">
                   <h2 class="title-result">${item.title}</h2>
+                  ${rating}
                   ${price}
                   <p class="excerpt-result">${item.excerpt}</p>
               </div>
