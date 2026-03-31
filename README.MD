@@ -83,6 +83,12 @@ By default, it will index 10 posts per minute.
 
 ## Changelog
 
+### 1.6.0
+* Added: Rating, Price Range, and Custom Product Field filters for products
+* Added: Star ratings to product tab
+* Added: Singular endpoint to fetch all posts, pages, ect to reduce the number of requests per search
+* Added: Notice in settings when no object cache is detected
+
 ### 1.5.2
 * Bugfix: WooCommerce orders admin will sometimes close if opened in new tab
 * Bugfix: Searching orders will fail if orders were not indexed

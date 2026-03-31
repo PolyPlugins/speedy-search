@@ -3,7 +3,11 @@
 [ ] Update Screenshots
 [ ] Plugin Scan
 
+# Test
+[] Custom product fields
+
 # 1.6.0
+[ ] Add add to cart button with variation selector
 [ ] Add utils for version and plugin_dir_url using static property to cache
 [ ] Push featured to top of list and add a badge for "Featured"
 [ ] Handling indexing categories
@@ -12,6 +16,7 @@
 [ ] Add logging class from our other plugins
 
 # General
+[ ] Add filtering by category
 [ ] Add scroll to load more results
 [ ] Add additional ordering like by top seller for products
 [ ] Add autocomplete functionality
@@ -22,6 +27,10 @@
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
+
+# 1.6.0
+[X] Add star rating for products
+[X] Add shortcode filters enabled setting
 
 # 1.5.1
 [X] Add custom tokenizer for future use
