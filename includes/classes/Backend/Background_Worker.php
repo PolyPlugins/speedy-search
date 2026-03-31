@@ -285,6 +285,7 @@ class Background_Worker {
           'shipping_city'       => sanitize_text_field($order->get_shipping_city()),
         );
 
+        $args = Utils::sanitize_index_document($args, 255);
         $index->insert($args);
         $progress++;
 

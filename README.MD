@@ -99,6 +99,9 @@ By default, it will index 10 posts per minute.
 * Updated: TNTSearch to latest version
 * Bugfix: Indexing can fail if using page builders due to long text strings
 * Bugfix: Indexing can fail on orders
+* Bugfix: Order search not working on non HPOS installs
+* Bugfix: Extra columns on orders from other plugins shift the layout, added Unavailable messaging to take it's place
+* Bugfix: Order search not working on non HPOS installs
 
 ### 1.5.2
 * Bugfix: WooCommerce orders admin will sometimes close if opened in new tab
