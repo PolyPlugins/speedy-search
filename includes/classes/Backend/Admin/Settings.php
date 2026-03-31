@@ -447,6 +447,18 @@ class Settings {
 			$sanitary_values['typing_delay'] = sanitize_text_field($input['typing_delay']);
 		}
 
+    if (isset($input['shortcode_filters_enabled']) && $input['shortcode_filters_enabled']) {
+      $sanitary_values['shortcode_filters_enabled'] = $input['shortcode_filters_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['shortcode_filters_enabled'] = false;
+    }
+
+    if (isset($input['selector_filters_enabled']) && $input['selector_filters_enabled']) {
+      $sanitary_values['selector_filters_enabled'] = $input['selector_filters_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['selector_filters_enabled'] = false;
+    }
+
     if (isset($input['selector']) && $input['selector']) {
 			$sanitary_values['selector'] = sanitize_text_field($input['selector']);
 		}
@@ -603,6 +615,12 @@ class Settings {
     if (isset($input['advanced']['placeholder']) && $input['advanced']['placeholder']) {
 			$sanitary_values['advanced']['placeholder'] = sanitize_text_field($input['advanced']['placeholder']);
 		}
+
+    if (isset($input['advanced']['filters_enabled']) && $input['advanced']['filters_enabled']) {
+      $sanitary_values['advanced']['filters_enabled'] = $input['advanced']['filters_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['advanced']['filters_enabled'] = false;
+    }
 
     if (isset($input['repo_enabled']) && $input['repo_enabled']) {
       $sanitary_values['repo_enabled'] = $input['repo_enabled'] === 'on' ? true : false;

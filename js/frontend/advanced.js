@@ -15,6 +15,8 @@ jQuery(document).ready(function ($) {
   let products_enabled    = snappy_search_object.options?.products?.enabled ?? false;
   let downloads_enabled   = snappy_search_object.options?.downloads?.enabled ?? false;
   let currency            = snappy_search_object.currency ?? '$';
+  let filters_enabled     = snappy_search_object.options?.advanced?.filters_enabled ?? false;
+  let latest_results      = {};
 
   const $searchInput      = $(selector);
   const $searchForm       = $searchInput.closest("form");
@@ -46,6 +48,9 @@ jQuery(document).ready(function ($) {
       if (!$container.find(".instant-search-wrapper").length) {
         $form.after(buildInitialSearchForm());
       }
+
+      bindFilterEvents($container);
+      toggleProductFiltersVisibility($container);
 
       $input.on("input", function () {
         clearTimeout(typingTimer);
@@ -86,6 +91,9 @@ jQuery(document).ready(function ($) {
           $(this).hide();
         }
       });
+
+      let $container = $(this).closest(".speedy-search-container.advanced-search");
+      toggleProductFiltersVisibility($container);
     });
   }
 
@@ -148,58 +156,9 @@ jQuery(document).ready(function ($) {
       data: { search: query },
       dataType: "json",
       success: function (data) {
-        const $sections = $container.find('.instant-search-section');
-        let hasResults = false;
-
-        $sections.each(function () {
-          let $section = $(this);
-          let endpoint = $section.data('type');
-          let endpointKey = endpoint + 's';
-          let items = Array.isArray(data[endpointKey]) ? data[endpointKey] : [];
-
-          $section.empty();
-
-          if (!items.length) {
-            $section.append("<p>" + __("No results found.", "speedy-search") + "</p>");
-            return;
-          }
-
-          hasResults = true;
-
-          const results = $.map(items, function (item) {
-            let imageHTML = "";
-            let price = "";
-
-            if (item.thumbnail) {
-              imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
-            }
-
-            if (item.price) {
-              price = '<p class="price-result">' + currency + item.price + "</p>";
-            }
-
-            return `
-              <div class="instant-search-result">
-                <a href="${item.permalink}" class="permalink-result">
-                  <div class="image-wrapper">
-                    ${imageHTML}
-                  </div>
-                  <div class="search-content">
-                      <h2 class="title-result">${item.title}</h2>
-                      ${price}
-                      <p class="excerpt-result">${item.excerpt}</p>
-                  </div>
-                </a>
-              </div>
-            `;
-          }).join("");
-
-          $section.append(results);
-        });
-
-        if (!hasResults && $sections.length) {
-          $sections.first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
-        }
+        latest_results = data;
+        setupProductFilters($container, data.products || []);
+        renderSections($container, data);
       },
       error: function () {
         const $sections = $container.find('.instant-search-section');
@@ -215,6 +174,195 @@ jQuery(document).ready(function ($) {
       $(".speedy-search-container .snappy-search-close").show();
       $(".speedy-search-container .loader").hide();
     });
+  }
+
+  function renderSections($container, data) {
+    const $sections = $container.find('.instant-search-section');
+    let hasResults = false;
+    let filteredProducts = getFilteredProducts($container, data.products || []);
+
+    $sections.each(function () {
+      let $section = $(this);
+      let endpoint = $section.data('type');
+      let endpointKey = endpoint + 's';
+      let items = endpoint === 'product' ? filteredProducts : (Array.isArray(data[endpointKey]) ? data[endpointKey] : []);
+
+      $section.empty();
+
+      if (!items.length) {
+        $section.append("<p>" + __("No results found.", "speedy-search") + "</p>");
+        return;
+      }
+
+      hasResults = true;
+
+      const results = $.map(items, function (item) {
+        let imageHTML = "";
+        let price = "";
+
+        if (item.thumbnail) {
+          imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
+        }
+
+        if (item.price) {
+          price = '<p class="price-result">' + currency + item.price + "</p>";
+        }
+
+        return `
+          <div class="instant-search-result">
+            <a href="${item.permalink}" class="permalink-result">
+              <div class="image-wrapper">
+                ${imageHTML}
+              </div>
+              <div class="search-content">
+                  <h2 class="title-result">${item.title}</h2>
+                  ${price}
+                  <p class="excerpt-result">${item.excerpt}</p>
+              </div>
+            </a>
+          </div>
+        `;
+      }).join("");
+
+      $section.append(results);
+    });
+
+    if (!hasResults && $sections.length) {
+      $sections.first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
+    }
+  }
+
+  function parsePrice(value) {
+    let number = parseFloat(String(value).replace(/[^0-9.]/g, ''));
+    return isNaN(number) ? 0 : number;
+  }
+
+  function setupProductFilters($container, products) {
+    if (!filters_enabled || !products_enabled) {
+      return;
+    }
+
+    let prices = $.map(products, function (item) {
+      return parsePrice(item.price);
+    }).filter(function (price) {
+      return price >= 0;
+    });
+
+    if (!prices.length) {
+      return;
+    }
+
+    let minPrice = Math.floor(Math.min.apply(null, prices));
+    let maxPrice = Math.ceil(Math.max.apply(null, prices));
+    let $filters = $container.find('.snappy-product-filters');
+    let $min = $filters.find('.filter-price-min');
+    let $max = $filters.find('.filter-price-max');
+
+    $min.attr('min', minPrice).attr('max', maxPrice).val(minPrice);
+    $max.attr('min', minPrice).attr('max', maxPrice).val(maxPrice);
+    $filters.data('min-price', minPrice);
+    $filters.data('max-price', maxPrice);
+    $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
+    $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
+    updatePriceRangeTrack($filters, minPrice, maxPrice, minPrice, maxPrice);
+  }
+
+  function getFilteredProducts($container, products) {
+    if (!filters_enabled || !products_enabled || !products.length) {
+      return products;
+    }
+
+    let $filters = $container.find('.snappy-product-filters');
+    let minRating = parseFloat($filters.find('.filter-rating').val() || '0');
+    let minPrice = parsePrice($filters.find('.filter-price-min').val());
+    let maxPrice = parsePrice($filters.find('.filter-price-max').val());
+
+    if (minPrice > maxPrice) {
+      let temp = minPrice;
+      minPrice = maxPrice;
+      maxPrice = temp;
+    }
+
+    return $.grep(products, function (item) {
+      let rating = parseFloat(item.average_rating || 0);
+      let price = parsePrice(item.price);
+
+      return rating >= minRating && price >= minPrice && price <= maxPrice;
+    });
+  }
+
+  function bindFilterEvents($container) {
+    if (!filters_enabled || !products_enabled) {
+      return;
+    }
+
+    $container.off('change.snappyFilters input.snappyFilters', '.snappy-product-filters input, .snappy-product-filters select');
+    $container.on('change.snappyFilters input.snappyFilters', '.snappy-product-filters input, .snappy-product-filters select', function () {
+      let $filters = $container.find('.snappy-product-filters');
+      let minPrice = parsePrice($filters.find('.filter-price-min').val());
+      let maxPrice = parsePrice($filters.find('.filter-price-max').val());
+      let minBound = parsePrice($filters.data('min-price'));
+      let maxBound = parsePrice($filters.data('max-price'));
+
+      if (minPrice > maxPrice) {
+        if ($(this).hasClass('filter-price-min')) {
+          $filters.find('.filter-price-max').val(minPrice);
+          maxPrice = minPrice;
+        } else {
+          $filters.find('.filter-price-min').val(maxPrice);
+          minPrice = maxPrice;
+        }
+      }
+
+      $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
+      $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
+      updatePriceRangeTrack($filters, minPrice, maxPrice, minBound, maxBound);
+
+      renderSections($container, latest_results);
+    });
+  }
+
+  function updatePriceRangeTrack($filters, minPrice, maxPrice, minBound, maxBound) {
+    if (maxBound <= minBound) {
+      $filters.find('.dual-range-fill').css({ left: '0%', right: '0%' });
+      return;
+    }
+
+    let left = ((minPrice - minBound) / (maxBound - minBound)) * 100;
+    let right = ((maxBound - maxPrice) / (maxBound - minBound)) * 100;
+
+    $filters.find('.dual-range-fill').css({
+      left: left + '%',
+      right: right + '%'
+    });
+  }
+
+  function toggleProductFiltersVisibility($container) {
+    if (!filters_enabled || !products_enabled) {
+      return;
+    }
+
+    let $filters = $container.find('.snappy-product-filters');
+
+    if (!$filters.length) {
+      return;
+    }
+
+    let activeType = '';
+    let $activeTab = $container.find('.instant-search-tabs .tab.active');
+
+    if ($activeTab.length) {
+      activeType = $activeTab.data('type');
+    } else {
+      let $visibleSection = $container.find('.instant-search-section:visible').first();
+      activeType = $visibleSection.data('type');
+    }
+
+    if (activeType === 'product') {
+      $filters.show();
+    } else {
+      $filters.hide();
+    }
   }
 
   function buildInitialSearchForm() {
@@ -255,11 +403,41 @@ jQuery(document).ready(function ($) {
       `;
     }
 
+    let filtersHTML = '';
+
+    if (filters_enabled && products_enabled) {
+      filtersHTML = `
+        <div class="snappy-product-filters">
+          <h4>${__('Filter Products', 'speedy-search')}</h4>
+          <label>${__('Rating', 'speedy-search')}</label>
+          <select class="filter-rating">
+            <option value="0">${__('All ratings', 'speedy-search')}</option>
+            <option value="1">1.0+</option>
+            <option value="2">2.0+</option>
+            <option value="3">3.0+</option>
+            <option value="4">4.0+</option>
+            <option value="5">5.0</option>
+          </select>
+          <label>${__('Price Range', 'speedy-search')}</label>
+          <div class="dual-range-slider">
+            <div class="dual-range-track"></div>
+            <div class="dual-range-fill"></div>
+            <input type="range" class="filter-price-min" step="1" value="0">
+            <input type="range" class="filter-price-max" step="1" value="0">
+          </div>
+          <p class="price-range-text"><span class="filter-price-min-label">0.00</span> - <span class="filter-price-max-label">0.00</span></p>
+        </div>
+      `;
+    }
+
     let searchForm = `
       <div class="instant-search-wrapper" style="display: none;">
         ${tabsHTML}
-        <div class="instant-search-results">
-          ${sectionsHTML}
+        <div class="instant-search-layout">
+          ${filtersHTML}
+          <div class="instant-search-results">
+            ${sectionsHTML}
+          </div>
         </div>
       </div>
     `;

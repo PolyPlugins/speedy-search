@@ -77,6 +77,14 @@ class General {
 			'speedy_search_general_section_polyplugins' // Setting section
 		);
 
+		add_settings_field(
+			'shortcode_filters_enabled',
+			__('Shortcode Product Filters?', 'speedy-search'),
+			array($this, 'shortcode_filters_enabled_render'),
+			'speedy_search_general_polyplugins',
+			'speedy_search_general_section_polyplugins'
+		);
+
     add_settings_field(
       'default_result_type',
       __('Default Result Type', 'speedy-search'),
@@ -125,6 +133,14 @@ class General {
 			'selector',
 			__('Selector', 'speedy-search'),
 			array($this, 'selector_render'),
+			'speedy_search_general_polyplugins',
+			'speedy_search_general_section_polyplugins'
+		);
+
+		add_settings_field(
+			'selector_filters_enabled',
+			__('Selector Product Filters?', 'speedy-search'),
+			array($this, 'selector_filters_enabled_render'),
 			'speedy_search_general_polyplugins',
 			'speedy_search_general_section_polyplugins'
 		);
@@ -214,6 +230,36 @@ class General {
     ?>
     <input type="number" name="speedy_search_settings_polyplugins[typing_delay]" id="typing_delay" value="<?php echo esc_html($option); ?>">
     <p><strong><?php esc_html_e('How many milliseconds between inputs until a search is fired?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Shortcode Filters Enabled Field
+	 *
+	 * @return void
+	 */
+	public function shortcode_filters_enabled_render() {
+		$option = Utils::get_option('shortcode_filters_enabled');
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[shortcode_filters_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Enable product filters (rating and price) on shortcode results.', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Selector Filters Enabled Field
+	 *
+	 * @return void
+	 */
+	public function selector_filters_enabled_render() {
+		$option = Utils::get_option('selector_filters_enabled');
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[selector_filters_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Enable product filters (rating and price) on selector results.', 'speedy-search'); ?></strong></p>
 	  <?php
 	}
 

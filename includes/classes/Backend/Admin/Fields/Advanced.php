@@ -99,6 +99,14 @@ class Advanced {
 			'speedy_search_advanced_polyplugins',
 			'speedy_search_advanced_section_polyplugins'
 		);
+
+		add_settings_field(
+			'advanced_filters_enabled',
+			__('Product Filters?', 'speedy-search'),
+			array($this, 'advanced_filters_enabled_render'),
+			'speedy_search_advanced_polyplugins',
+			'speedy_search_advanced_section_polyplugins'
+		);
   }
   
   /**
@@ -170,6 +178,22 @@ class Advanced {
     ?>
     <input type="text" name="speedy_search_settings_polyplugins[advanced][placeholder]" value="<?php echo esc_html($option); ?>" />
     <p><strong><?php esc_html_e('Set the placeholder for the advanced search input.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Advanced Product Filters Enabled Field
+	 *
+	 * @return void
+	 */
+	public function advanced_filters_enabled_render() {
+		$options = Utils::get_option('advanced');
+    $option  = isset($options['filters_enabled']) ? $options['filters_enabled'] : false;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[advanced][filters_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Enable product filters (rating and price) on advanced results.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 
