@@ -6,8 +6,6 @@
 # Test
 [] Custom product fields
 
-# 1.6.0
-
 # 1.7.0
 [ ] Add utils for version and plugin_dir_url using static property to cache
 [ ] Handling indexing categories
