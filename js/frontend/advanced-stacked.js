@@ -384,11 +384,11 @@ jQuery(document).ready(function ($) {
           <label>${__('Rating', 'speedy-search')}</label>
           <select class="filter-rating">
             <option value="0">${__('All ratings', 'speedy-search')}</option>
-            <option value="1">1.0+</option>
-            <option value="2">2.0+</option>
-            <option value="3">3.0+</option>
-            <option value="4">4.0+</option>
             <option value="5">5.0</option>
+            <option value="4">4.0+</option>
+            <option value="3">3.0+</option>
+            <option value="2">2.0+</option>
+            <option value="1">1.0+</option>
           </select>
           <label>${__('Price Range', 'speedy-search')}</label>
           <div class="dual-range-slider">

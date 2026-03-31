@@ -153,6 +153,7 @@
 
 .speedy-search-container .snappy-product-filters select,
 .speedy-search-container .snappy-product-filters input[type="range"] {
+  padding-left: 5px;
   width: 100%;
 }
 
