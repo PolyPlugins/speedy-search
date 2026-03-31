@@ -482,6 +482,10 @@ class Settings {
 			$sanitary_values['selector'] = sanitize_text_field($input['selector']);
 		}
 
+    if (isset($input['filters_custom_fields']) && $input['filters_custom_fields']) {
+			$sanitary_values['filters_custom_fields'] = sanitize_text_field($input['filters_custom_fields']);
+		}
+
     if (isset($input['popular']['enabled']) && $input['popular']['enabled']) {
       $sanitary_values['popular']['enabled'] = $input['popular']['enabled'] === 'on' ? true : false;
     } else {

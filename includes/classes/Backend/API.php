@@ -420,6 +420,8 @@ class API {
 		$options          = Utils::get_option('products');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $custom_fields_raw = Utils::get_option('filters_custom_fields');
+    $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -475,11 +477,27 @@ class API {
 
       foreach ($posts as $post) {
         $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
+        $product_custom_fields = array();
 
         $tags = array(
           'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
           'span' => array('class' => array(), 'style' => array()),
         );
+
+        if (!empty($custom_fields)) {
+          foreach ($custom_fields as $custom_field) {
+            $meta_key   = sanitize_key($custom_field);
+            $meta_value = get_post_meta($post->ID, $meta_key, true);
+
+            if (is_array($meta_value)) {
+              $meta_value = implode(', ', array_map('sanitize_text_field', $meta_value));
+            } else {
+              $meta_value = sanitize_text_field($meta_value);
+            }
+
+            $product_custom_fields[$meta_key] = $meta_value;
+          }
+        }
         
         $data = array(
           'id'             => $post->ID,
@@ -489,7 +507,8 @@ class API {
           'excerpt'        => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
           'average_rating' => $average_rating ? (float) $average_rating : 0,
           'rating'         => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
-          'permalink'      => get_permalink($post->ID)
+          'permalink'      => get_permalink($post->ID),
+          'custom_fields'  => $product_custom_fields,
         );
 
         if ($average_rating > 0) {

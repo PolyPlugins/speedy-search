@@ -91,6 +91,14 @@ class Filters {
 			'speedy_search_filters_polyplugins',
 			'speedy_search_filters_section_polyplugins'
 		);
+
+		add_settings_field(
+			'filters_custom_fields',
+			__('Custom Product Fields', 'speedy-search'),
+			array($this, 'filters_custom_fields_render'),
+			'speedy_search_filters_polyplugins',
+			'speedy_search_filters_section_polyplugins'
+		);
   }
 
   /**
@@ -136,6 +144,19 @@ class Filters {
       <input type="checkbox" name="speedy_search_settings_polyplugins[advanced][filters_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Enable product filters (rating and price) on advanced results.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Custom Product Fields
+	 *
+	 * @return void
+	 */
+	public function filters_custom_fields_render() {
+		$option = Utils::get_option('filters_custom_fields');
+    ?>
+    <input type="text" name="speedy_search_settings_polyplugins[filters_custom_fields]" value="<?php echo esc_html($option); ?>" />
+    <p><strong><?php esc_html_e('Add custom product meta keys separated by commas to show as filters. Example: _color,_size', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

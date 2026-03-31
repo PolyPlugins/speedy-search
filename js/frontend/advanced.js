@@ -265,6 +265,7 @@ jQuery(document).ready(function ($) {
     $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
     $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
     updatePriceRangeTrack($filters, minPrice, maxPrice, minPrice, maxPrice);
+    populateCustomFieldFilters($filters, products);
   }
 
   function getFilteredProducts($container, products) {
@@ -286,8 +287,9 @@ jQuery(document).ready(function ($) {
     return $.grep(products, function (item) {
       let rating = parseFloat(item.average_rating || 0);
       let price = parsePrice(item.price);
+      let customFieldsMatch = matchCustomFieldFilters($filters, item);
 
-      return rating >= minRating && price >= minPrice && price <= maxPrice;
+      return rating >= minRating && price >= minPrice && price <= maxPrice && customFieldsMatch;
     });
   }
 
@@ -335,6 +337,98 @@ jQuery(document).ready(function ($) {
       left: left + '%',
       right: right + '%'
     });
+  }
+
+  function normalizeCustomFieldKey(fieldKey) {
+    return String(fieldKey || '').trim().toLowerCase();
+  }
+
+  function normalizeCustomFieldLabel(fieldKey) {
+    return String(fieldKey || '')
+      .replace(/^_+/, '')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, function(char) {
+        return char.toUpperCase();
+      });
+  }
+
+  function populateCustomFieldFilters($filters, products) {
+    let fieldValues = {};
+    let selectedValues = {};
+    let $container = $filters.find('.custom-field-filters');
+
+    if (!$container.length) {
+      return;
+    }
+
+    $container.find('.filter-custom-field').each(function () {
+      selectedValues[$(this).data('field-key')] = $(this).val();
+    });
+
+    $.each(products, function (_, item) {
+      if (!item.custom_fields || typeof item.custom_fields !== 'object') {
+        return;
+      }
+
+      $.each(item.custom_fields, function (rawKey, rawValue) {
+        let key = normalizeCustomFieldKey(rawKey);
+        let value = String(rawValue || '').trim();
+
+        if (!key || !value) {
+          return;
+        }
+
+        if (!fieldValues[key]) {
+          fieldValues[key] = {};
+        }
+
+        fieldValues[key][value] = true;
+      });
+    });
+
+    $container.empty();
+
+    $.each(fieldValues, function (fieldKey, values) {
+      let valueKeys = Object.keys(values).sort();
+
+      if (!valueKeys.length) {
+        return;
+      }
+
+      let label = normalizeCustomFieldLabel(fieldKey);
+      let selected = selectedValues[fieldKey] || '';
+      let options = '<option value="">' + __('All', 'speedy-search') + '</option>';
+
+      $.each(valueKeys, function (_, value) {
+        let selectedAttr = selected === value ? ' selected' : '';
+        options += '<option value="' + value + '"' + selectedAttr + '>' + value + '</option>';
+      });
+
+      $container.append(
+        '<label>' + label + '</label>' +
+        '<select class="filter-custom-field" data-field-key="' + fieldKey + '">' +
+          options +
+        '</select>'
+      );
+    });
+  }
+
+  function matchCustomFieldFilters($filters, item) {
+    let isMatch = true;
+    let productCustomFields = item.custom_fields && typeof item.custom_fields === 'object' ? item.custom_fields : {};
+
+    $filters.find('.filter-custom-field').each(function () {
+      let selected = String($(this).val() || '').trim();
+      let fieldKey = normalizeCustomFieldKey($(this).data('field-key'));
+      let itemValue = String(productCustomFields[fieldKey] || '').trim();
+
+      if (selected && itemValue !== selected) {
+        isMatch = false;
+        return false;
+      }
+    });
+
+    return isMatch;
   }
 
   function toggleProductFiltersVisibility($container) {
@@ -418,6 +512,7 @@ jQuery(document).ready(function ($) {
             <option value="2">2.0+</option>
             <option value="1">1.0+</option>
           </select>
+          <div class="custom-field-filters"></div>
           <label>${__('Price Range', 'speedy-search')}</label>
           <div class="dual-range-slider">
             <div class="dual-range-track"></div>

@@ -157,6 +157,10 @@
   width: 100%;
 }
 
+.speedy-search-container .snappy-product-filters .custom-field-filters label {
+  margin-top: 10px;
+}
+
 .speedy-search-container .snappy-product-filters .dual-range-slider {
   position: relative;
   height: 28px;
