@@ -486,6 +486,18 @@ class Settings {
 			$sanitary_values['filters_custom_fields'] = sanitize_text_field($input['filters_custom_fields']);
 		}
 
+    if (isset($input['filters_rating_enabled']) && $input['filters_rating_enabled']) {
+      $sanitary_values['filters_rating_enabled'] = $input['filters_rating_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['filters_rating_enabled'] = false;
+    }
+
+    if (isset($input['filters_price_range_enabled']) && $input['filters_price_range_enabled']) {
+      $sanitary_values['filters_price_range_enabled'] = $input['filters_price_range_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['filters_price_range_enabled'] = false;
+    }
+
     if (isset($input['popular']['enabled']) && $input['popular']['enabled']) {
       $sanitary_values['popular']['enabled'] = $input['popular']['enabled'] === 'on' ? true : false;
     } else {

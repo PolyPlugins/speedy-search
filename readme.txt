@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 6.8
-Stable tag: 1.5.2
+Stable tag: 1.6.0
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -99,6 +99,19 @@ By default it will index 10 posts per minute.
 
 
 == Changelog ==
+
+= 1.6.0 =
+* Added: Rating, Price Range, and Custom Product Field filters for products
+* Added: Star ratings to product tab
+* Added: Add to Cart / Select Options button to products tab
+* Added: Option to filter out of stock products to end of list
+* Added: Out of Stock badges on product tab
+* Added: Featured functionality to move featured products to top of list and show a featured badge on product tab
+* Added: Singular endpoint to fetch all posts, pages, ect to reduce the number of requests per search
+* Added: Handling to clear cache when a product goes out of stock
+* Added: Handling clearing cache when posts, products, ect are updated / deleted
+* Added: Handling for when a products visibility is set to hidden
+* Added: Notice in settings when no object cache is detected
 
 = 1.5.2 =
 * Bugfix: WooCommerce orders admin will sometimes close if opened in new tab

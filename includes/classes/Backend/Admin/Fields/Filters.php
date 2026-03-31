@@ -93,6 +93,22 @@ class Filters {
 		);
 
 		add_settings_field(
+			'filters_rating_enabled',
+			__('Rating Filter?', 'speedy-search'),
+			array($this, 'filters_rating_enabled_render'),
+			'speedy_search_filters_polyplugins',
+			'speedy_search_filters_section_polyplugins'
+		);
+
+		add_settings_field(
+			'filters_price_range_enabled',
+			__('Price Range?', 'speedy-search'),
+			array($this, 'filters_price_range_enabled_render'),
+			'speedy_search_filters_polyplugins',
+			'speedy_search_filters_section_polyplugins'
+		);
+
+		add_settings_field(
 			'filters_custom_fields',
 			__('Custom Product Fields', 'speedy-search'),
 			array($this, 'filters_custom_fields_render'),
@@ -144,6 +160,36 @@ class Filters {
       <input type="checkbox" name="speedy_search_settings_polyplugins[advanced][filters_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Enable product filters (rating and price) on advanced results.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Rating Filter Enabled Field
+	 *
+	 * @return void
+	 */
+	public function filters_rating_enabled_render() {
+		$option = Utils::get_option('filters_rating_enabled');
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[filters_rating_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Show the rating filter in product filter panels.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Price Range Filter Enabled Field
+	 *
+	 * @return void
+	 */
+	public function filters_price_range_enabled_render() {
+		$option = Utils::get_option('filters_price_range_enabled');
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[filters_price_range_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Show the price range filter in product filter panels.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

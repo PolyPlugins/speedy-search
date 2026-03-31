@@ -91,9 +91,10 @@ By default, it will index 10 posts per minute.
 * Added: Out of Stock badges on product tab
 * Added: Featured functionality to move featured products to top of list and show a featured badge on product tab
 * Added: Singular endpoint to fetch all posts, pages, ect to reduce the number of requests per search
-* Added: Notice in settings when no object cache is detected
 * Added: Handling to clear cache when a product goes out of stock
 * Added: Handling clearing cache when posts, products, ect are updated / deleted
+* Added: Handling for when a products visibility is set to hidden
+* Added: Notice in settings when no object cache is detected
 
 ### 1.5.2
 * Bugfix: WooCommerce orders admin will sometimes close if opened in new tab

@@ -16,6 +16,10 @@ jQuery(document).ready(function ($) {
   let advanced_enabled_types = snappy_search_object.options?.advanced?.enabled_types ?? [];
   let currency               = snappy_search_object.currency ?? '$';
   let filters_enabled        = snappy_search_object.options?.advanced?.filters_enabled ?? false;
+  let rating_filter_enabled = snappy_search_object.options?.filters_rating_enabled ?? false;
+  let price_range_filter_enabled = snappy_search_object.options?.filters_price_range_enabled ?? false;
+  let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
+  let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled;
   let latest_results         = {};
 
   const $searchInput      = $(selector);
@@ -297,47 +301,51 @@ jQuery(document).ready(function ($) {
   }
 
   function setupProductFilters($container, products) {
-    if (!filters_enabled || !products_enabled) {
+    if (!filters_enabled || !products_enabled || !has_active_product_filters) {
       return;
     }
 
-    let prices = $.map(products, function (item) {
-      return parsePrice(item.price);
-    }).filter(function (price) {
-      return price >= 0;
-    });
-
-    if (!prices.length) {
-      return;
-    }
-
-    let minPrice = Math.floor(Math.min.apply(null, prices));
-    let maxPrice = Math.ceil(Math.max.apply(null, prices));
     let $filters = $container.find('.snappy-product-filters');
-    let $min = $filters.find('.filter-price-min');
-    let $max = $filters.find('.filter-price-max');
 
-    $min.attr('min', minPrice).attr('max', maxPrice).val(minPrice);
-    $max.attr('min', minPrice).attr('max', maxPrice).val(maxPrice);
-    $filters.data('min-price', minPrice);
-    $filters.data('max-price', maxPrice);
-    $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
-    $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
-    updatePriceRangeTrack($filters, minPrice, maxPrice, minPrice, maxPrice);
-    populateCustomFieldFilters($filters, products);
+    if (price_range_filter_enabled) {
+      let prices = $.map(products, function (item) {
+        return parsePrice(item.price);
+      }).filter(function (price) {
+        return price >= 0;
+      });
+
+      if (prices.length) {
+        let minPrice = Math.floor(Math.min.apply(null, prices));
+        let maxPrice = Math.ceil(Math.max.apply(null, prices));
+        let $min = $filters.find('.filter-price-min');
+        let $max = $filters.find('.filter-price-max');
+
+        $min.attr('min', minPrice).attr('max', maxPrice).val(minPrice);
+        $max.attr('min', minPrice).attr('max', maxPrice).val(maxPrice);
+        $filters.data('min-price', minPrice);
+        $filters.data('max-price', maxPrice);
+        $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
+        $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
+        updatePriceRangeTrack($filters, minPrice, maxPrice, minPrice, maxPrice);
+      }
+    }
+
+    if (custom_field_filter_enabled) {
+      populateCustomFieldFilters($filters, products);
+    }
   }
 
   function getFilteredProducts($container, products) {
-    if (!filters_enabled || !products_enabled || !products.length) {
+    if (!filters_enabled || !products_enabled || !has_active_product_filters || !products.length) {
       return products;
     }
 
     let $filters = $container.find('.snappy-product-filters');
-    let minRating = parseFloat($filters.find('.filter-rating').val() || '0');
-    let minPrice = parsePrice($filters.find('.filter-price-min').val());
-    let maxPrice = parsePrice($filters.find('.filter-price-max').val());
+    let minRating = rating_filter_enabled ? parseFloat($filters.find('.filter-rating').val() || '0') : 0;
+    let minPrice = price_range_filter_enabled ? parsePrice($filters.find('.filter-price-min').val()) : 0;
+    let maxPrice = price_range_filter_enabled ? parsePrice($filters.find('.filter-price-max').val()) : Number.MAX_SAFE_INTEGER;
 
-    if (minPrice > maxPrice) {
+    if (price_range_filter_enabled && minPrice > maxPrice) {
       let temp = minPrice;
       minPrice = maxPrice;
       maxPrice = temp;
@@ -346,38 +354,40 @@ jQuery(document).ready(function ($) {
     return $.grep(products, function (item) {
       let rating = parseFloat(item.average_rating || 0);
       let price = parsePrice(item.price);
-      let customFieldsMatch = matchCustomFieldFilters($filters, item);
+      let customFieldsMatch = custom_field_filter_enabled ? matchCustomFieldFilters($filters, item) : true;
 
       return rating >= minRating && price >= minPrice && price <= maxPrice && customFieldsMatch;
     });
   }
 
   function bindFilterEvents($container) {
-    if (!filters_enabled || !products_enabled) {
+    if (!filters_enabled || !products_enabled || !has_active_product_filters) {
       return;
     }
 
     $container.off('change.snappyFilters input.snappyFilters', '.snappy-product-filters input, .snappy-product-filters select');
     $container.on('change.snappyFilters input.snappyFilters', '.snappy-product-filters input, .snappy-product-filters select', function () {
       let $filters = $container.find('.snappy-product-filters');
-      let minPrice = parsePrice($filters.find('.filter-price-min').val());
-      let maxPrice = parsePrice($filters.find('.filter-price-max').val());
-      let minBound = parsePrice($filters.data('min-price'));
-      let maxBound = parsePrice($filters.data('max-price'));
+      if (price_range_filter_enabled) {
+        let minPrice = parsePrice($filters.find('.filter-price-min').val());
+        let maxPrice = parsePrice($filters.find('.filter-price-max').val());
+        let minBound = parsePrice($filters.data('min-price'));
+        let maxBound = parsePrice($filters.data('max-price'));
 
-      if (minPrice > maxPrice) {
-        if ($(this).hasClass('filter-price-min')) {
-          $filters.find('.filter-price-max').val(minPrice);
-          maxPrice = minPrice;
-        } else {
-          $filters.find('.filter-price-min').val(maxPrice);
-          minPrice = maxPrice;
+        if (minPrice > maxPrice) {
+          if ($(this).hasClass('filter-price-min')) {
+            $filters.find('.filter-price-max').val(minPrice);
+            maxPrice = minPrice;
+          } else {
+            $filters.find('.filter-price-min').val(maxPrice);
+            minPrice = maxPrice;
+          }
         }
-      }
 
-      $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
-      $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
-      updatePriceRangeTrack($filters, minPrice, maxPrice, minBound, maxBound);
+        $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
+        $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
+        updatePriceRangeTrack($filters, minPrice, maxPrice, minBound, maxBound);
+      }
 
       renderSections($container, latest_results);
     });
@@ -505,10 +515,11 @@ jQuery(document).ready(function ($) {
 
     let filtersHTML = '';
 
-    if (filters_enabled && products_enabled) {
+    if (filters_enabled && products_enabled && has_active_product_filters) {
       filtersHTML = `
         <div class="snappy-product-filters">
           <h4>${__('Filter Products', 'speedy-search')}</h4>
+          ${rating_filter_enabled ? `
           <label>${__('Rating', 'speedy-search')}</label>
           <select class="filter-rating">
             <option value="0">${__('All ratings', 'speedy-search')}</option>
@@ -517,8 +528,9 @@ jQuery(document).ready(function ($) {
             <option value="3">3.0+</option>
             <option value="2">2.0+</option>
             <option value="1">1.0+</option>
-          </select>
-          <div class="custom-field-filters"></div>
+          </select>` : ''}
+          ${custom_field_filter_enabled ? '<div class="custom-field-filters"></div>' : ''}
+          ${price_range_filter_enabled ? `
           <label>${__('Price Range', 'speedy-search')}</label>
           <div class="dual-range-slider">
             <div class="dual-range-track"></div>
@@ -526,7 +538,7 @@ jQuery(document).ready(function ($) {
             <input type="range" class="filter-price-min" step="1" value="0">
             <input type="range" class="filter-price-max" step="1" value="0">
           </div>
-          <p class="price-range-text"><span class="filter-price-min-label">0.00</span> - <span class="filter-price-max-label">0.00</span></p>
+          <p class="price-range-text"><span class="filter-price-min-label">0.00</span> - <span class="filter-price-max-label">0.00</span></p>` : ''}
         </div>
       `;
     }
