@@ -477,6 +477,8 @@ class API {
         $product = wc_get_product($post->ID);
         $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
         $is_featured = $product ? $product->is_featured() : false;
+        $is_variable = $product ? $product->is_type('variable') : false;
+        $add_to_cart_url = $product ? $product->add_to_cart_url() : get_permalink($post->ID);
         $product_custom_fields = array();
 
         $tags = array(
@@ -508,6 +510,8 @@ class API {
           'average_rating' => $average_rating ? (float) $average_rating : 0,
           'rating'         => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
           'is_featured'    => (bool) $is_featured,
+          'is_variable'    => (bool) $is_variable,
+          'add_to_cart_url' => esc_url_raw($add_to_cart_url),
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
         );

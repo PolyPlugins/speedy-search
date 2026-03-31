@@ -201,6 +201,7 @@ jQuery(document).ready(function ($) {
         let price = "";
         let rating = "";
         let featuredBadge = "";
+        let productAction = "";
 
         if (item.thumbnail) {
           imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
@@ -218,6 +219,16 @@ jQuery(document).ready(function ($) {
           featuredBadge = '<div class="featured-badge">' + __("Featured", "speedy-search") + '</div>';
         }
 
+        if (endpoint === 'product') {
+          let actionLabel = item.is_variable ? __("Select Options", "speedy-search") : __("Add to Cart", "speedy-search");
+          let actionUrl = item.is_variable ? item.permalink : getCurrentAddToCartUrl(item.id);
+          productAction = `
+            <a href="${actionUrl}" class="product-action-result">
+              ${actionLabel}
+            </a>
+          `;
+        }
+
         return `
           <div class="instant-search-result">
             <a href="${item.permalink}" class="permalink-result">
@@ -232,6 +243,7 @@ jQuery(document).ready(function ($) {
                   <p class="excerpt-result">${item.excerpt}</p>
               </div>
             </a>
+            ${productAction}
           </div>
         `;
       }).join("");
@@ -247,6 +259,18 @@ jQuery(document).ready(function ($) {
   function parsePrice(value) {
     let number = parseFloat(String(value).replace(/[^0-9.]/g, ''));
     return isNaN(number) ? 0 : number;
+  }
+
+  function getCurrentAddToCartUrl(productId) {
+    if (!productId) {
+      return window.location.href;
+    }
+
+    let currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('add-to-cart', String(productId));
+    currentUrl.searchParams.delete('added-to-cart');
+
+    return currentUrl.toString();
   }
 
   function setupProductFilters($container, products) {
