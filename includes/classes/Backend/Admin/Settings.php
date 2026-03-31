@@ -261,6 +261,11 @@ class Settings {
             </div>
             <div class="tabs col-12 col-md-6 col-xl-6">
               <div class="tab general">
+                <?php if (!wp_using_ext_object_cache()) : ?>
+                  <div class="danger">
+                    <?php esc_html_e('You do not currently have a persistent object cache enabled. For best Snappy Search performance, we recommend enabling a persistent object cache (Redis/Memcached). Snappy Search will still work without it, but caching may be less effective.', 'speedy-search'); ?>
+                  </div>
+                <?php endif; ?>
                 <?php
                 do_settings_sections('speedy_search_general_polyplugins');
                 ?>

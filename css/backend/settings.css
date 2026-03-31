@@ -59,7 +59,7 @@ input[type=checkbox]:checked::before {
 
 .tab .danger {
   background-color: #DC3545;
-  color: #333;
+  color: #fff;
   border-top-right-radius: 5px;
   border-top-left-radius: 5px;
   padding: 8px 12px;
