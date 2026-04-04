@@ -3,16 +3,23 @@
 [ ] Update Screenshots
 [ ] Plugin Scan
 
+# 1.6.0
+[ ] Add a link to download standalone Snappy Search API
+[ ] Featured out of stock should not move to the top
+[ ] Add synonyms functionality
+[ ] Scan standalone Snappy Search API
+
 # 1.7.0
+[ ] Make order search work with new search shortinit
 [ ] Have it so when you click in it, it shows the full search filled with popular search terms, products, posts, ect.
 [ ] Add utils for version and plugin_dir_url using static property to cache
 [ ] Handling indexing categories
 [ ] Add analytics for 0 search items and top searches
-[ ] Add logging class from our other plugins
-
-# General
+[ ] Add logging class from our other plugins[ ] Add options to disable various parts of search result like star rating, price, excerpt, etc.
 [ ] When a product has variations have a popup list all the options to choose from
 [ ] Add filtering by category
+
+# General
 [ ] Add scroll to load more results
 [ ] Add additional ordering like by top seller for products
 [ ] Add autocomplete functionality
