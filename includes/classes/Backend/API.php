@@ -446,6 +446,7 @@ class API {
     }
 
     $expanded_query = $this->expand_search_query($search_query);
+    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
     $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last);
@@ -524,6 +525,7 @@ class API {
           'add_to_cart_url' => esc_url_raw($add_to_cart_url),
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
+          'title_match'   => $this->title_contains_search_terms(get_the_title($post->ID), $title_terms),
         );
         $posts_data[] = $data;
       }
@@ -537,8 +539,16 @@ class API {
           return $a['is_featured'] ? -1 : 1;
         }
 
+        if ($a['title_match'] !== $b['title_match']) {
+          return $a['title_match'] ? -1 : 1;
+        }
+
         return $b['average_rating'] <=> $a['average_rating'];
       });
+
+      foreach ($posts_data as $index => $item) {
+        unset($posts_data[$index]['title_match']);
+      }
 
       Utils::set_api_cache($cache_key, $posts_data, 600);
 
@@ -791,6 +801,80 @@ class API {
     }
 
     return $map;
+  }
+
+  /**
+   * Build all search terms including synonyms.
+   *
+   * @param string $search_query
+   * @return array
+   */
+  private function get_search_terms_with_synonyms($search_query) {
+    $search_query = sanitize_text_field((string) $search_query);
+    $normalized   = strtolower(trim($search_query));
+    $synonym_map  = $this->get_synonym_map();
+    $terms        = array();
+
+    if ($normalized !== '') {
+      $terms[] = $normalized;
+    }
+
+    $tokens = preg_split('/\s+/', $normalized);
+
+    if (is_array($tokens)) {
+      foreach ($tokens as $token) {
+        if ($token !== '') {
+          $terms[] = $token;
+        }
+      }
+    }
+
+    if (isset($synonym_map[$normalized])) {
+      $terms = array_merge($terms, preg_split('/\s+/', strtolower($synonym_map[$normalized])));
+    }
+
+    if (is_array($tokens)) {
+      foreach ($tokens as $token) {
+        if ($token === '' || !isset($synonym_map[$token])) {
+          continue;
+        }
+
+        $terms = array_merge($terms, preg_split('/\s+/', strtolower($synonym_map[$token])));
+      }
+    }
+
+    $terms = array_filter(array_unique(array_map('trim', $terms)));
+
+    return array_values($terms);
+  }
+
+  /**
+   * Check if title contains any search term.
+   *
+   * @param string $title
+   * @param array $terms
+   * @return bool
+   */
+  private function title_contains_search_terms($title, $terms) {
+    $title = strtolower(trim(sanitize_text_field((string) $title)));
+
+    if ($title === '' || !is_array($terms) || empty($terms)) {
+      return false;
+    }
+
+    foreach ($terms as $term) {
+      $term = strtolower(trim(sanitize_text_field((string) $term)));
+
+      if ($term === '') {
+        continue;
+      }
+
+      if (strpos($title, $term) !== false) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   /**

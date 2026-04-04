@@ -103,6 +103,7 @@ By default it will index 10 posts per minute.
 = 1.6.0 =
 * Added: Handling for standalone Snappy Search API for huge speed increases
 * Added: Synonym functionality
+* Added: Sorting title matches to top
 * Added: Rating, Price Range, and Custom Product Field filters for products
 * Added: Star ratings to product tab
 * Added: Add to Cart / Select Options button to products tab
