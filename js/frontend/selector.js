@@ -30,6 +30,7 @@ jQuery(document).ready(function ($) {
   let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
   let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled;
   let search_endpoint       = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
+  let use_search_php        = snappy_search_object.endpoints?.has_custom_file ?? false;
   let latest_results        = {};
 
   const $searchInput        = $(selector);
@@ -108,10 +109,12 @@ jQuery(document).ready(function ($) {
   }
 
   function performSearch(query) {
-    // Show "Searching..." in each existing section
-    $('.instant-search-section').each(function () {
-      $(this).html('<p>' + __("Searching...", "speedy-search") + '</p>');
-    });
+    if (!use_search_php) {
+      // Show "Searching..." in each existing section
+      $('.instant-search-section').each(function () {
+        $(this).html('<p>' + __("Searching...", "speedy-search") + '</p>');
+      });
+    }
 
     fetchResults(query);
   }
@@ -123,8 +126,12 @@ jQuery(document).ready(function ($) {
       dataType: "json",
       success: function (data) {
         latest_results = data;
-        setupProductFilters(data.products || []);
-        renderSections(data);
+        if (use_search_php) {
+          crossfadeResults(data);
+        } else {
+          setupProductFilters(data.products || []);
+          renderSections(data);
+        }
       },
       error: function () {
         $('.instant-search-section').each(function () {
@@ -136,6 +143,22 @@ jQuery(document).ready(function ($) {
           );
         });
       },
+    });
+  }
+
+  function crossfadeResults(data) {
+    let $results = $('.instant-search-results');
+
+    setupProductFilters(data.products || []);
+
+    if (!$results.length) {
+      renderSections(data);
+      return;
+    }
+
+    $results.stop(true, true).fadeTo(75, 0.35, function () {
+      renderSections(data);
+      $results.fadeTo(150, 1);
     });
   }
 

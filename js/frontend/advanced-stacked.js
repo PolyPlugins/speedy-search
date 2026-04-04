@@ -21,6 +21,7 @@ jQuery(document).ready(function ($) {
   let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
   let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled;
   let search_endpoint         = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
+  let use_search_php          = snappy_search_object.endpoints?.has_custom_file ?? false;
   let latest_results         = {};
 
   const $searchInput      = $(selector);
@@ -130,20 +131,22 @@ jQuery(document).ready(function ($) {
   }
 
   function performSearch(query, $container) {
-    const $sections = $container.find('.instant-search-section');
+    if (!use_search_php) {
+      const $sections = $container.find('.instant-search-section');
 
-    $sections.each(function () {
-      let $result = $(".speedy-search-container .instant-search-result");
+      $sections.each(function () {
+        let $result = $(".speedy-search-container .instant-search-result");
 
-      if ($result.length) {
-        $result.addClass('skeleton-loading');
-      } else {
-        $(".speedy-search-container .snappy-search-close").hide();
-        $(".speedy-search-container .loader").show();
-      }
+        if ($result.length) {
+          $result.addClass('skeleton-loading');
+        } else {
+          $(".speedy-search-container .snappy-search-close").hide();
+          $(".speedy-search-container .loader").show();
+        }
 
-      // $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
-    });
+        // $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
+      });
+    }
 
     fetchResults(query, $container);
   }
@@ -155,8 +158,12 @@ jQuery(document).ready(function ($) {
       dataType: "json",
       success: function (data) {
         latest_results = data;
-        setupProductFilters($container, data.products || []);
-        renderSections($container, data);
+        if (use_search_php) {
+          crossfadeResults($container, data);
+        } else {
+          setupProductFilters($container, data.products || []);
+          renderSections($container, data);
+        }
       },
       error: function () {
         const $sections = $container.find('.instant-search-section');
@@ -185,6 +192,22 @@ jQuery(document).ready(function ($) {
       if (allEmpty) {
         $(".advanced-search .instant-search-section").first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
       }
+    });
+  }
+
+  function crossfadeResults($container, data) {
+    let $results = $container.find('.instant-search-results');
+
+    setupProductFilters($container, data.products || []);
+
+    if (!$results.length) {
+      renderSections($container, data);
+      return;
+    }
+
+    $results.stop(true, true).fadeTo(75, 0.35, function () {
+      renderSections($container, data);
+      $results.fadeTo(150, 1);
     });
   }
 

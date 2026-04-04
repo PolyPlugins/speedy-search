@@ -1,13 +1,12 @@
 # Update Checklist
 [ ] Update Readme
 [ ] Update Screenshots
+[ ] Scan Standalone Snappy Search API
 [ ] Plugin Scan
 
 # 1.6.0
 [ ] Add rules for apis (maybe skills)
-[ ] Fix sorting products by title first then description
 [ ] Add a link to download standalone Snappy Search API
-[ ] Add synonyms functionality
 [ ] Scan standalone Snappy Search API
 
 # 1.7.0
@@ -31,11 +30,15 @@
 [ ] Separate admin class
 [ ] Add option for private API
 [ ] Maybe bring Repo Advanced Search back if there is interest
+[ ] Check if prioritizing columns is added as a feature to TNTSearch yet
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
 
 # 1.6.0
+[X] Add animation to slide in results to make it feel even faster on Standalone Snappy Search API
+[X] Add synonyms functionality
+[X] Fix sorting products by title first then remaining relevance
 [X] Remove Repo Advanced Search since there is no interest from our clients at the moment
 [X] Check if featured out of stock move to the top
 [X] Custom product fields
