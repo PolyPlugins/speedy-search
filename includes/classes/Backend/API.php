@@ -203,7 +203,8 @@ class API {
   public function get_search(WP_REST_Request $request) {
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
-    $search_key       = strtolower(trim($search_query));
+    $expanded_query   = $this->expand_search_query($search_query);
+    $search_key       = strtolower(trim($expanded_query));
     $cache_key        = 'speedy_search_combined_' . md5($search_key);
     $cached_results   = Utils::get_api_cache($cache_key);
 
@@ -283,8 +284,10 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_posts_' . md5($search_query);
+    $cache_key = 'speedy_search_posts_' . md5($expanded_query);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -302,7 +305,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($search_query, $result_limit); // Limit to 10 results
+    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -360,8 +363,10 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_pages_' . md5($search_query);
+    $cache_key = 'speedy_search_pages_' . md5($expanded_query);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -379,7 +384,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($search_query, $result_limit); // Limit to 10 results
+    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -440,8 +445,10 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_products_' . md5($search_query . '|' . (int) $out_of_stock_last);
+    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -459,7 +466,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($search_query, $result_limit); // Limit to 10 results
+    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -564,8 +571,10 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_downloads_' . md5($search_query);
+    $cache_key = 'speedy_search_downloads_' . md5($expanded_query);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -583,7 +592,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($search_query, $result_limit); // Limit to 10 results
+    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -644,8 +653,10 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_orders_' . md5($search_query);
+    $cache_key = 'speedy_search_orders_' . md5($expanded_query);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -663,7 +674,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results    = $tnt->search($search_query, $result_limit);
+    $results    = $tnt->search($expanded_query, $result_limit);
     $result_ids = isset($results['ids']) ? array_map('absint', $results['ids']) : array();
 
     if (empty($result_ids)) {
@@ -704,6 +715,82 @@ class API {
 
   public function check_permissions() {
     return current_user_can('manage_woocommerce');
+  }
+
+  /**
+   * Expand query with configured synonyms.
+   *
+   * @param string $search_query
+   * @return string
+   */
+  private function expand_search_query($search_query) {
+    $search_query = sanitize_text_field((string) $search_query);
+    $normalized   = strtolower(trim($search_query));
+
+    if ($normalized === '') {
+      return $search_query;
+    }
+
+    $synonym_map = $this->get_synonym_map();
+    $additions   = array();
+
+    if (isset($synonym_map[$normalized])) {
+      $additions[] = $synonym_map[$normalized];
+    }
+
+    $tokens = preg_split('/\s+/', $normalized);
+
+    if (is_array($tokens)) {
+      foreach ($tokens as $token) {
+        if ($token === '' || !isset($synonym_map[$token])) {
+          continue;
+        }
+
+        $additions[] = $synonym_map[$token];
+      }
+    }
+
+    $additions = array_filter(array_unique(array_map('trim', $additions)));
+
+    if (empty($additions)) {
+      return $search_query;
+    }
+
+    return trim($search_query . ' ' . implode(' ', $additions));
+  }
+
+  /**
+   * Build synonym map from settings.
+   *
+   * @return array
+   */
+  private function get_synonym_map() {
+    $rows = Utils::get_option('synonyms');
+    $map  = array();
+
+    if (!is_array($rows)) {
+      return $map;
+    }
+
+    foreach ($rows as $row) {
+      if (!is_array($row)) {
+        continue;
+      }
+
+      $word_raw     = isset($row['word']) ? $row['word'] : '';
+      $synonyms_raw = isset($row['synonyms']) ? $row['synonyms'] : '';
+      $word         = strtolower(trim(sanitize_text_field((string) $word_raw)));
+      $synonyms     = array_filter(array_map('trim', explode(',', (string) $synonyms_raw)));
+      $synonyms     = array_unique(array_map('sanitize_text_field', $synonyms));
+
+      if ($word === '' || empty($synonyms)) {
+        continue;
+      }
+
+      $map[$word] = implode(' ', $synonyms);
+    }
+
+    return $map;
   }
 
   /**

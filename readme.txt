@@ -102,6 +102,7 @@ By default it will index 10 posts per minute.
 
 = 1.6.0 =
 * Added: Handling for standalone Snappy Search API for huge speed increases
+* Added: Synonym functionality
 * Added: Rating, Price Range, and Custom Product Field filters for products
 * Added: Star ratings to product tab
 * Added: Add to Cart / Select Options button to products tab
@@ -120,6 +121,7 @@ By default it will index 10 posts per minute.
 * Bugfix: Order search not working on non HPOS installs
 * Bugfix: Extra columns on orders from other plugins shift the layout, added Unavailable messaging to take it's place
 * Bugfix: Order search not working on non HPOS installs
+* Removed: Repo Advanced Search due to lack of interest
 
 = 1.5.2 =
 * Bugfix: WooCommerce orders admin will sometimes close if opened in new tab

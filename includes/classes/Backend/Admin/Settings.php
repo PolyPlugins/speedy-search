@@ -58,11 +58,11 @@ class Settings {
 		add_action('admin_init', array($this, 'load_setting_fields'));
     add_filter('plugin_action_links_' . plugin_basename($this->plugin), array($this, 'add_setting_link'));
     
-    $repo_enabled = Utils::get_option('repo_enabled');
+    // $repo_enabled = Utils::get_option('repo_enabled');
 
-    if ($repo_enabled) {
-		  add_action('admin_menu', array($this, 'advanced_repo_search'));
-    }
+    // if ($repo_enabled) {
+		//   add_action('admin_menu', array($this, 'advanced_repo_search'));
+    // }
   }
 
 	/**
@@ -76,6 +76,7 @@ class Settings {
 		add_menu_page(__('Snappy Search', 'speedy-search'), __('Snappy Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'), 'dashicons-search');
     add_submenu_page('speedy-search', __('General', 'speedy-search'), __('General', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
     add_submenu_page('speedy-search', __('Popular', 'speedy-search'), __('Popular', 'speedy-search'), 'manage_options', 'speedy-search-popular', array($this, 'redirect_to_popular_tab'));
+    add_submenu_page('speedy-search', __('Synonyms', 'speedy-search'), __('Synonyms', 'speedy-search'), 'manage_options', 'speedy-search-synonyms', array($this, 'redirect_to_synonyms_tab'));
     add_submenu_page('speedy-search', __('Posts', 'speedy-search'), __('Posts', 'speedy-search'), 'manage_options', 'speedy-search-posts', array($this, 'redirect_to_posts_tab'));
     add_submenu_page('speedy-search', __('Pages', 'speedy-search'), __('Pages', 'speedy-search'), 'manage_options', 'speedy-search-pages', array($this, 'redirect_to_pages_tab'));
     
@@ -164,7 +165,8 @@ class Settings {
       'orders'    => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Orders',
       'posts'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Posts',
       'products'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Products',
-      'repo'      => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Repo',
+      // 'repo'      => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Repo',
+      'synonyms'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Synonyms',
     );
 
     foreach ($field_classes as $key => $class) {
@@ -207,6 +209,12 @@ class Settings {
                   <a href="javascript:void(0);" data-section="popular">
                     <i class="bi bi-fire"></i>
                     <?php esc_html_e('Popular', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <li>
+                  <a href="javascript:void(0);" data-section="synonyms">
+                    <i class="bi bi-chat-left-text-fill"></i>
+                    <?php esc_html_e('Synonyms', 'speedy-search'); ?>
                   </a>
                 </li>
                 <li>
@@ -255,12 +263,14 @@ class Settings {
                     <?php esc_html_e('Advanced', 'speedy-search'); ?>
                   </a>
                 </li>
+                <?php /*
                 <li>
                   <a href="javascript:void(0);" data-section="repo">
                     <i class="bi bi-plug-fill"></i>
                     <?php esc_html_e('Repo', 'speedy-search'); ?>
                   </a>
                 </li>
+                */ ?>
                 <li>
                   <a href="javascript:void(0);" data-section="reindex">
                     <i class="bi bi-database-fill"></i>
@@ -284,6 +294,12 @@ class Settings {
               <div class="tab popular" style="display: none;">
                 <?php
                 do_settings_sections('speedy_search_popular_polyplugins');
+                ?>
+              </div>
+
+              <div class="tab synonyms" style="display: none;">
+                <?php
+                do_settings_sections('speedy_search_synonyms_polyplugins');
                 ?>
               </div>
 
@@ -394,6 +410,12 @@ class Settings {
   public function redirect_to_popular_tab() {
     wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=popular'));
     
+    exit;
+  }
+
+  public function redirect_to_synonyms_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=synonyms'));
+
     exit;
   }
 
@@ -529,6 +551,30 @@ class Settings {
     if (isset($input['popular']['blacklist']) && $input['popular']['blacklist']) {
 			$sanitary_values['popular']['blacklist'] = sanitize_text_field($input['popular']['blacklist']);
 		}
+
+    $sanitary_values['synonyms'] = array();
+
+    if (isset($input['synonyms']) && is_array($input['synonyms'])) {
+      foreach ($input['synonyms'] as $row) {
+        if (!is_array($row)) {
+          continue;
+        }
+
+        $word          = isset($row['word']) ? sanitize_text_field($row['word']) : '';
+        $synonyms_raw  = isset($row['synonyms']) ? sanitize_text_field($row['synonyms']) : '';
+        $synonym_items = array_filter(array_map('trim', explode(',', $synonyms_raw)));
+        $synonym_items = array_unique(array_map('sanitize_text_field', $synonym_items));
+
+        if ($word === '' || empty($synonym_items)) {
+          continue;
+        }
+
+        $sanitary_values['synonyms'][] = array(
+          'word'     => $word,
+          'synonyms' => implode(', ', $synonym_items),
+        );
+      }
+    }
 
     if (isset($input['posts']['enabled']) && $input['posts']['enabled']) {
       $sanitary_values['posts']['enabled'] = $input['posts']['enabled'] === 'on' ? true : false;

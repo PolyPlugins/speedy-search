@@ -10,6 +10,7 @@ jQuery(document).ready(function ($) {
   initColorPicker();
   initRangeSlider();
   initMediaUploader();
+  initSynonyms();
   initSubmit();
 
   function initTabs() {
@@ -208,6 +209,42 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
       }
     })
+  }
+
+  function initSynonyms() {
+    $(document).on('click', '.snappy-synonym-add', function() {
+      let $wrapper = $(this).closest('.snappy-synonyms-wrapper');
+      let nextIndex = parseInt($wrapper.attr('data-next-index'), 10);
+
+      if (isNaN(nextIndex)) {
+        nextIndex = $wrapper.find('.snappy-synonym-row').length;
+      }
+
+      let row = '' +
+        '<div class="snappy-synonym-row">' +
+          '<p class="snappy-synonym-label"><strong>' + __('Word', 'speedy-search') + '</strong></p>' +
+          '<input type="text" name="speedy_search_settings_polyplugins[synonyms][' + nextIndex + '][word]" value="" />' +
+          '<p class="snappy-synonym-label"><strong>' + __('Synonyms (comma separated)', 'speedy-search') + '</strong></p>' +
+          '<textarea rows="3" name="speedy_search_settings_polyplugins[synonyms][' + nextIndex + '][synonyms]"></textarea>' +
+          '<button type="button" class="button button-secondary snappy-synonym-remove">' + __('Remove', 'speedy-search') + '</button>' +
+        '</div>';
+
+      $wrapper.find('.snappy-synonyms-rows').append(row);
+      $wrapper.attr('data-next-index', nextIndex + 1);
+    });
+
+    $(document).on('click', '.snappy-synonym-remove', function() {
+      let $wrapper = $(this).closest('.snappy-synonyms-wrapper');
+      let $rows = $wrapper.find('.snappy-synonym-row');
+
+      if ($rows.length <= 1) {
+        $rows.find('input[type="text"]').val('');
+        $rows.find('textarea').val('');
+        return;
+      }
+
+      $(this).closest('.snappy-synonym-row').remove();
+    });
   }
 
   function initValidation() {
