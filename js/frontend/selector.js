@@ -29,6 +29,7 @@ jQuery(document).ready(function ($) {
   let price_range_filter_enabled = snappy_search_object.options?.filters_price_range_enabled ?? false;
   let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
   let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled;
+  let search_endpoint       = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
   let latest_results        = {};
 
   const $searchInput        = $(selector);
@@ -117,7 +118,7 @@ jQuery(document).ready(function ($) {
 
   function fetchResults(query) {
     $.ajax({
-      url: "/wp-json/speedy-search/v1/search/",
+      url: search_endpoint,
       data: { search: query },
       dataType: "json",
       success: function (data) {

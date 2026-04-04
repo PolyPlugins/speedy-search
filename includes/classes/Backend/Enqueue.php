@@ -188,6 +188,7 @@ class Enqueue {
           'options'  => $options,
           'currency' => get_woocommerce_currency_symbol(),
           'nonce'    => wp_create_nonce('wp_rest'),
+          'endpoints' => Utils::get_api_endpoints(),
         )
       );
       wp_set_script_translations('speedy-search-orders', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');

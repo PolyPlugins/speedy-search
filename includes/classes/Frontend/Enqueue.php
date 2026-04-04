@@ -129,6 +129,7 @@ class Enqueue {
           'options'  => $this->options,
           'popular'  => DB::get_top_terms_last_x_days(),
           'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
+          'endpoints' => Utils::get_api_endpoints(),
         )
       );
       wp_set_script_translations('snappy-search-selector', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
@@ -154,6 +155,7 @@ class Enqueue {
         array(
           'options'  => $this->options,
           'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
+          'endpoints' => Utils::get_api_endpoints(),
         )
       );
       wp_set_script_translations('snappy-search-shortcode', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
@@ -183,6 +185,7 @@ class Enqueue {
           array(
             'options'  => $this->options,
             'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
+            'endpoints' => Utils::get_api_endpoints(),
           )
         );
         wp_set_script_translations('snappy-search-advanced-stacked', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
@@ -194,6 +197,7 @@ class Enqueue {
           array(
             'options'  => $this->options,
             'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
+            'endpoints' => Utils::get_api_endpoints(),
           )
         );
         wp_set_script_translations('snappy-search-advanced', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');

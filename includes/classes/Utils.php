@@ -507,4 +507,45 @@ class Utils {
     }, true, true);
   }
 
+  /**
+   * Get API endpoint URLs with custom search.php fallback support.
+   *
+   * @return array
+   */
+  public static function get_api_endpoints() {
+    $version            = '1.0.0';
+    $custom_search_file = ABSPATH . 'search.php';
+    $has_custom_file    = file_exists($custom_search_file);
+
+    if ($has_custom_file) {
+      $base_url = add_query_arg(array(
+        'snappy_search' => '1',
+        'v'             => $version,
+      ), home_url('/search.php'));
+
+      return array(
+        'has_custom_file' => true,
+        'version'         => $version,
+        'search'          => add_query_arg('endpoint', 'search', $base_url),
+        'posts'           => add_query_arg('endpoint', 'posts', $base_url),
+        'pages'           => add_query_arg('endpoint', 'pages', $base_url),
+        'products'        => add_query_arg('endpoint', 'products', $base_url),
+        'downloads'       => add_query_arg('endpoint', 'downloads', $base_url),
+        // Orders stay on REST so existing permission callbacks remain enforced.
+        'orders'          => home_url('/wp-json/speedy-search-search/v1/orders'),
+      );
+    }
+
+    return array(
+      'has_custom_file' => false,
+      'version'         => $version,
+      'search'          => home_url('/wp-json/speedy-search/v1/search/'),
+      'posts'           => home_url('/wp-json/speedy-search/v1/posts/'),
+      'pages'           => home_url('/wp-json/speedy-search/v1/pages/'),
+      'products'        => home_url('/wp-json/speedy-search/v1/products/'),
+      'downloads'       => home_url('/wp-json/speedy-search/v1/downloads/'),
+      'orders'          => home_url('/wp-json/speedy-search-search/v1/orders'),
+    );
+  }
+
 }

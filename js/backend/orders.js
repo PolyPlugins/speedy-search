@@ -8,6 +8,7 @@ let pages_enabled     = speedy_search_object.options?.pages?.enabled ?? false;
 let products_enabled  = speedy_search_object.options?.products?.enabled ?? false;
 let downloads_enabled = speedy_search_object.options?.downloads?.enabled ?? false;
 let currency          = speedy_search_object.currency ?? '$';
+let orders_endpoint   = speedy_search_object.endpoints?.orders ?? "/wp-json/speedy-search-search/v1/orders";
 let unavailableLabel  = 'Error';
 
 jQuery(document).ready(function ($) {
@@ -59,12 +60,12 @@ jQuery(document).ready(function ($) {
       });
     }
 
-    fetchResults(query, 'orders');
+    fetchResults(query);
   }
 
-  function fetchResults(query, endpoint) {
+  function fetchResults(query) {
     $.ajax({
-      url: "/wp-json/speedy-search-search/v1/" + endpoint,
+      url: orders_endpoint,
       data: { search: query },
       dataType: "json",
       beforeSend: function (xhr) {
