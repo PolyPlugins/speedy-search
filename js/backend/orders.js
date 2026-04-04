@@ -8,8 +8,21 @@ let pages_enabled     = speedy_search_object.options?.pages?.enabled ?? false;
 let products_enabled  = speedy_search_object.options?.products?.enabled ?? false;
 let downloads_enabled = speedy_search_object.options?.downloads?.enabled ?? false;
 let currency          = speedy_search_object.currency ?? '$';
+let has_custom_file   = speedy_search_object.endpoints?.has_custom_file ?? false;
+let search_endpoint   = speedy_search_object.endpoints?.search ?? '';
 let orders_endpoint   = speedy_search_object.endpoints?.orders ?? "/wp-json/speedy-search-search/v1/orders";
 let unavailableLabel  = 'Error';
+
+if (has_custom_file && search_endpoint) {
+  try {
+    const endpointUrl = new URL(search_endpoint, window.location.origin);
+
+    endpointUrl.searchParams.set('endpoint', 'orders');
+    orders_endpoint = endpointUrl.toString();
+  } catch (e) {
+    orders_endpoint = speedy_search_object.endpoints?.orders ?? orders_endpoint;
+  }
+}
 
 jQuery(document).ready(function ($) {
   if (!selector) return;
@@ -198,9 +211,10 @@ jQuery(document).ready(function ($) {
     const colname = escapeHtml(column.label || column.key);
     const fullName = `${order.billing_first_name || ''} ${order.billing_last_name || ''}`.trim();
     const escapedName = escapeHtml(fullName || unavailableLabel);
-    const statusRaw = (order.order_status || '').replace(/-/g, ' ');
+    const statusRaw = (order.order_status || '').replace(/^wc[-_]/i, '').replace(/-/g, ' ');
     const statusLabel = escapeHtml(toTitleCase(statusRaw || 'unknown'));
-    const statusClass = escapeHtml(order.order_status || 'unknown');
+    const normalizedStatusClass = (order.order_status || '').replace(/^wc[-_]/i, '') || 'unknown';
+    const statusClass = escapeHtml(normalizedStatusClass);
     const orderDate = order.order_date ? formatDate(order.order_date) : unavailableLabel;
 
     switch (column.key) {
