@@ -11,7 +11,6 @@
 
 # 1.7.0
 [ ] Make order search work with new search shortinit
-[ ] Have it so when you click in it, it shows the full search filled with popular search terms, products, posts, ect.
 [ ] Add utils for version and plugin_dir_url using static property to cache
 [ ] Handling indexing categories
 [ ] Add analytics for 0 search items and top searches
@@ -36,6 +35,7 @@
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
 
 # 1.6.0
+[X] Have it so when you click in search input, it shows the newest results filled with popular search terms, products, posts, ect.
 [X] Add animation to slide in results to make it feel even faster on Standalone Snappy Search API
 [X] Add synonyms functionality
 [X] Fix sorting products by title first then remaining relevance

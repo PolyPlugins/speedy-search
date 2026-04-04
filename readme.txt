@@ -124,6 +124,8 @@ By default it will index 10 posts per minute.
 * Bugfix: Order search not working on non HPOS installs
 * Bugfix: Extra columns on orders from other plugins shift the layout, added Unavailable messaging to take it's place
 * Bugfix: Order search not working on non HPOS installs
+* Bugfix: Popular searches not populating when enabled
+* Removed: Popular search text to allow for more badges
 * Removed: Advanced WordPress Repo Search due to lack of interest
 
 = 1.5.2 =

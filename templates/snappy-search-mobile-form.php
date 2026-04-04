@@ -24,7 +24,6 @@ $name_speedy_search               = $advanced_enabled_speedy_search && $advanced
   <?php if (!$is_indexing_speedy_search) : ?>
     <?php if ($popular_enabled_speedy_search) : ?>
       <div class="popular-searches">
-        <p class="popular"><?php esc_attr_e('Popular Searches', 'speedy-search'); ?></p>
         <?php
         $popular_speedy_search = DB::get_top_terms_last_x_days();
         ?>
