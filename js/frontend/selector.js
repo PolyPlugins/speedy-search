@@ -30,6 +30,7 @@ jQuery(document).ready(function ($) {
   let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
   let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled;
   let search_endpoint       = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
+  let latest_endpoint       = snappy_search_object.endpoints?.latest ?? snappy_search_object.endpoints?.preload ?? "/wp-json/speedy-search/v1/latest/";
   let use_search_php        = snappy_search_object.endpoints?.has_custom_file ?? false;
   let latest_results        = {};
 
@@ -46,6 +47,7 @@ jQuery(document).ready(function ($) {
     navigation();
     popular();
     renderPopularTerms();
+    preloadLatestResults();
   }
 
   function listener() {
@@ -69,6 +71,16 @@ jQuery(document).ready(function ($) {
       } else {
         // Change text to type more characters
       }
+    });
+
+    $searchInput.on("focus click", function () {
+      const query = $.trim($searchInput.val());
+
+      if (query.length >= characters) {
+        return;
+      }
+
+      showLatestResults();
     });
   }
 
@@ -144,6 +156,27 @@ jQuery(document).ready(function ($) {
         });
       },
     });
+  }
+
+  function preloadLatestResults() {
+    $.ajax({
+      url: latest_endpoint,
+      dataType: "json",
+      success: function (data) {
+        latest_results = data || {};
+      },
+    });
+  }
+
+  function showLatestResults() {
+    if (!latest_results || Object.keys(latest_results).length === 0) {
+      return;
+    }
+
+    setupProductFilters(latest_results.products || []);
+    renderSections(latest_results);
+
+    $('.instant-search-wrapper').show();
   }
 
   function crossfadeResults(data) {

@@ -102,6 +102,8 @@ By default it will index 10 posts per minute.
 
 = 1.6.0 =
 * Added: Handling for standalone Snappy Search API for huge speed increases
+* Added: A crossfade transition for result updates when using the custom standalone Snappy Search API, making fast responses feel smoother and more instant.
+* Added: Initial loader so when users click into search it shows results for the latest post, products, ect.
 * Added: Synonym functionality
 * Added: Sorting title matches to top
 * Added: Rating, Price Range, and Custom Product Field filters for products
@@ -122,7 +124,7 @@ By default it will index 10 posts per minute.
 * Bugfix: Order search not working on non HPOS installs
 * Bugfix: Extra columns on orders from other plugins shift the layout, added Unavailable messaging to take it's place
 * Bugfix: Order search not working on non HPOS installs
-* Removed: Repo Advanced Search due to lack of interest
+* Removed: Advanced WordPress Repo Search due to lack of interest
 
 = 1.5.2 =
 * Bugfix: WooCommerce orders admin will sometimes close if opened in new tab

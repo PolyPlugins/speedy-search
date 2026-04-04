@@ -97,6 +97,26 @@ class API {
           'permission_callback' => '__return_true',
         )
       );
+
+      register_rest_route(
+        'speedy-search/v1',
+        '/preload/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_preload'),
+          'permission_callback' => '__return_true',
+        )
+      );
+
+      register_rest_route(
+        'speedy-search/v1',
+        '/latest/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_latest'),
+          'permission_callback' => '__return_true',
+        )
+      );
     }
     
     $orders         = Utils::get_option('orders');
@@ -191,6 +211,26 @@ class API {
           'permission_callback' => '__return_true',
         )
       );
+
+      register_rest_route(
+        'snappy-search/v1',
+        '/preload/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_preload'),
+          'permission_callback' => '__return_true',
+        )
+      );
+
+      register_rest_route(
+        'snappy-search/v1',
+        '/latest/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_latest'),
+          'permission_callback' => '__return_true',
+        )
+      );
     }
 	}
 
@@ -253,6 +293,37 @@ class API {
         $results[$type] = array();
       }
     }
+
+    Utils::set_api_cache($cache_key, $results, 600);
+
+    return new WP_REST_Response($results, 200);
+  }
+
+  /**
+   * Get preload data for empty search state
+   *
+   * @param WP_REST_Request $request
+   * @return WP_REST_Response
+   */
+  public function get_preload(WP_REST_Request $request) {
+    return $this->get_latest($request);
+  }
+
+  /**
+   * Get latest data for empty search state
+   *
+   * @param WP_REST_Request $request
+   * @return WP_REST_Response
+   */
+  public function get_latest(WP_REST_Request $request) {
+    $cache_key      = 'speedy_search_latest_v3';
+    $cached_results = Utils::get_api_cache($cache_key);
+
+    if ($cached_results !== false) {
+      return new WP_REST_Response($cached_results, 200);
+    }
+
+    $results = $this->get_latest_enabled_results();
 
     Utils::set_api_cache($cache_key, $results, 600);
 
@@ -935,6 +1006,211 @@ class API {
     }
 
     return $values;
+  }
+
+  /**
+   * Get latest post type entries for preload rendering
+   *
+   * @param string $post_type
+   * @param array $options
+   * @return array
+   */
+  private function get_latest_content_items($post_type, $options) {
+    $safe_limit   = 12;
+    $posts        = get_posts(array(
+      'post_type'      => $post_type,
+      'post_status'    => 'publish',
+      'orderby'        => 'date',
+      'order'          => 'DESC',
+      'posts_per_page' => $safe_limit,
+    ));
+    $posts_data    = array();
+
+    foreach ($posts as $post) {
+      $posts_data[] = array(
+        'id'        => $post->ID,
+        'title'     => get_the_title($post->ID),
+        'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
+        'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+        'permalink' => get_permalink($post->ID),
+      );
+    }
+
+    return $posts_data;
+  }
+
+  /**
+   * Get latest enabled post type entries for preload/latest rendering
+   *
+   * @return array
+   */
+  private function get_latest_enabled_results() {
+    $posts_options     = Utils::get_option('posts');
+    $pages_options     = Utils::get_option('pages');
+    $products_options  = Utils::get_option('products');
+    $downloads_options = Utils::get_option('downloads');
+    $posts_enabled     = isset($posts_options['enabled']) ? $posts_options['enabled'] : 1;
+    $pages_enabled     = isset($pages_options['enabled']) ? $pages_options['enabled'] : 0;
+    $products_enabled  = isset($products_options['enabled']) ? $products_options['enabled'] : 0;
+    $downloads_enabled = isset($downloads_options['enabled']) ? $downloads_options['enabled'] : 0;
+    $results           = array();
+
+    if ($posts_enabled) {
+      $results['posts'] = $this->get_latest_content_items('post', $posts_options);
+    }
+
+    if ($pages_enabled) {
+      $results['pages'] = $this->get_latest_content_items('page', $pages_options);
+    }
+
+    if ($products_enabled) {
+      $results['products'] = $this->get_latest_products($products_options);
+    }
+
+    if ($downloads_enabled) {
+      $results['downloads'] = $this->get_latest_content_items('download', $downloads_options);
+    }
+
+    return $results;
+  }
+
+  /**
+   * Get latest published products for preload/latest rendering
+   *
+   * @param array $options
+   * @return array
+   */
+  private function get_latest_products($options) {
+    if (!class_exists('WooCommerce')) {
+      return array();
+    }
+
+    $safe_limit       = 12;
+    $query_limit      = 48;
+    $custom_fields_raw = Utils::get_option('filters_custom_fields');
+    $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+    $posts      = get_posts(array(
+      'post_type'      => 'product',
+      'post_status'    => 'publish',
+      'orderby'        => 'date',
+      'order'          => 'DESC',
+      'posts_per_page' => $query_limit,
+    ));
+    $posts_data = array();
+    $tags = array(
+      'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
+      'span' => array('class' => array(), 'style' => array()),
+    );
+
+    foreach ($posts as $post) {
+      $product = wc_get_product($post->ID);
+
+      if (!$product || $product->get_catalog_visibility() === 'hidden' || !$product->is_in_stock()) {
+        continue;
+      }
+
+      $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
+      $is_featured    = $product->is_featured();
+      $is_variable    = $product->is_type('variable');
+      $add_to_cart_url = $product->add_to_cart_url();
+      $product_custom_fields = array();
+
+      if (!empty($custom_fields)) {
+        foreach ($custom_fields as $custom_field) {
+          $meta_key   = sanitize_key($custom_field);
+          $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
+          $product_custom_fields[$meta_key] = $meta_values;
+        }
+      }
+
+      $posts_data[] = array(
+        'id'              => $post->ID,
+        'title'           => get_the_title($post->ID),
+        'price'           => get_post_meta($post->ID, '_price', true),
+        'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
+        'excerpt'         => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+        'average_rating'  => $average_rating ? (float) $average_rating : 0,
+        'rating'          => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
+        'is_featured'     => (bool) $is_featured,
+        'is_variable'     => (bool) $is_variable,
+        'is_in_stock'     => true,
+        'add_to_cart_url' => esc_url_raw($add_to_cart_url),
+        'permalink'       => get_permalink($post->ID),
+        'custom_fields'   => $product_custom_fields,
+      );
+
+      if (count($posts_data) >= $safe_limit) {
+        break;
+      }
+    }
+
+    return $posts_data;
+  }
+
+  /**
+   * Get top selling, in stock products for preload rendering
+   *
+   * @param array $options
+   * @return array
+   */
+  private function get_top_selling_in_stock_products($options) {
+    if (!class_exists('WooCommerce')) {
+      return array();
+    }
+
+    $result_limit = isset($options['result_limit']) ? (int) $options['result_limit'] : 10;
+    $safe_limit   = $result_limit > 0 ? $result_limit : 10;
+    $posts        = get_posts(array(
+      'post_type'      => 'product',
+      'post_status'    => 'publish',
+      'posts_per_page' => $safe_limit,
+      'meta_key'       => 'total_sales',
+      'orderby'        => 'meta_value_num',
+      'order'          => 'DESC',
+      'meta_query'     => array(
+        array(
+          'key'     => '_stock_status',
+          'value'   => 'instock',
+          'compare' => '=',
+        ),
+      ),
+    ));
+    $posts_data = array();
+    $tags = array(
+      'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
+      'span' => array('class' => array(), 'style' => array()),
+    );
+
+    foreach ($posts as $post) {
+      $product = wc_get_product($post->ID);
+
+      if (!$product || $product->get_catalog_visibility() === 'hidden' || !$product->is_in_stock()) {
+        continue;
+      }
+
+      $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
+      $is_featured    = $product->is_featured();
+      $is_variable    = $product->is_type('variable');
+      $add_to_cart_url = $product->add_to_cart_url();
+
+      $posts_data[] = array(
+        'id'              => $post->ID,
+        'title'           => get_the_title($post->ID),
+        'price'           => get_post_meta($post->ID, '_price', true),
+        'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
+        'excerpt'         => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+        'average_rating'  => $average_rating ? (float) $average_rating : 0,
+        'rating'          => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
+        'is_featured'     => (bool) $is_featured,
+        'is_variable'     => (bool) $is_variable,
+        'is_in_stock'     => true,
+        'add_to_cart_url' => esc_url_raw($add_to_cart_url),
+        'permalink'       => get_permalink($post->ID),
+        'custom_fields'   => array(),
+      );
+    }
+
+    return $posts_data;
   }
 
 }

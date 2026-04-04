@@ -21,6 +21,7 @@ jQuery(document).ready(function ($) {
   let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
   let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled;
   let search_endpoint         = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
+  let latest_endpoint         = snappy_search_object.endpoints?.latest ?? snappy_search_object.endpoints?.preload ?? "/wp-json/speedy-search/v1/latest/";
   let use_search_php          = snappy_search_object.endpoints?.has_custom_file ?? false;
   let latest_results         = {};
 
@@ -41,6 +42,7 @@ jQuery(document).ready(function ($) {
     popular();
     close();
     initialSearch();
+    preloadLatestResults();
   }
 
   function listener() {
@@ -74,6 +76,16 @@ jQuery(document).ready(function ($) {
           // Could show a message like: "Keep typing..."
           // $container.find(".instant-search-wrapper").hide();
         }
+      });
+
+      $input.on("focus click", function () {
+        const query = $.trim($input.val());
+
+        if (query.length >= characters) {
+          return;
+        }
+
+        showLatestResults($container);
       });
     });
   }
@@ -193,6 +205,28 @@ jQuery(document).ready(function ($) {
         $(".advanced-search .instant-search-section").first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
       }
     });
+  }
+
+  function preloadLatestResults() {
+    $.ajax({
+      url: latest_endpoint,
+      dataType: "json",
+      success: function (data) {
+        latest_results = data || {};
+      },
+    });
+  }
+
+  function showLatestResults($container) {
+    if (!latest_results || Object.keys(latest_results).length === 0) {
+      return;
+    }
+
+    setupProductFilters($container, latest_results.products || []);
+    renderSections($container, latest_results);
+
+    $container.find(".instant-search-wrapper").show();
+    $container.find(".snappy-search-close").show();
   }
 
   function crossfadeResults($container, data) {
