@@ -1144,7 +1144,22 @@ class API {
       }
     }
 
-    return $posts_data;
+    if (empty($posts_data)) {
+      return $posts_data;
+    }
+
+    $featured_posts = array();
+    $regular_posts  = array();
+
+    foreach ($posts_data as $post_data) {
+      if (!empty($post_data['is_featured'])) {
+        $featured_posts[] = $post_data;
+      } else {
+        $regular_posts[] = $post_data;
+      }
+    }
+
+    return array_merge($featured_posts, $regular_posts);
   }
 
   /**
