@@ -30,6 +30,10 @@ class Activation {
     if (!wp_next_scheduled('snappy_search_daily_background_worker')) {
       wp_schedule_event(time(), 'daily', 'snappy_search_daily_background_worker');
     }
+
+    if (!wp_next_scheduled('snappy_search_orders_background_worker')) {
+      wp_schedule_event(time() + 30, 'every_minute', 'snappy_search_orders_background_worker');
+    }
   }
   
   /**

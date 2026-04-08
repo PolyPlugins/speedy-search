@@ -30,6 +30,7 @@ class Background_Worker {
    */
   public function init() {
     add_action('snappy_search_background_worker', array($this, 'background_worker'));
+    add_action('snappy_search_orders_background_worker', array($this, 'orders_background_worker'));
     add_action('snappy_search_daily_background_worker', array($this, 'daily_background_worker'));
     add_action('cron_schedules', array($this, 'add_cron_schedules'));
   }
@@ -53,6 +54,30 @@ class Background_Worker {
     }
 
     $this->indexer();
+  }
+
+  /**
+   * Orders-only background worker (separate cron so heavy wc_get_orders batches do not run in the same tick as content indexes).
+   *
+   * @return void
+   */
+  public function orders_background_worker() {
+    $enabled               = Utils::get_option('enabled');
+    $is_missing_extensions = Utils::is_missing_extensions();
+
+    if ($is_missing_extensions) {
+      return;
+    }
+
+    if (!$enabled) {
+      return;
+    }
+
+    if (!class_exists('WooCommerce')) {
+      return;
+    }
+
+    $this->maybe_index_orders();
   }
 
   /**
@@ -85,10 +110,6 @@ class Background_Worker {
 
     if (class_exists('Easy_Digital_Downloads')) {
       $this->maybe_index('download');
-    }
-
-    if (class_exists('WooCommerce')) {
-      $this->maybe_index_orders();
     }
   }
 

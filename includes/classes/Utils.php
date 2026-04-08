@@ -47,6 +47,59 @@ class Utils {
   }
 
   /**
+   * Stored plugin version read from the options table only (bypasses cache).
+   *
+   * @return string|false
+   */
+  public static function get_current_version() {
+    global $wpdb;
+
+    $value = $wpdb->get_var(
+      $wpdb->prepare(
+        "SELECT option_value FROM %i WHERE option_name = %s LIMIT 1",
+        $wpdb->options,
+        'speedy_search_version_polyplugins'
+      )
+    );
+
+    if ($value === null) {
+      return false;
+    }
+
+    return maybe_unserialize($value);
+  }
+
+  /**
+   * Persist plugin version in the options table only (bypasses stale reads; refreshes object cache for this option).
+   *
+   * @param  string $version Version string to store.
+   * @return bool            False on database error, true otherwise.
+   */
+  public static function update_current_version($version) {
+    global $wpdb;
+
+    $version = sanitize_text_field((string) $version);
+    $value   = maybe_serialize($version);
+
+    $result = $wpdb->query(
+      $wpdb->prepare(
+        "INSERT INTO %i (option_name, option_value, autoload) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE option_value = %s",
+        $wpdb->options,
+        'speedy_search_version_polyplugins',
+        $value,
+        'auto',
+        $value
+      )
+    );
+
+    if ($result === false) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
    * Get API cache value
    *
    * @param  string $key Cache key
@@ -170,6 +223,17 @@ class Utils {
     }
 
     return $is_indexing;
+  }
+
+  /**
+   * Whether the WooCommerce orders search index has finished its initial build.
+   *
+   * @return bool
+   */
+  public static function is_orders_index_complete() {
+    $index = self::get_index('shop_orders');
+
+    return is_array($index) && !empty($index['complete']);
   }
 
   /**

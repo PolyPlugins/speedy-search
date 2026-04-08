@@ -2,6 +2,8 @@
 
 namespace PolyPlugins\Speedy_Search;
 
+use PolyPlugins\Speedy_Search\Utils;
+
 if (!defined('ABSPATH')) exit;
 
 class Updater {
@@ -43,12 +45,12 @@ class Updater {
   }
 
   public function maybe_update() {
-    $stored_version = get_option('speedy_search_version_polyplugins');
+    $stored_version = Utils::get_current_version('speedy_search_version_polyplugins');
 
     if (!$stored_version) {
       $stored_version = $this->version;
 
-      update_option('speedy_search_version_polyplugins', $this->version);
+      Utils::update_current_version($this->version);
     }
 
     if (version_compare($stored_version, '1.2.0', '<')) {
@@ -56,7 +58,7 @@ class Updater {
 
       $this->update_to_120();
 
-      update_option('speedy_search_version_polyplugins', $stored_version);
+      Utils::update_current_version($stored_version);
     }
 
     if (version_compare($stored_version, '1.3.0', '<')) {
@@ -64,7 +66,7 @@ class Updater {
 
       $this->update_to_130();
 
-      update_option('speedy_search_version_polyplugins', $stored_version);
+      Utils::update_current_version($stored_version);
     }
 
     if (version_compare($stored_version, '1.4.0', '<')) {
@@ -72,7 +74,7 @@ class Updater {
 
       $this->update_to_140();
 
-      update_option('speedy_search_version_polyplugins', $stored_version);
+      Utils::update_current_version($stored_version);
     }
 
     if (version_compare($stored_version, '1.4.2', '<')) {
@@ -80,7 +82,7 @@ class Updater {
 
       $this->update_to_142();
 
-      update_option('speedy_search_version_polyplugins', $stored_version);
+      Utils::update_current_version($stored_version);
     }
 
     if (version_compare($stored_version, '1.4.3', '<')) {
@@ -88,7 +90,7 @@ class Updater {
 
       $this->update_to_143();
 
-      update_option('speedy_search_version_polyplugins', $stored_version);
+      Utils::update_current_version($stored_version);
     }
 
     if (version_compare($stored_version, '1.5.0', '<')) {
@@ -96,7 +98,7 @@ class Updater {
 
       $this->update_to_150();
 
-      update_option('speedy_search_version_polyplugins', $stored_version);
+      Utils::update_current_version($stored_version);
     }
 
     if (version_compare($stored_version, '1.5.1', '<')) {
@@ -104,7 +106,15 @@ class Updater {
 
       $this->update_to_151();
 
-      update_option('speedy_search_version_polyplugins', $stored_version);
+      Utils::update_current_version($stored_version);
+    }
+
+    if (version_compare($stored_version, '1.6.0', '<')) {
+      $stored_version = '1.6.0';
+
+      $this->update_to_160();
+
+      Utils::update_current_version($stored_version);
     }
   }
 
@@ -179,6 +189,12 @@ class Updater {
 
   private function update_to_151() {
     update_option('speedy_search_notice_dismissed_polyplugins', false);
+  }
+
+  private function update_to_160() {
+    if (!wp_next_scheduled('snappy_search_orders_background_worker')) {
+      wp_schedule_event(time() + 30, 'every_minute', 'snappy_search_orders_background_worker');
+    }
   }
 
 }

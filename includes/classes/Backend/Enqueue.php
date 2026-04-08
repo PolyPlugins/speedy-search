@@ -71,7 +71,7 @@ class Enqueue {
       $order_options  = Utils::get_option('orders');
       $orders_enabled = isset($order_options['enabled']) ? $order_options['enabled'] : 0;
 
-      if ($orders_enabled) {
+      if ($orders_enabled && !Utils::is_indexing() && Utils::is_orders_index_complete()) {
         $this->enqueue_order_styles();
         $this->enqueue_order_scripts();
       }
@@ -175,25 +175,21 @@ class Enqueue {
       return;
     }
 
-    $options     = get_option('speedy_search_settings_polyplugins');
-    $is_indexing = Utils::is_indexing();
-    
-    // Fallback to default search when indexing
-    if (!$is_indexing) {
-      wp_enqueue_script('speedy-search-orders', plugins_url('/js/backend/orders.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
-      wp_localize_script(
-        'speedy-search-orders',
-        'speedy_search_object',
-        array(
-          'options'  => $options,
-          'currency' => get_woocommerce_currency_symbol(),
-          'nonce'    => wp_create_nonce('wp_rest'),
-          'endpoints' => Utils::get_api_endpoints(),
-        )
-      );
-      wp_set_script_translations('speedy-search-orders', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
-      wp_enqueue_script('sweetalert2', plugins_url('/js/backend/sweetalert2.all.min.js', $this->plugin), array('jquery'), $this->version, true);
-    }
+    $options = get_option('speedy_search_settings_polyplugins');
+
+    wp_enqueue_script('speedy-search-orders', plugins_url('/js/backend/orders.js', $this->plugin), array('jquery', 'wp-i18n'), $this->version, true);
+    wp_localize_script(
+      'speedy-search-orders',
+      'speedy_search_object',
+      array(
+        'options'  => $options,
+        'currency' => get_woocommerce_currency_symbol(),
+        'nonce'    => wp_create_nonce('wp_rest'),
+        'endpoints' => Utils::get_api_endpoints(),
+      )
+    );
+    wp_set_script_translations('speedy-search-orders', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+    wp_enqueue_script('sweetalert2', plugins_url('/js/backend/sweetalert2.all.min.js', $this->plugin), array('jquery'), $this->version, true);
   }
   
   /**

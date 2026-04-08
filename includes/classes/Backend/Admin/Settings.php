@@ -72,6 +72,7 @@ class Settings {
 	 */
 	public function add_admin_menu() {
     add_action('admin_notices', array($this, 'maybe_show_indexing_notice'));
+    add_action('admin_notices', array($this, 'maybe_show_orders_indexing_notice'));
     add_action('admin_notices', array($this, 'maybe_show_missing_extensions_notice'));
 		add_menu_page(__('Snappy Search', 'speedy-search'), __('Snappy Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'), 'dashicons-search');
     add_submenu_page('speedy-search', __('General', 'speedy-search'), __('General', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
@@ -106,6 +107,11 @@ class Settings {
       return;
     }
 
+    $screen = get_current_screen();
+    if ($screen && ($screen->id === 'woocommerce_page_wc-orders' || $screen->id === 'edit-shop_order')) {
+      return;
+    }
+
     $is_indexing = Utils::is_indexing();
     ?>
     <?php if ($is_indexing) : ?>
@@ -113,6 +119,52 @@ class Settings {
         <p><?php esc_html_e('Snappy Search is currently indexing.', 'speedy-search'); ?></p>
       </div>
     <?php endif; ?>
+    <?php
+  }
+
+  /**
+   * Notice on WooCommerce orders list while the orders search index is still building.
+   *
+   * @return void
+   */
+  public function maybe_show_orders_indexing_notice() {
+    if (!class_exists('WooCommerce')) {
+      return;
+    }
+
+    if (!current_user_can('edit_shop_orders')) {
+      return;
+    }
+
+    $enabled = Utils::get_option('enabled');
+    if (!$enabled) {
+      return;
+    }
+
+    $order_options   = Utils::get_option('orders');
+    $orders_enabled  = isset($order_options['enabled']) ? $order_options['enabled'] : 0;
+    if (!$orders_enabled) {
+      return;
+    }
+
+    $screen = get_current_screen();
+    if (!$screen) {
+      return;
+    }
+
+    $is_wc_orders_list = ($screen->id === 'woocommerce_page_wc-orders' || $screen->id === 'edit-shop_order');
+    if (!$is_wc_orders_list) {
+      return;
+    }
+
+    if (Utils::is_orders_index_complete()) {
+      return;
+    }
+
+    ?>
+    <div class="notice notice-warning">
+      <p><?php esc_html_e('Snappy Search is still building the orders search index. Standard WooCommerce order search is in use until indexing finishes.', 'speedy-search'); ?></p>
+    </div>
     <?php
   }
   
