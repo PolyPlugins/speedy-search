@@ -86,23 +86,14 @@ class Index_Updater {
       'content' => $content,
     );
 
-    $taxonomies = array('category', 'post_tag', 'product_cat', 'product_tag');
-
-    foreach ($taxonomies as $taxonomy) {
-      $term_names = wp_get_post_terms($post_id, $taxonomy, array('fields' => 'names'));
-
-      if (is_wp_error($term_names) || empty($term_names)) {
-        $data[$taxonomy] = '';
-        continue;
-      }
-
-      $data[$taxonomy] = sanitize_text_field(implode(' ', $term_names));
-    }
+    $data = Utils::add_taxonomy_terms_to_document($post_id, $data);
 
     if ($post_type === 'product' && class_exists('WooCommerce')) {
+      $product                = wc_get_product($post_id);
       $sku                    = get_post_meta($post_id, '_sku', true);
       $data['sku']            = sanitize_text_field($sku);
       $data['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
+      $data                   = Utils::add_product_custom_fields_to_document($post_id, $data, $product);
     }
 
     $data = Utils::sanitize_index_document($data, 255);

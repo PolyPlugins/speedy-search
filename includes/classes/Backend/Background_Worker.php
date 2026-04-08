@@ -227,18 +227,7 @@ class Background_Worker {
           'content' => sanitize_text_field($content)
         );
 
-        $taxonomies = array('category', 'post_tag', 'product_cat', 'product_tag');
-
-        foreach ($taxonomies as $taxonomy) {
-          $term_names = wp_get_post_terms($post_id, $taxonomy, array('fields' => 'names'));
-
-          if (is_wp_error($term_names) || empty($term_names)) {
-            $args[$taxonomy] = '';
-            continue;
-          }
-
-          $args[$taxonomy] = sanitize_text_field(implode(' ', $term_names));
-        }
+        $args = Utils::add_taxonomy_terms_to_document($post_id, $args);
 
         if ($post_type === 'product') {
           $product    = wc_get_product($post_id);
@@ -252,6 +241,7 @@ class Background_Worker {
           $sku                    = get_post_meta($post_id, '_sku', true);
           $args['sku']            = sanitize_text_field($sku);
           $args['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
+          $args                   = Utils::add_product_custom_fields_to_document($post_id, $args, $product);
         }
 
         $args = Utils::sanitize_index_document($args, 255);

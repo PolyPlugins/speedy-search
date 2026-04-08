@@ -556,6 +556,153 @@ class Utils {
     return $document;
   }
 
+  /**
+   * Add taxonomy term names into the index document.
+   *
+   * @param int   $post_id
+   * @param array $document
+   * @param array $taxonomies
+   * @return array
+   */
+  public static function add_taxonomy_terms_to_document($post_id, $document, $taxonomies = array()) {
+    if (!is_array($document)) {
+      return $document;
+    }
+
+    if (empty($taxonomies)) {
+      $taxonomies = array('category', 'post_tag', 'product_cat', 'product_tag');
+    }
+
+    foreach ($taxonomies as $taxonomy) {
+      $taxonomy_name = sanitize_key((string) $taxonomy);
+
+      if ($taxonomy_name === '') {
+        continue;
+      }
+
+      $term_names = wp_get_post_terms($post_id, $taxonomy_name, array('fields' => 'names'));
+
+      if (is_wp_error($term_names) || empty($term_names)) {
+        $document[$taxonomy_name] = '';
+        continue;
+      }
+
+      $document[$taxonomy_name] = sanitize_text_field(implode(' ', $term_names));
+    }
+
+    return $document;
+  }
+
+  /**
+   * Add configured product custom fields into the index document.
+   *
+   * @param int   $product_id
+   * @param array $document
+   * @param mixed $product
+   * @return array
+   */
+  public static function add_product_custom_fields_to_document($product_id, $document, $product = null) {
+    if (!is_array($document)) {
+      return $document;
+    }
+
+    $custom_fields_raw = self::get_option('filters_custom_fields');
+    $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+
+    if (empty($custom_fields)) {
+      return $document;
+    }
+
+    foreach ($custom_fields as $custom_field) {
+      $meta_key = sanitize_key($custom_field);
+
+      if ($meta_key === '') {
+        continue;
+      }
+
+      $values               = self::get_product_custom_field_values($product_id, $meta_key, $product);
+      $document[$meta_key]  = sanitize_text_field(implode(' ', $values));
+    }
+
+    return $document;
+  }
+
+  /**
+   * Get product custom field values from product and variations.
+   *
+   * @param int    $product_id
+   * @param string $meta_key
+   * @param mixed  $product
+   * @return array
+   */
+  private static function get_product_custom_field_values($product_id, $meta_key, $product) {
+    $values = self::normalize_custom_field_values(get_post_meta($product_id, $meta_key, true));
+
+    if ($product && method_exists($product, 'is_type') && $product->is_type('variable')) {
+      $variation_ids = $product->get_children();
+
+      if (!empty($variation_ids)) {
+        foreach ($variation_ids as $variation_id) {
+          $variation_values = self::normalize_custom_field_values(get_post_meta($variation_id, $meta_key, true));
+
+          if (!empty($variation_values)) {
+            $values = array_merge($values, $variation_values);
+          }
+        }
+      }
+    }
+
+    return array_values(array_unique($values));
+  }
+
+  /**
+   * Normalize custom field values to a flat sanitized array.
+   *
+   * @param mixed $meta_value
+   * @return array
+   */
+  private static function normalize_custom_field_values($meta_value) {
+    $values = array();
+
+    if (is_string($meta_value) && function_exists('maybe_unserialize')) {
+      $meta_value = maybe_unserialize($meta_value);
+    }
+
+    if (is_array($meta_value)) {
+      foreach ($meta_value as $value) {
+        if (is_array($value)) {
+          foreach ($value as $nested_value) {
+            if (is_array($nested_value)) {
+              continue;
+            }
+
+            $sanitized_value = sanitize_text_field((string) $nested_value);
+
+            if ($sanitized_value !== '') {
+              $values[] = $sanitized_value;
+            }
+          }
+
+          continue;
+        }
+
+        $sanitized_value = sanitize_text_field((string) $value);
+
+        if ($sanitized_value !== '') {
+          $values[] = $sanitized_value;
+        }
+      }
+    } else {
+      $sanitized_value = sanitize_text_field((string) $meta_value);
+
+      if ($sanitized_value !== '') {
+        $values[] = $sanitized_value;
+      }
+    }
+
+    return $values;
+  }
+
   public static function prevent_predis_autoload_conflict($autoloader) {
     if (!is_object($autoloader) || !method_exists($autoloader, 'loadClass')) {
       return;
