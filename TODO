@@ -3,13 +3,9 @@
 [ ] Update Screenshots
 [ ] Scan Standalone Snappy Search API
 [ ] Plugin Scan
-
-# 1.6.0
-[ ] Plugin check
-[ ] Test regular API
+[ ] Add new version to updater
 
 # 1.7.0
-[ ] Make order search work with new search shortinit
 [ ] Add utils for version and plugin_dir_url using static property to cache
 [ ] Handling indexing categories
 [ ] Add analytics for 0 search items and top searches
@@ -34,6 +30,9 @@
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
 
 # 1.6.0
+[X] Make order search work with new search shortinit
+[X] Plugin check
+[X] Test regular API
 [X] Add a link to download standalone Snappy Search API
 [X] Scan standalone Snappy Search API
 [X] Have it so when you click in search input, it shows the newest results filled with popular search terms, products, posts, ect.

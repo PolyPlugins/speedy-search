@@ -29,10 +29,30 @@ class Background_Worker {
    * @return void
    */
   public function init() {
+    add_action('wp', array($this, 'maybe_add_cron'));
     add_action('snappy_search_background_worker', array($this, 'background_worker'));
     add_action('snappy_search_orders_background_worker', array($this, 'orders_background_worker'));
     add_action('snappy_search_daily_background_worker', array($this, 'daily_background_worker'));
     add_action('cron_schedules', array($this, 'add_cron_schedules'));
+  }
+
+  /**
+   * Maybe add cron
+   *
+   * @return void
+   */
+  public function maybe_add_cron() {
+    if (!wp_next_scheduled('snappy_search_background_worker')) {
+      wp_schedule_event(time(), 'every_minute', 'snappy_search_background_worker');
+    }
+
+    if (!wp_next_scheduled('snappy_search_daily_background_worker')) {
+      wp_schedule_event(time(), 'daily', 'snappy_search_daily_background_worker');
+    }
+
+    if (!wp_next_scheduled('snappy_search_orders_background_worker')) {
+      wp_schedule_event(time() + 30, 'every_minute', 'snappy_search_orders_background_worker');
+    }
   }
 
   /**

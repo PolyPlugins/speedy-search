@@ -112,8 +112,6 @@ class Updater {
     if (version_compare($stored_version, '1.6.0', '<')) {
       $stored_version = '1.6.0';
 
-      $this->update_to_160();
-
       Utils::update_current_version($stored_version);
     }
   }
@@ -189,12 +187,6 @@ class Updater {
 
   private function update_to_151() {
     update_option('speedy_search_notice_dismissed_polyplugins', false);
-  }
-
-  private function update_to_160() {
-    if (!wp_next_scheduled('snappy_search_orders_background_worker')) {
-      wp_schedule_event(time() + 30, 'every_minute', 'snappy_search_orders_background_worker');
-    }
   }
 
 }
