@@ -227,6 +227,19 @@ class Background_Worker {
           'content' => sanitize_text_field($content)
         );
 
+        $taxonomies = array('category', 'post_tag', 'product_cat', 'product_tag');
+
+        foreach ($taxonomies as $taxonomy) {
+          $term_names = wp_get_post_terms($post_id, $taxonomy, array('fields' => 'names'));
+
+          if (is_wp_error($term_names) || empty($term_names)) {
+            $args[$taxonomy] = '';
+            continue;
+          }
+
+          $args[$taxonomy] = sanitize_text_field(implode(' ', $term_names));
+        }
+
         if ($post_type === 'product') {
           $product    = wc_get_product($post_id);
           $visibility = $product->get_catalog_visibility();
