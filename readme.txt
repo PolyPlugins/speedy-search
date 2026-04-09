@@ -11,7 +11,11 @@ A fast, lightweight search plugin powered by TNTSearch, indexing posts for near 
 
 
 == Description ==
+[youtube https://www.youtube.com/watch?v=d4Z7vC8Xhec]
+
 Snappy Search is a powerful and lightweight AJAX search plugin that enhances your site's search functionality with lightning fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts for near instant, accurate, and efficient searching. Say goodbye to slow searches, this plugin ensures a seamless user experience with improved relevancy. Perfect for blogs, news sites, and content heavy websites. For even faster search performance, install our [Snappy Search Standalone API](https://www.polyplugins.com/product/snappy-search-standalone-api/).
+
+[Demo](https://demo.polyplugins.com)
 
 
 == Currently Supports ==
@@ -21,7 +25,6 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 * Searching WordPress posts
 * Searching WordPress pages
 * Searching through WooCommerce orders
-* Advanced repo search for finding plugins and themes. [Demo](https://www.polyplugins.com/repo-search/)
 
 
 == Features ==
@@ -55,9 +58,7 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 
 * Add analytics for 0 search items and other things
 * Add scroll to load more results
-* Add logging class from our other plugins
 * Add another shortcode for replacing advanced search
-* Add ability for admin side nav to jump to sub settings
 
 == GDPR ==
 
