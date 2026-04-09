@@ -4,6 +4,7 @@ use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
 
+// phpcs:disable WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound -- Keep legacy template variable suffixes for consistency.
 $is_indexing_speedy_search          = Utils::is_indexing();
 $popular_options_speedy_search      = Utils::get_option('popular');
 $popular_enabled_speedy_search      = isset($popular_options_speedy_search['enabled']) ? $popular_options_speedy_search['enabled'] : 0;

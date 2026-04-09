@@ -48,7 +48,8 @@ class Enqueue {
    */
   public function enqueue($hook_suffix) {
     $this->enqueue_dismiss_notices();
-    $post_type = isset($_GET['post_type']) ? sanitize_key(wp_unslash($_GET['post_type'])) : '';
+    $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+    $is_orders_screen = $hook_suffix === 'woocommerce_page_wc-orders' || ($screen && $screen->id === 'edit-shop_order');
 
     if ($hook_suffix === 'toplevel_page_speedy-search') {
       $this->enqueue_styles();
@@ -67,7 +68,7 @@ class Enqueue {
       $this->enqueue_repo_search_scripts();
     }
 
-    if ($hook_suffix === 'woocommerce_page_wc-orders' || ($hook_suffix === 'edit.php' && $post_type === 'shop_order')) {
+    if ($is_orders_screen) {
       $order_options  = Utils::get_option('orders');
       $orders_enabled = isset($order_options['enabled']) ? $order_options['enabled'] : 0;
 
