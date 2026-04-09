@@ -92,7 +92,7 @@ class Settings {
     }
 
     add_submenu_page('speedy-search', __('Advanced', 'speedy-search'), __('Advanced', 'speedy-search'), 'manage_options', 'speedy-search-advanced', array($this, 'redirect_to_advanced_tab'));
-    add_submenu_page('speedy-search', __('Repo', 'speedy-search'), __('Repo', 'speedy-search'), 'manage_options', 'speedy-search-repo', array($this, 'redirect_to_repo_tab'));
+    // add_submenu_page('speedy-search', __('Repo', 'speedy-search'), __('Repo', 'speedy-search'), 'manage_options', 'speedy-search-repo', array($this, 'redirect_to_repo_tab'));
 	}
   
   /**
