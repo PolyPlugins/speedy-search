@@ -91,7 +91,7 @@ By default, it will index 10 posts per minute.
 ### 1.6.0
 * Added: Handling for standalone Snappy Search API for huge speed increases
 * Added: A crossfade transition for result updates when using the custom standalone Snappy Search API, making fast responses feel smoother and more instant.
-* Added: Initial loader so when users click into search it shows results for the latest post, products, ect.
+* Added: Initial loader so when users click into search it shows results for the latest posts, products, ect.
 * Added: Synonym functionality
 * Added: Sorting title matches to top
 * Added: Rating, Price Range, and Custom Product Field filters for products
@@ -106,6 +106,8 @@ By default, it will index 10 posts per minute.
 * Added: Handling for when a products visibility is set to hidden
 * Added: Suffixes to global variables
 * Added: Notice in settings when no object cache is detected
+* Added: Handling for indexing categories and tags
+* Added: Handling for indexing product categories, product tags, and custom fields if applicable
 * Updated: TNTSearch to latest version
 * Bugfix: Indexing can fail if using page builders due to long text strings
 * Bugfix: Indexing can fail on orders
