@@ -33,6 +33,7 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 * Advanced search to replace the default WordPress search
 * Add your own custom shortcode template by copying snappy-search-form.php to your theme folder
 * Reindexer button
+* Adds categories, product categories, tags, product tags, and custom fields (if used) to the index to help with more accurate results
 * Shortcode [snappy_search_polyplugins placeholder="Search..."] to inject a Snappy Search form anywhere
 * Shortcode [snappy_search_mobile_polyplugins] to inject a mobile Snappy Search form anywhere
 * Shortcode [snappy_search_advanced_polyplugins] to inject an advanced Snappy Search form anywhere
