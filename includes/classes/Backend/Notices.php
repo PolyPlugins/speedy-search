@@ -55,6 +55,9 @@ class Notices {
       if ($this->version == '1.5.1') {
         $this->notice_151();
       }
+      if ($this->version == '1.6.0') {
+        $this->notice_160();
+      }
     }
 
     $this->maybe_show_sqlite_notice();
@@ -163,6 +166,14 @@ class Notices {
       
       <a href="admin.php?page=speedy-search"><?php echo esc_html__('Settings', 'speedy-search'); ?></a> | 
       <a href="https://wordpress.org/plugins/speedy-search/#developers" target="_blank"><?php echo esc_html__('View Changelog', 'speedy-search'); ?></a>
+    </div>
+    <?php
+  }
+
+  public function notice_160() {
+    ?>
+    <div class="notice notice-warning is-dismissible speedy-search">
+      <p><?php echo wp_kses_post(__('Snappy Search has been updated to index categories, tags, and custom fields. Please Re-index if you would like to take advantage of it.<br /><br /><a href="https://wordpress.org/plugins/speedy-search/#developers" target="_blank">Changelog</a>', 'speedy-search')); ?></p>
     </div>
     <?php
   }
