@@ -8,6 +8,8 @@ use PolyPlugins\Speedy_Search\Frontend\Enqueue;
 use PolyPlugins\Speedy_Search\Frontend\Shortcode;
 use PolyPlugins\Speedy_Search\Frontend\UI;
 
+if (!defined('ABSPATH')) exit;
+
 class Frontend_Loader {
 
   /**

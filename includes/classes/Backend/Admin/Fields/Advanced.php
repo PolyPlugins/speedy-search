@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search\Backend\Admin\Fields;
 
 use PolyPlugins\Speedy_Search\Utils;
 
+if (!defined('ABSPATH')) exit;
+
 class Advanced {
 
   /**
@@ -99,6 +101,7 @@ class Advanced {
 			'speedy_search_advanced_polyplugins',
 			'speedy_search_advanced_section_polyplugins'
 		);
+
   }
   
   /**

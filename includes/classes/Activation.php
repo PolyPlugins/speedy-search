@@ -12,24 +12,9 @@ class Activation {
    * @return void
    */
   public static function init() {
-    self::schedule_cron();
     self::set_default_options();
+    self::maybe_add_cron();
     self::create_tables();
-  }
-  
-  /**
-   * Schedule cron
-   *
-   * @return void
-   */
-  private static function schedule_cron() {
-    if (!wp_next_scheduled('snappy_search_background_worker')) {
-      wp_schedule_event(time(), 'every_minute', 'snappy_search_background_worker');
-    }
-
-    if (!wp_next_scheduled('snappy_search_daily_background_worker')) {
-      wp_schedule_event(time(), 'daily', 'snappy_search_daily_background_worker');
-    }
   }
   
   /**
@@ -43,6 +28,25 @@ class Activation {
     );
 
     add_option('speedy_search_settings_polyplugins', $default_options);
+  }
+
+  /**
+   * Maybe add cron
+   *
+   * @return void
+   */
+  private static function maybe_add_cron() {
+    if (!wp_next_scheduled('snappy_search_background_worker')) {
+      wp_schedule_event(time(), 'every_minute', 'snappy_search_background_worker');
+    }
+
+    if (!wp_next_scheduled('snappy_search_daily_background_worker')) {
+      wp_schedule_event(time(), 'daily', 'snappy_search_daily_background_worker');
+    }
+
+    if (!wp_next_scheduled('snappy_search_orders_background_worker')) {
+      wp_schedule_event(time() + 30, 'every_minute', 'snappy_search_orders_background_worker');
+    }
   }
   
   /**

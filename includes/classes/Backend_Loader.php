@@ -6,10 +6,13 @@ use PolyPlugins\Speedy_Search\Backend\Admin;
 use PolyPlugins\Speedy_Search\Backend\Admin\Settings;
 use PolyPlugins\Speedy_Search\Backend\API;
 use PolyPlugins\Speedy_Search\Backend\Background_Worker;
+use PolyPlugins\Speedy_Search\Backend\Cache;
 use PolyPlugins\Speedy_Search\Backend\Enqueue;
 use PolyPlugins\Speedy_Search\Backend\Index_Updater;
 use PolyPlugins\Speedy_Search\Backend\Notices;
 use PolyPlugins\Speedy_Search\Backend\Reindexer;
+
+if (!defined('ABSPATH')) exit;
 
 class Backend_Loader {
 
@@ -54,6 +57,7 @@ class Backend_Loader {
     $this->load_enqueue();
     $this->load_settings();
     $this->load_api();
+    $this->load_cache();
     $this->load_background_worker();
     $this->load_index_updater();
     $this->load_reindexer();
@@ -88,6 +92,16 @@ class Backend_Loader {
   public function load_api() {
     $admin = new API($this->plugin, $this->version, $this->plugin_dir_url);
     $admin->init();
+  }
+
+  /**
+   * Load Cache
+   *
+   * @return void
+   */
+  public function load_cache() {
+    $cache = new Cache($this->plugin, $this->version, $this->plugin_dir_url);
+    $cache->init();
   }
   
   /**

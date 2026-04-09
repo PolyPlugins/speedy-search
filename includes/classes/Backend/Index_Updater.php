@@ -5,6 +5,8 @@ namespace PolyPlugins\Speedy_Search\Backend;
 use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
 
+if (!defined('ABSPATH')) exit;
+
 class Index_Updater {
 
   private $plugin;
@@ -84,12 +86,17 @@ class Index_Updater {
       'content' => $content,
     );
 
+    $data = Utils::add_taxonomy_terms_to_document($post_id, $data);
+
     if ($post_type === 'product' && class_exists('WooCommerce')) {
+      $product                = wc_get_product($post_id);
       $sku                    = get_post_meta($post_id, '_sku', true);
       $data['sku']            = sanitize_text_field($sku);
       $data['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
+      $data                   = Utils::add_product_custom_fields_to_document($post_id, $data, $product);
     }
 
+    $data = Utils::sanitize_index_document($data, 255);
     $index->insert($data);
   }
 
@@ -237,6 +244,7 @@ class Index_Updater {
       'shipping_city'       => sanitize_text_field($order->get_shipping_city()),
     );
 
+    $args = Utils::sanitize_index_document($args, 255);
     $index->insert($args);
   }
 

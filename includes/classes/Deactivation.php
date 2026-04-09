@@ -24,6 +24,7 @@ class Deactivation {
     wp_clear_scheduled_hook('speedy_search_background_worker');
     wp_clear_scheduled_hook('speedy_search_daily_background_worker');
     wp_clear_scheduled_hook('snappy_search_background_worker');
+    wp_clear_scheduled_hook('snappy_search_orders_background_worker');
     wp_clear_scheduled_hook('snappy_search_daily_background_worker');
   }
 

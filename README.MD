@@ -1,33 +1,39 @@
 ![Snappy Search Banner](.wordpress-org/banner-1880x609.png)
 ## About
 
-Snappy Search is a powerful and lightweight AJAX search plugin that enhances your site's search functionality with lightning fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts, pages, products, and downloads for instant, accurate, and efficient searching. Say goodbye to slow searches, this plugin ensures a seamless user experience with improved relevancy. Perfect for blogs, news sites, and content heavy websites. For even faster search performance, install our [Snappy Search Enhancements](https://www.polyplugins.com/product/snappy-search-enhancements/) MU plugin to disable unnecessary plugins during search requests.
+[![Snappy Search Demo](.github/images/snappy-search-demo-video-thumbnail.jpg)](https://www.youtube.com/watch?v=d4Z7vC8Xhec)
+
+Snappy Search is a powerful and lightweight AJAX search plugin that enhances your site's search functionality with lightning fast results. Powered by [TNTSearch](https://github.com/teamtnt/tntsearch), it indexes your WordPress posts, pages, products, and downloads for near instant, accurate, and efficient searching. Say goodbye to slow searches, this plugin ensures a seamless user experience with improved relevancy. Perfect for blogs, news sites, and content heavy websites. For even faster search performance, install our [Snappy Search Standalone API](https://www.polyplugins.com/product/snappy-search-standalone-api/).
+
+[Demo](https://demo.polyplugins.com)
 
 ## Currently Supports
 
-* Instantly searching WooCommerce products
-* Instantly searching Easy Digital Downloads downloads
-* Instantly searching WordPress posts
-* Instantly searching WordPress pages
-* Instantly searching through WooCommerce orders
-* Advanced repo search for finding plugins and themes. [Demo](https://www.polyplugins.com/repo-search/)
+* Searching WooCommerce products
+* Searching Easy Digital Downloads downloads
+* Searching WordPress posts
+* Searching WordPress pages
+* Searching through WooCommerce orders
 
 ## Features
 
-* Search through all posts fast without requiring multiple page loads
+* Search through various post types fast without requiring multiple page loads
+* Popular search terms can be displayed below the search
+* Define synonyms when there are multiple search terms that could be used
+* Option to filter WooCommerce products by rating, price, or custom fields.
 * Set how many characters to trigger the AJAX search
 * Set a typing delay before an AJAX request is made
 * Tab selection between various indexes if more than one is enabled
 * Adds a dropdown by defined selector to search form to show results
-* Can build indexes for products, downloads, posts, and pages
+* Can build indexes for products, downloads, posts, pages, orders
 * Background sync for indexes
 * Index updater that handles when data is added, updated, removed, set to draft, or visibility hidden.
 * Ability to adjust the batch size for the initial index so smaller servers don't get overloaded
 * Limit the number of results displayed
-* [NEW] Advanced search to replace the default WordPress search
-* Popular search terms can be displayed below the search
+* Advanced search to replace the default WordPress search
 * Add your own custom shortcode template by copying snappy-search-form.php to your theme folder
 * Reindexer button
+* Adds categories, product categories, tags, product tags, and custom fields (if used) to the index to help with more accurate results
 * Shortcode [snappy_search_polyplugins placeholder="Search..."] to inject a Snappy Search form anywhere
 * Shortcode [snappy_search_mobile_polyplugins] to inject a mobile Snappy Search form anywhere
 * Shortcode [snappy_search_advanced_polyplugins] to inject an advanced Snappy Search form anywhere
@@ -40,9 +46,7 @@ Snappy Search is a powerful and lightweight AJAX search plugin that enhances you
 
 * Add analytics for 0 search items and other things
 * Add scroll to load more results
-* Add logging class from our other plugins
 * Add another shortcode for replacing advanced search
-* Add ability for admin side nav to jump to sub settings
 
 ## GDPR
 
@@ -61,12 +65,13 @@ This plugin collects and stores certain data on your server to ensure proper fun
 ![Demo](.wordpress-org/screenshot-1.jpg)
 ![General Settings](.wordpress-org/screenshot-2.jpg)
 ![Popular Settings](.wordpress-org/screenshot-3.jpg)
-![Posts Settings](.wordpress-org/screenshot-4.jpg)
-![Pages Settings](.wordpress-org/screenshot-5.jpg)
-![Products Settings](.wordpress-org/screenshot-6.jpg)
-![Order Settings](.wordpress-org/screenshot-7.jpg)
-![Advanced Search Settings](.wordpress-org/screenshot-8.jpg)
-![Repo Settings](.wordpress-org/screenshot-9.jpg)
+![Synonyms Settings](.wordpress-org/screenshot-4.jpg)
+![Posts Settings](.wordpress-org/screenshot-5.jpg)
+![Pages Settings](.wordpress-org/screenshot-6.jpg)
+![Products Settings](.wordpress-org/screenshot-7.jpg)
+![Orders Settings](.wordpress-org/screenshot-8.jpg)
+![Filters Settings](.wordpress-org/screenshot-9.jpg)
+![Advanced Search Settings](.wordpress-org/screenshot-10.jpg)
 
 ## Installation
 
@@ -82,6 +87,36 @@ This plugin collects and stores certain data on your server to ensure proper fun
 By default, it will index 10 posts per minute.
 
 ## Changelog
+
+### 1.6.0
+* Added: Handling for standalone Snappy Search API for huge speed increases
+* Added: A crossfade transition for result updates when using the custom standalone Snappy Search API, making fast responses feel smoother and more instant.
+* Added: Initial loader so when users click into search it shows results for the latest posts, products, ect.
+* Added: Synonym functionality
+* Added: Sorting title matches to top
+* Added: Rating, Price Range, and Custom Product Field filters for products
+* Added: Star ratings to product tab
+* Added: Add to Cart / Select Options button to products tab
+* Added: Option to filter out of stock products to end of list
+* Added: Out of Stock badges on product tab
+* Added: Featured functionality to move featured products to top of list and show a featured badge on product tab
+* Added: Singular endpoint to fetch all posts, pages, ect to reduce the number of requests per search
+* Added: Handling to clear cache when a product goes out of stock
+* Added: Handling clearing cache when posts, products, ect are updated / deleted
+* Added: Handling for when a products visibility is set to hidden
+* Added: Suffixes to global variables
+* Added: Notice in settings when no object cache is detected
+* Added: Handling for indexing categories and tags
+* Added: Handling for indexing product categories, product tags, and custom fields if applicable
+* Updated: TNTSearch to latest version
+* Bugfix: Indexing can fail if using page builders due to long text strings
+* Bugfix: Indexing can fail on orders
+* Bugfix: Order search not working on non HPOS installs
+* Bugfix: Extra columns on orders from other plugins shift the layout, added Unavailable messaging to take it's place
+* Bugfix: Order search not working on non HPOS installs
+* Bugfix: Popular searches not populating when enabled
+* Removed: Popular search text to allow for more badges
+* Removed: Advanced WordPress Repo Search due to lack of interest
 
 ### 1.5.2
 * Bugfix: WooCommerce orders admin will sometimes close if opened in new tab

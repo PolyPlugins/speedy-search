@@ -6,6 +6,8 @@ use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
 use WP_Query;
 
+if (!defined('ABSPATH')) exit;
+
 class Background_Worker {
 
   private $tnt;
@@ -27,9 +29,30 @@ class Background_Worker {
    * @return void
    */
   public function init() {
+    add_action('wp', array($this, 'maybe_add_cron'));
     add_action('snappy_search_background_worker', array($this, 'background_worker'));
+    add_action('snappy_search_orders_background_worker', array($this, 'orders_background_worker'));
     add_action('snappy_search_daily_background_worker', array($this, 'daily_background_worker'));
     add_action('cron_schedules', array($this, 'add_cron_schedules'));
+  }
+
+  /**
+   * Maybe add cron
+   *
+   * @return void
+   */
+  public function maybe_add_cron() {
+    if (!wp_next_scheduled('snappy_search_background_worker')) {
+      wp_schedule_event(time(), 'every_minute', 'snappy_search_background_worker');
+    }
+
+    if (!wp_next_scheduled('snappy_search_daily_background_worker')) {
+      wp_schedule_event(time(), 'daily', 'snappy_search_daily_background_worker');
+    }
+
+    if (!wp_next_scheduled('snappy_search_orders_background_worker')) {
+      wp_schedule_event(time() + 30, 'every_minute', 'snappy_search_orders_background_worker');
+    }
   }
 
   /**
@@ -51,6 +74,30 @@ class Background_Worker {
     }
 
     $this->indexer();
+  }
+
+  /**
+   * Orders-only background worker (separate cron so heavy wc_get_orders batches do not run in the same tick as content indexes).
+   *
+   * @return void
+   */
+  public function orders_background_worker() {
+    $enabled               = Utils::get_option('enabled');
+    $is_missing_extensions = Utils::is_missing_extensions();
+
+    if ($is_missing_extensions) {
+      return;
+    }
+
+    if (!$enabled) {
+      return;
+    }
+
+    if (!class_exists('WooCommerce')) {
+      return;
+    }
+
+    $this->maybe_index_orders();
   }
 
   /**
@@ -83,10 +130,6 @@ class Background_Worker {
 
     if (class_exists('Easy_Digital_Downloads')) {
       $this->maybe_index('download');
-    }
-
-    if (class_exists('WooCommerce')) {
-      $this->maybe_index_orders();
     }
   }
 
@@ -184,6 +227,8 @@ class Background_Worker {
           'content' => sanitize_text_field($content)
         );
 
+        $args = Utils::add_taxonomy_terms_to_document($post_id, $args);
+
         if ($post_type === 'product') {
           $product    = wc_get_product($post_id);
           $visibility = $product->get_catalog_visibility();
@@ -196,8 +241,10 @@ class Background_Worker {
           $sku                    = get_post_meta($post_id, '_sku', true);
           $args['sku']            = sanitize_text_field($sku);
           $args['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
+          $args                   = Utils::add_product_custom_fields_to_document($post_id, $args, $product);
         }
 
+        $args = Utils::sanitize_index_document($args, 255);
         $index->insert($args);
 
         $progress++;
@@ -248,6 +295,7 @@ class Background_Worker {
     $args = array(
       'limit'     => $batch,
       'offset'    => $progress - 1,
+      'type'      => 'shop_order',
       'orderby'   => 'date',
       'order'     => 'ASC',
       'return'    => 'objects',
@@ -260,10 +308,13 @@ class Background_Worker {
 
       foreach ($orders as $order) {
         $order_id = $order->get_id();
+        $order_number = method_exists($order, 'get_order_number')
+          ? $order->get_order_number()
+          : $order_id;
 
         $args = array(
           'id'                  => intval($order_id),
-          'order_number'        => sanitize_text_field($order->get_order_number()),
+          'order_number'        => sanitize_text_field((string) $order_number),
           'billing_first_name'  => sanitize_text_field($order->get_billing_first_name()),
           'billing_last_name'   => sanitize_text_field($order->get_billing_last_name()),
           'billing_address_1'   => sanitize_text_field($order->get_billing_address_1()),
@@ -278,6 +329,7 @@ class Background_Worker {
           'shipping_city'       => sanitize_text_field($order->get_shipping_city()),
         );
 
+        $args = Utils::sanitize_index_document($args, 255);
         $index->insert($args);
         $progress++;
 

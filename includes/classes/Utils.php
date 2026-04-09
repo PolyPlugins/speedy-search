@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search;
 
 use PolyPlugins\Speedy_Search\TNTSearch;
 
+if (!defined('ABSPATH')) exit;
+
 class Utils {
 
   /**
@@ -42,6 +44,124 @@ class Utils {
     $options[$option] = $value;
 
     update_option('speedy_search_settings_polyplugins', $options);
+  }
+
+  /**
+   * Stored plugin version read from the options table only (bypasses cache).
+   *
+   * @return string|false
+   */
+  public static function get_current_version() {
+    global $wpdb;
+
+    $value = $wpdb->get_var(
+      $wpdb->prepare(
+        "SELECT option_value FROM %i WHERE option_name = %s LIMIT 1",
+        $wpdb->options,
+        'speedy_search_version_polyplugins'
+      )
+    );
+
+    if ($value === null) {
+      return false;
+    }
+
+    return maybe_unserialize($value);
+  }
+
+  /**
+   * Persist plugin version in the options table only (bypasses stale reads; refreshes object cache for this option).
+   *
+   * @param  string $version Version string to store.
+   * @return bool            False on database error, true otherwise.
+   */
+  public static function update_current_version($version) {
+    global $wpdb;
+
+    $version = sanitize_text_field((string) $version);
+    $value   = maybe_serialize($version);
+
+    $result = $wpdb->query(
+      $wpdb->prepare(
+        "INSERT INTO %i (option_name, option_value, autoload) VALUES (%s, %s, %s) ON DUPLICATE KEY UPDATE option_value = %s",
+        $wpdb->options,
+        'speedy_search_version_polyplugins',
+        $value,
+        'auto',
+        $value
+      )
+    );
+
+    if ($result === false) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Get API cache value
+   *
+   * @param  string $key Cache key
+   * @return mixed
+   */
+  public static function get_api_cache($key) {
+    return wp_cache_get($key, 'speedy_search_api');
+  }
+
+  /**
+   * Set API cache value and register the key
+   *
+   * @param  string $key Cache key
+   * @param  mixed  $value Cache value
+   * @param  int    $expiration Cache expiration in seconds
+   * @return void
+   */
+  public static function set_api_cache($key, $value, $expiration = 600) {
+    wp_cache_set($key, $value, 'speedy_search_api', $expiration);
+
+    $keys = get_option('speedy_search_api_cache_keys', array());
+
+    if (!is_array($keys)) {
+      $keys = array();
+    }
+
+    $keys[$key] = time();
+
+    update_option('speedy_search_api_cache_keys', $keys);
+  }
+
+  /**
+   * Clear API cache group
+   *
+   * @return void
+   */
+  public static function clear_api_cache() {
+    $did_flush_group = false;
+
+    if (function_exists('wp_cache_flush_group')) {
+      if (function_exists('wp_cache_supports')) {
+        if (wp_cache_supports('flush_group')) {
+          wp_cache_flush_group('speedy_search_api');
+          $did_flush_group = true;
+        }
+      } else {
+        wp_cache_flush_group('speedy_search_api');
+        $did_flush_group = true;
+      }
+    }
+
+    if (!$did_flush_group) {
+      $keys = get_option('speedy_search_api_cache_keys', array());
+
+      if (is_array($keys) && !empty($keys)) {
+        foreach ($keys as $key => $timestamp) {
+          wp_cache_delete($key, 'speedy_search_api');
+        }
+      }
+    }
+
+    delete_option('speedy_search_api_cache_keys');
   }
 
   /**
@@ -106,6 +226,17 @@ class Utils {
   }
 
   /**
+   * Whether the WooCommerce orders search index has finished its initial build.
+   *
+   * @return bool
+   */
+  public static function is_orders_index_complete() {
+    $index = self::get_index('shop_orders');
+
+    return is_array($index) && !empty($index['complete']);
+  }
+
+  /**
    * Delete an index file
    *
    * @param  string $index_path The path to the index file
@@ -116,7 +247,7 @@ class Utils {
     $path = rtrim($index_path, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
 
     if (file_exists($path)) {
-      return unlink($path);
+      return wp_delete_file($path);
     }
 
     return false;
@@ -362,6 +493,274 @@ class Utils {
     } else {
       return "rgb($r, $g, $b)";
     }
+  }
+
+  /**
+   * Strip shortcodes and oversized tokens from plain text.
+   *
+   * @param string $value            Text to sanitize.
+   * @param int    $max_token_length Maximum token length allowed.
+   * @return string
+   */
+  public static function sanitize_index_text($value, $max_token_length = 255) {
+    if (!is_string($value) || $value === '') {
+      return $value;
+    }
+
+    if (function_exists('strip_shortcodes')) {
+      $value = strip_shortcodes($value);
+    }
+
+    // Remove shortcode-like wrappers even if shortcode tags are not registered.
+    $value = preg_replace('/\[(?:\/)?[a-zA-Z0-9_-]+(?:\s[^\]]*)?\]/', ' ', $value);
+
+    $max_token_length = is_numeric($max_token_length) ? (int) $max_token_length : 255;
+
+    if ($max_token_length < 1) {
+      return $value;
+    }
+
+    $min_oversized_length = $max_token_length + 1;
+    $pattern              = '/\S{' . $min_oversized_length . ',}/u';
+    $sanitized            = preg_replace($pattern, ' ', (string) $value);
+
+    // Fallback if unicode mode fails for edge-case invalid UTF-8.
+    if ($sanitized === null) {
+      $pattern   = '/\S{' . $min_oversized_length . ',}/';
+      $sanitized = preg_replace($pattern, ' ', (string) $value);
+    }
+
+    return is_string($sanitized) ? $sanitized : $value;
+  }
+
+  /**
+   * Strip oversized tokens from each string field in an index document.
+   *
+   * @param array $document          Key/value data passed to TNTSearch insert.
+   * @param int   $max_token_length  Maximum token length allowed.
+   * @return array
+   */
+  public static function sanitize_index_document($document, $max_token_length = 255) {
+    if (!is_array($document)) {
+      return $document;
+    }
+
+    foreach ($document as $key => $value) {
+      if (!is_string($value)) {
+        continue;
+      }
+
+      $document[$key] = self::sanitize_index_text($value, $max_token_length);
+    }
+
+    return $document;
+  }
+
+  /**
+   * Add taxonomy term names into the index document.
+   *
+   * @param int   $post_id
+   * @param array $document
+   * @param array $taxonomies
+   * @return array
+   */
+  public static function add_taxonomy_terms_to_document($post_id, $document, $taxonomies = array()) {
+    if (!is_array($document)) {
+      return $document;
+    }
+
+    if (empty($taxonomies)) {
+      $taxonomies = array('category', 'post_tag', 'product_cat', 'product_tag');
+    }
+
+    foreach ($taxonomies as $taxonomy) {
+      $taxonomy_name = sanitize_key((string) $taxonomy);
+
+      if ($taxonomy_name === '') {
+        continue;
+      }
+
+      $term_names = wp_get_post_terms($post_id, $taxonomy_name, array('fields' => 'names'));
+
+      if (is_wp_error($term_names) || empty($term_names)) {
+        $document[$taxonomy_name] = '';
+        continue;
+      }
+
+      $document[$taxonomy_name] = sanitize_text_field(implode(' ', $term_names));
+    }
+
+    return $document;
+  }
+
+  /**
+   * Add configured product custom fields into the index document.
+   *
+   * @param int   $product_id
+   * @param array $document
+   * @param mixed $product
+   * @return array
+   */
+  public static function add_product_custom_fields_to_document($product_id, $document, $product = null) {
+    if (!is_array($document)) {
+      return $document;
+    }
+
+    $custom_fields_raw = self::get_option('filters_custom_fields');
+    $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+
+    if (empty($custom_fields)) {
+      return $document;
+    }
+
+    foreach ($custom_fields as $custom_field) {
+      $meta_key = sanitize_key($custom_field);
+
+      if ($meta_key === '') {
+        continue;
+      }
+
+      $values               = self::get_product_custom_field_values($product_id, $meta_key, $product);
+      $document[$meta_key]  = sanitize_text_field(implode(' ', $values));
+    }
+
+    return $document;
+  }
+
+  /**
+   * Get product custom field values from product and variations.
+   *
+   * @param int    $product_id
+   * @param string $meta_key
+   * @param mixed  $product
+   * @return array
+   */
+  private static function get_product_custom_field_values($product_id, $meta_key, $product) {
+    $values = self::normalize_custom_field_values(get_post_meta($product_id, $meta_key, true));
+
+    if ($product && method_exists($product, 'is_type') && $product->is_type('variable')) {
+      $variation_ids = $product->get_children();
+
+      if (!empty($variation_ids)) {
+        foreach ($variation_ids as $variation_id) {
+          $variation_values = self::normalize_custom_field_values(get_post_meta($variation_id, $meta_key, true));
+
+          if (!empty($variation_values)) {
+            $values = array_merge($values, $variation_values);
+          }
+        }
+      }
+    }
+
+    return array_values(array_unique($values));
+  }
+
+  /**
+   * Normalize custom field values to a flat sanitized array.
+   *
+   * @param mixed $meta_value
+   * @return array
+   */
+  private static function normalize_custom_field_values($meta_value) {
+    $values = array();
+
+    if (is_string($meta_value) && function_exists('maybe_unserialize')) {
+      $meta_value = maybe_unserialize($meta_value);
+    }
+
+    if (is_array($meta_value)) {
+      foreach ($meta_value as $value) {
+        if (is_array($value)) {
+          foreach ($value as $nested_value) {
+            if (is_array($nested_value)) {
+              continue;
+            }
+
+            $sanitized_value = sanitize_text_field((string) $nested_value);
+
+            if ($sanitized_value !== '') {
+              $values[] = $sanitized_value;
+            }
+          }
+
+          continue;
+        }
+
+        $sanitized_value = sanitize_text_field((string) $value);
+
+        if ($sanitized_value !== '') {
+          $values[] = $sanitized_value;
+        }
+      }
+    } else {
+      $sanitized_value = sanitize_text_field((string) $meta_value);
+
+      if ($sanitized_value !== '') {
+        $values[] = $sanitized_value;
+      }
+    }
+
+    return $values;
+  }
+
+  public static function prevent_predis_autoload_conflict($autoloader) {
+    if (!is_object($autoloader) || !method_exists($autoloader, 'loadClass')) {
+      return;
+    }
+
+    spl_autoload_unregister(array($autoloader, 'loadClass'));
+    spl_autoload_register(function ($class) use ($autoloader) {
+      if (strpos($class, 'Predis\\') === 0) {
+        return false;
+      }
+
+      return $autoloader->loadClass($class);
+    }, true, true);
+  }
+
+  /**
+   * Get API endpoint URLs with custom search.php fallback support.
+   *
+   * @return array
+   */
+  public static function get_api_endpoints() {
+    $version            = '1.0.0';
+    $custom_search_file = ABSPATH . 'search.php';
+    $has_custom_file    = file_exists($custom_search_file);
+
+    if ($has_custom_file) {
+      $base_url = add_query_arg(array(
+        'snappy_search' => '1',
+        'v'             => $version,
+      ), home_url('/search.php'));
+
+      return array(
+        'has_custom_file' => true,
+        'version'         => $version,
+        'search'          => add_query_arg('endpoint', 'search', $base_url),
+        'preload'         => add_query_arg('endpoint', 'preload', $base_url),
+        'latest'          => add_query_arg('endpoint', 'latest', $base_url),
+        'posts'           => add_query_arg('endpoint', 'posts', $base_url),
+        'pages'           => add_query_arg('endpoint', 'pages', $base_url),
+        'products'        => add_query_arg('endpoint', 'products', $base_url),
+        'downloads'       => add_query_arg('endpoint', 'downloads', $base_url),
+        // Orders stay on REST so existing permission callbacks remain enforced.
+        'orders'          => home_url('/wp-json/speedy-search-search/v1/orders'),
+      );
+    }
+
+    return array(
+      'has_custom_file' => false,
+      'version'         => $version,
+      'search'          => home_url('/wp-json/speedy-search/v1/search/'),
+      'preload'         => home_url('/wp-json/speedy-search/v1/preload/'),
+      'latest'          => home_url('/wp-json/speedy-search/v1/latest/'),
+      'posts'           => home_url('/wp-json/speedy-search/v1/posts/'),
+      'pages'           => home_url('/wp-json/speedy-search/v1/pages/'),
+      'products'        => home_url('/wp-json/speedy-search/v1/products/'),
+      'downloads'       => home_url('/wp-json/speedy-search/v1/downloads/'),
+      'orders'          => home_url('/wp-json/speedy-search-search/v1/orders'),
+    );
   }
 
 }

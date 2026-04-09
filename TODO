@@ -1,15 +1,21 @@
 # Update Checklist
 [ ] Update Readme
 [ ] Update Screenshots
+[ ] Scan Standalone Snappy Search API
 [ ] Plugin Scan
+[ ] Add new version to updater
 
-# 1.6.0
+# 1.7.0
+[ ] Add search to backend product search
+[ ] Maybe add category badge to search results
+[ ] Add support for indexing categories, tags, and custom fields (ACF)
 [ ] Add utils for version and plugin_dir_url using static property to cache
-[ ] Push featured to top of list and add a badge for "Featured"
-[ ] Handling indexing categories
-[ ] Add scroll to load more results
 [ ] Add analytics for 0 search items and top searches
 [ ] Add logging class from our other plugins
+[ ] Add options to disable various parts of search result like star rating, price, excerpt, etc.
+[ ] When a product has variations have a popup list all the options to choose from
+[ ] Add filtering by category
+[ ] Maybe add a footer in search to indicate how fast it loaded
 
 # General
 [ ] Add scroll to load more results
@@ -19,9 +25,36 @@
 [ ] Move DB to Utils folder
 [ ] Separate admin class
 [ ] Add option for private API
+[ ] Maybe bring Repo Advanced Search back if there is interest
+[ ] Check if prioritizing columns is added as a feature to TNTSearch yet
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
+
+# 1.6.0
+[X] Add support for indexing categories, tags, and custom fields (Meta)
+[X] Fix featured products being at bottom of list when initially loaded
+[X] Make order search work with new search shortinit
+[X] Plugin check
+[X] Test regular API
+[X] Add a link to download standalone Snappy Search API
+[X] Scan standalone Snappy Search API
+[X] Have it so when you click in search input, it shows the newest results filled with popular search terms, products, posts, ect.
+[X] Add animation to slide in results to make it feel even faster on Standalone Snappy Search API
+[X] Add synonyms functionality
+[X] Fix sorting products by title first then remaining relevance
+[X] Remove Repo Advanced Search since there is no interest from our clients at the moment
+[X] Check if featured out of stock move to the top
+[X] Custom product fields
+[X] Produc visibility
+[X] When products go out of stock clear cache
+[X] Add out of stock badges
+[X] Add option to filter out of stock to end of list
+[X] Add add to cart button
+[X] Push featured to top of list and add a badge for "Featured"
+[X] Add star rating for products
+[X] Add shortcode filters enabled setting
+[X] Handling indexing categories, tags, product categories, product tags, and custom fields if applicable
 
 # 1.5.1
 [X] Add custom tokenizer for future use

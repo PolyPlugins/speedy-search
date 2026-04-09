@@ -15,7 +15,15 @@ jQuery(document).ready(function ($) {
   let downloads_enabled      = snappy_search_object.options?.downloads?.enabled ?? false;
   let advanced_enabled_types = snappy_search_object.options?.advanced?.enabled_types ?? [];
   let currency               = snappy_search_object.currency ?? '$';
-  let ajaxCalls              = 0;
+  let filters_enabled        = snappy_search_object.options?.advanced?.filters_enabled ?? false;
+  let rating_filter_enabled = snappy_search_object.options?.filters_rating_enabled ?? false;
+  let price_range_filter_enabled = snappy_search_object.options?.filters_price_range_enabled ?? false;
+  let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
+  let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled;
+  let search_endpoint         = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
+  let latest_endpoint         = snappy_search_object.endpoints?.latest ?? snappy_search_object.endpoints?.preload ?? "/wp-json/speedy-search/v1/latest/";
+  let use_search_php          = snappy_search_object.endpoints?.has_custom_file ?? false;
+  let latest_results         = {};
 
   const $searchInput      = $(selector);
   const $searchForm       = $searchInput.closest("form");
@@ -34,6 +42,7 @@ jQuery(document).ready(function ($) {
     popular();
     close();
     initialSearch();
+    preloadLatestResults();
   }
 
   function listener() {
@@ -51,6 +60,9 @@ jQuery(document).ready(function ($) {
         $form.after(buildInitialSearchForm());
       }
 
+      initMobileFilterToggle($container);
+      bindFilterEvents($container);
+
       $input.on("input", function () {
         clearTimeout(typingTimer);
         const query = $.trim($input.val());
@@ -64,6 +76,16 @@ jQuery(document).ready(function ($) {
           // Could show a message like: "Keep typing..."
           // $container.find(".instant-search-wrapper").hide();
         }
+      });
+
+      $input.on("focus click", function () {
+        const query = $.trim($input.val());
+
+        if (query.length >= characters) {
+          return;
+        }
+
+        showLatestResults($container);
       });
     });
   }
@@ -121,100 +143,47 @@ jQuery(document).ready(function ($) {
   }
 
   function performSearch(query, $container) {
-    const $sections = $container.find('.instant-search-section');
+    if (!use_search_php) {
+      const $sections = $container.find('.instant-search-section');
 
-    ajaxCalls = $sections.length;
+      $sections.each(function () {
+        let $result = $(".speedy-search-container .instant-search-result");
 
-    $sections.each(function () {
-      let $section = $(this);
-      let type = $section.data('type');
+        if ($result.length) {
+          $result.addClass('skeleton-loading');
+        } else {
+          $(".speedy-search-container .snappy-search-close").hide();
+          $(".speedy-search-container .loader").show();
+        }
 
-      let typeObj = postTypes.find(t => t.type === type);
-      let label = typeObj ? typeObj.label : type;
+        // $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
+      });
+    }
 
-      
-      let $result = $(".speedy-search-container .instant-search-result");
-
-      if ($result.length) {
-        $result.addClass('skeleton-loading');
-      } else {
-        $(".speedy-search-container .snappy-search-close").hide();
-        $(".speedy-search-container .loader").show();
-      }
-
-      // $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
-
-      fetchResults(query, type, label, $section);
-    });
+    fetchResults(query, $container);
   }
 
-  function fetchResults(query, endpoint, label, $section) {
+  function fetchResults(query, $container) {
     $.ajax({
-      url: "/wp-json/speedy-search/v1/" + endpoint + "s/",
+      url: search_endpoint,
       data: { search: query },
       dataType: "json",
       success: function (data) {
-        $section.empty();
-
-        const isDefaultType = endpoint === default_result_type;
-        const initialLimit = isDefaultType ? data.length : 4;
-        const showMore = !isDefaultType && data.length > initialLimit;
-
-        const results = $.map(data, function (item, index) {
-          let imageHTML = "";
-          let price = "";
-          let rating = "";
-
-          if (item.thumbnail) {
-            imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
-          }
-
-          if (item.price) {
-            price = '<p class="price-result">' + currency + item.price + "</p>";
-          }
-
-          if (item.rating && endpoint === 'product') {
-            rating = '<div class="rating-result"><div class="woocommerce">' + item.rating + "</div></div>";
-          }
-
-          // Add class to hide results after the limit
-          const hiddenClass = index >= initialLimit ? ' hidden-result' : '';
-
-          return `
-            <div class="instant-search-result grid-item${hiddenClass}">
-              <a href="${item.permalink}" class="permalink-result">
-                ${imageHTML ? `<div class="image-wrapper">${imageHTML}</div>` : ''}
-                <div class="search-content">
-                  <h2 class="title-result">${item.title}</h2>
-                  ${rating}
-                  ${price}
-                  <p class="excerpt-result">${item.excerpt}</p>
-                  ${
-                  endpoint === 'post' ? `
-                    <div class="read-more">
-                      ${__("Read more >", "speedy-search")}
-                    </div>` : ''
-                  }
-                </div>
-              </a>
-            </div>
-          `;
-        }).join("");
-
-        $section.append(results);
-
-        if (showMore) {
-          const readMoreBtn = `
-            <div class="instant-search-result grid-item more-results">
-              <button class="show-all-results">${__("Show all " + endpoint + " results", "speedy-search")}</button>
-            </div>
-          `;
-          $section.append(readMoreBtn);
+        latest_results = data;
+        if (use_search_php) {
+          crossfadeResults($container, data);
+        } else {
+          setupProductFilters($container, data.products || []);
+          renderSections($container, data);
         }
       },
-      error: function (xhr, status, error) {
-        $section.empty();
-        $section.append("<p>" + __("An error occurred while searching.", "speedy-search") + "</p>");
+      error: function () {
+        const $sections = $container.find('.instant-search-section');
+
+        $sections.each(function () {
+          $(this).empty();
+          $(this).append("<p>" + __("An error occurred while searching.", "speedy-search") + "</p>");
+        });
       }
     })
     .always(function() {
@@ -222,24 +191,412 @@ jQuery(document).ready(function ($) {
       $(".speedy-search-container .snappy-search-close").show();
       $(".speedy-search-container .loader").hide();
 
-      ajaxCalls--;
+      let allEmpty = true;
+      
+      $(".advanced-search .instant-search-section").each(function () {
+        if ($(this).find('.instant-search-result').length > 0) {
+          allEmpty = false;
 
-      if (ajaxCalls === 0) {
-        let allEmpty = true;
-        
-        $(".advanced-search .instant-search-section").each(function () {
-          if ($(this).children().length > 0) {
-            allEmpty = false;
-
-            return false;
-          }
-        });
-
-        if (allEmpty) {
-          $(".advanced-search .instant-search-section").first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
+          return false;
         }
+      });
+
+      if (allEmpty) {
+        $(".advanced-search .instant-search-section").first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
       }
     });
+  }
+
+  function preloadLatestResults() {
+    $.ajax({
+      url: latest_endpoint,
+      dataType: "json",
+      success: function (data) {
+        latest_results = data || {};
+      },
+    });
+  }
+
+  function showLatestResults($container) {
+    if (!latest_results || Object.keys(latest_results).length === 0) {
+      return;
+    }
+
+    setupProductFilters($container, latest_results.products || []);
+    renderSections($container, latest_results);
+
+    $container.find(".instant-search-wrapper").show();
+    $container.find(".snappy-search-close").show();
+  }
+
+  function crossfadeResults($container, data) {
+    let $results = $container.find('.instant-search-results');
+
+    setupProductFilters($container, data.products || []);
+
+    if (!$results.length) {
+      renderSections($container, data);
+      return;
+    }
+
+    $results.stop(true, true).fadeTo(75, 0.35, function () {
+      renderSections($container, data);
+      $results.fadeTo(150, 1);
+    });
+  }
+
+  function renderSections($container, data) {
+    const $sections = $container.find('.instant-search-section');
+    let filteredProducts = getFilteredProducts($container, data.products || []);
+
+    $sections.each(function () {
+      let $section = $(this);
+      let endpoint = $section.data('type');
+      let endpointKey = endpoint + 's';
+      let items = endpoint === 'product' ? filteredProducts : (Array.isArray(data[endpointKey]) ? data[endpointKey] : []);
+
+      $section.empty();
+
+      if (!items.length) {
+        $section.append("<p>" + __("No results found.", "speedy-search") + "</p>");
+        return;
+      }
+
+      const isDefaultType = endpoint === default_result_type;
+      const initialLimit = isDefaultType ? items.length : 4;
+      const showMore = !isDefaultType && items.length > initialLimit;
+
+      const results = $.map(items, function (item, index) {
+        let imageHTML = "";
+        let price = "";
+        let rating = "";
+        let featuredBadge = "";
+        let stockBadge = "";
+        let productAction = "";
+
+        if (item.thumbnail) {
+          imageHTML = '<img src="' + item.thumbnail + '" alt="' + item.title + '" class="image-result">';
+        }
+
+        if (item.price) {
+          price = '<p class="price-result">' + currency + item.price + "</p>";
+        }
+
+        if (item.rating && endpoint === 'product') {
+          rating = '<div class="rating-result"><div class="woocommerce">' + item.rating + "</div></div>";
+        }
+
+        if (item.is_featured && endpoint === 'product') {
+          featuredBadge = '<div class="featured-badge">' + __("Featured", "speedy-search") + '</div>';
+        }
+
+        if (endpoint === 'product' && item.is_in_stock === false) {
+          stockBadge = '<div class="stock-badge out-of-stock-badge">' + __("Out of stock", "speedy-search") + '</div>';
+        }
+
+        if (endpoint === 'product') {
+          let actionLabel = item.is_variable ? __("Select Options", "speedy-search") : __("Add to Cart", "speedy-search");
+          let actionUrl = item.is_variable ? item.permalink : getCurrentAddToCartUrl(item.id);
+          productAction = `
+            <a href="${actionUrl}" class="product-action-result">
+              ${actionLabel}
+            </a>
+          `;
+        }
+
+        // Add class to hide results after the limit
+        const hiddenClass = index >= initialLimit ? ' hidden-result' : '';
+
+        return `
+          <div class="instant-search-result grid-item${hiddenClass}">
+            <a href="${item.permalink}" class="permalink-result">
+              ${imageHTML ? `<div class="image-wrapper">${imageHTML}${featuredBadge}${stockBadge}</div>` : ''}
+              <div class="search-content">
+                <h2 class="title-result">${item.title}</h2>
+                ${rating}
+                ${price}
+                <p class="excerpt-result">${item.excerpt}</p>
+                ${
+                endpoint === 'post' ? `
+                  <div class="read-more">
+                    ${__("Read more >", "speedy-search")}
+                  </div>` : ''
+                }
+              </div>
+            </a>
+            ${productAction}
+          </div>
+        `;
+      }).join("");
+
+      $section.append(results);
+
+      if (showMore) {
+        const readMoreBtn = `
+          <div class="instant-search-result grid-item more-results">
+            <button class="show-all-results">${__("Show all " + endpoint + " results", "speedy-search")}</button>
+          </div>
+        `;
+        $section.append(readMoreBtn);
+      }
+    });
+  }
+
+  function parsePrice(value) {
+    let number = parseFloat(String(value).replace(/[^0-9.]/g, ''));
+    return isNaN(number) ? 0 : number;
+  }
+
+  function getCurrentAddToCartUrl(productId) {
+    if (!productId) {
+      return window.location.href;
+    }
+
+    let currentUrl = new URL(window.location.href);
+    currentUrl.searchParams.set('add-to-cart', String(productId));
+    currentUrl.searchParams.delete('added-to-cart');
+
+    return currentUrl.toString();
+  }
+
+  function setupProductFilters($container, products) {
+    if (!filters_enabled || !products_enabled || !has_active_product_filters) {
+      return;
+    }
+
+    let $filters = $container.find('.snappy-product-filters');
+
+    if (price_range_filter_enabled) {
+      let prices = $.map(products, function (item) {
+        return parsePrice(item.price);
+      }).filter(function (price) {
+        return price >= 0;
+      });
+
+      if (prices.length) {
+        let minPrice = Math.floor(Math.min.apply(null, prices));
+        let maxPrice = Math.ceil(Math.max.apply(null, prices));
+        let $min = $filters.find('.filter-price-min');
+        let $max = $filters.find('.filter-price-max');
+
+        $min.attr('min', minPrice).attr('max', maxPrice).val(minPrice);
+        $max.attr('min', minPrice).attr('max', maxPrice).val(maxPrice);
+        $filters.data('min-price', minPrice);
+        $filters.data('max-price', maxPrice);
+        $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
+        $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
+        updatePriceRangeTrack($filters, minPrice, maxPrice, minPrice, maxPrice);
+      }
+    }
+
+    if (custom_field_filter_enabled) {
+      populateCustomFieldFilters($filters, products);
+    }
+  }
+
+  function getFilteredProducts($container, products) {
+    if (!filters_enabled || !products_enabled || !has_active_product_filters || !products.length) {
+      return products;
+    }
+
+    let $filters = $container.find('.snappy-product-filters');
+    let minRating = rating_filter_enabled ? parseFloat($filters.find('.filter-rating').val() || '0') : 0;
+    let minPrice = price_range_filter_enabled ? parsePrice($filters.find('.filter-price-min').val()) : 0;
+    let maxPrice = price_range_filter_enabled ? parsePrice($filters.find('.filter-price-max').val()) : Number.MAX_SAFE_INTEGER;
+
+    if (price_range_filter_enabled && minPrice > maxPrice) {
+      let temp = minPrice;
+      minPrice = maxPrice;
+      maxPrice = temp;
+    }
+
+    return $.grep(products, function (item) {
+      let rating = parseFloat(item.average_rating || 0);
+      let price = parsePrice(item.price);
+      let customFieldsMatch = custom_field_filter_enabled ? matchCustomFieldFilters($filters, item) : true;
+
+      return rating >= minRating && price >= minPrice && price <= maxPrice && customFieldsMatch;
+    });
+  }
+
+  function bindFilterEvents($container) {
+    if (!filters_enabled || !products_enabled || !has_active_product_filters) {
+      return;
+    }
+
+    $container.off('change.snappyFilters input.snappyFilters', '.snappy-product-filters input, .snappy-product-filters select');
+    $container.on('change.snappyFilters input.snappyFilters', '.snappy-product-filters input, .snappy-product-filters select', function () {
+      let $filters = $container.find('.snappy-product-filters');
+      if (price_range_filter_enabled) {
+        let minPrice = parsePrice($filters.find('.filter-price-min').val());
+        let maxPrice = parsePrice($filters.find('.filter-price-max').val());
+        let minBound = parsePrice($filters.data('min-price'));
+        let maxBound = parsePrice($filters.data('max-price'));
+
+        if (minPrice > maxPrice) {
+          if ($(this).hasClass('filter-price-min')) {
+            $filters.find('.filter-price-max').val(minPrice);
+            maxPrice = minPrice;
+          } else {
+            $filters.find('.filter-price-min').val(maxPrice);
+            minPrice = maxPrice;
+          }
+        }
+
+        $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
+        $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
+        updatePriceRangeTrack($filters, minPrice, maxPrice, minBound, maxBound);
+      }
+
+      renderSections($container, latest_results);
+    });
+  }
+
+  function initMobileFilterToggle($container) {
+    if (!filters_enabled || !products_enabled || !has_active_product_filters) {
+      return;
+    }
+
+    let $filters = $container.find('.snappy-product-filters');
+
+    if (!$filters.length) {
+      return;
+    }
+
+    $filters.addClass('mobile-collapsible');
+    $filters.removeClass('is-open');
+    $filters.find('.product-filters-toggle').attr('role', 'button').attr('tabindex', '0').attr('aria-expanded', 'false');
+
+    $container.off('click.snappyFilterToggle', '.product-filters-toggle');
+    $container.on('click.snappyFilterToggle', '.product-filters-toggle', function () {
+      let $panel = $(this).closest('.snappy-product-filters');
+      let isOpen = $panel.hasClass('is-open');
+      $panel.toggleClass('is-open', !isOpen);
+      $(this).attr('aria-expanded', isOpen ? 'false' : 'true');
+    });
+  }
+
+  function updatePriceRangeTrack($filters, minPrice, maxPrice, minBound, maxBound) {
+    if (maxBound <= minBound) {
+      $filters.find('.dual-range-fill').css({ left: '0%', right: '0%' });
+      return;
+    }
+
+    let left = ((minPrice - minBound) / (maxBound - minBound)) * 100;
+    let right = ((maxBound - maxPrice) / (maxBound - minBound)) * 100;
+
+    $filters.find('.dual-range-fill').css({
+      left: left + '%',
+      right: right + '%'
+    });
+  }
+
+  function normalizeCustomFieldKey(fieldKey) {
+    return String(fieldKey || '').trim().toLowerCase();
+  }
+
+  function normalizeCustomFieldLabel(fieldKey) {
+    return String(fieldKey || '')
+      .replace(/^_+/, '')
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, function(char) {
+        return char.toUpperCase();
+      });
+  }
+
+  function normalizeCustomFieldValues(rawValue) {
+    if (Array.isArray(rawValue)) {
+      return $.grep($.map(rawValue, function (value) {
+        return String(value || '').trim();
+      }), function (value) {
+        return !!value;
+      });
+    }
+
+    let value = String(rawValue || '').trim();
+
+    return value ? [value] : [];
+  }
+
+  function populateCustomFieldFilters($filters, products) {
+    let fieldValues = {};
+    let selectedValues = {};
+    let $container = $filters.find('.custom-field-filters');
+
+    if (!$container.length) {
+      return;
+    }
+
+    $container.find('.filter-custom-field').each(function () {
+      selectedValues[$(this).data('field-key')] = $(this).val();
+    });
+
+    $.each(products, function (_, item) {
+      if (!item.custom_fields || typeof item.custom_fields !== 'object') {
+        return;
+      }
+
+      $.each(item.custom_fields, function (rawKey, rawValue) {
+        let key = normalizeCustomFieldKey(rawKey);
+        let values = normalizeCustomFieldValues(rawValue);
+
+        if (!key || !values.length) {
+          return;
+        }
+
+        if (!fieldValues[key]) {
+          fieldValues[key] = {};
+        }
+
+        $.each(values, function (_, value) {
+          fieldValues[key][value] = true;
+        });
+      });
+    });
+
+    $container.empty();
+
+    $.each(fieldValues, function (fieldKey, values) {
+      let valueKeys = Object.keys(values).sort();
+
+      if (!valueKeys.length) {
+        return;
+      }
+
+      let label = normalizeCustomFieldLabel(fieldKey);
+      let selected = selectedValues[fieldKey] || '';
+      let options = '<option value="">' + __('All', 'speedy-search') + '</option>';
+
+      $.each(valueKeys, function (_, value) {
+        let selectedAttr = selected === value ? ' selected' : '';
+        options += '<option value="' + value + '"' + selectedAttr + '>' + value + '</option>';
+      });
+
+      $container.append(
+        '<label>' + label + '</label>' +
+        '<select class="filter-custom-field" data-field-key="' + fieldKey + '">' +
+          options +
+        '</select>'
+      );
+    });
+  }
+
+  function matchCustomFieldFilters($filters, item) {
+    let isMatch = true;
+    let productCustomFields = item.custom_fields && typeof item.custom_fields === 'object' ? item.custom_fields : {};
+
+    $filters.find('.filter-custom-field').each(function () {
+      let selected = String($(this).val() || '').trim();
+      let fieldKey = normalizeCustomFieldKey($(this).data('field-key'));
+      let itemValues = normalizeCustomFieldValues(productCustomFields[fieldKey]);
+
+      if (selected && $.inArray(selected, itemValues) === -1) {
+        isMatch = false;
+        return false;
+      }
+    });
+
+    return isMatch;
   }
 
   function buildInitialSearchForm() {
@@ -255,10 +612,51 @@ jQuery(document).ready(function ($) {
       `;
     });
 
+    let filtersHTML = '';
+
+    if (filters_enabled && products_enabled && has_active_product_filters) {
+      filtersHTML = `
+        <div class="snappy-product-filters">
+          <h4 class="product-filters-toggle">
+            <span>${__('Filter Products', 'speedy-search')}</span>
+            <span class="product-filters-caret" aria-hidden="true">
+              <i class="fas fa-chevron-down toggle-caret-down"></i>
+              <i class="fas fa-chevron-up toggle-caret-up"></i>
+            </span>
+          </h4>
+          <div class="product-filters-body">
+          ${rating_filter_enabled ? `
+          <label>${__('Rating', 'speedy-search')}</label>
+          <select class="filter-rating">
+            <option value="0">${__('All ratings', 'speedy-search')}</option>
+            <option value="5">5.0</option>
+            <option value="4">4.0+</option>
+            <option value="3">3.0+</option>
+            <option value="2">2.0+</option>
+            <option value="1">1.0+</option>
+          </select>` : ''}
+          ${custom_field_filter_enabled ? '<div class="custom-field-filters"></div>' : ''}
+          ${price_range_filter_enabled ? `
+          <label>${__('Price Range', 'speedy-search')}</label>
+          <div class="dual-range-slider">
+            <div class="dual-range-track"></div>
+            <div class="dual-range-fill"></div>
+            <input type="range" class="filter-price-min" step="1" value="0">
+            <input type="range" class="filter-price-max" step="1" value="0">
+          </div>
+          <p class="price-range-text"><span class="filter-price-min-label">0.00</span> - <span class="filter-price-max-label">0.00</span></p>` : ''}
+          </div>
+        </div>
+      `;
+    }
+
     let searchForm = `
       <div class="instant-search-wrapper" style="display: none;">
-        <div class="instant-search-results">
-          ${sectionsHTML}
+        <div class="instant-search-layout">
+          ${filtersHTML}
+          <div class="instant-search-results">
+            ${sectionsHTML}
+          </div>
         </div>
       </div>
     `;

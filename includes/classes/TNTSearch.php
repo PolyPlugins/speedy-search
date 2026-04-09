@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search;
 
 use TeamTNT\TNTSearch\TNTSearch as TNTSearchEngine;
 
+if (!defined('ABSPATH')) exit;
+
 class TNTSearch {
   
   private $index_path;
@@ -52,9 +54,16 @@ class TNTSearch {
    */
   public function init_tnt() {
 		$database_type = Utils::get_option('database_type') ?: 'mysql';
+    $mysql_host    = '';
 
     if ($database_type === 'mysql') {
       if (!defined('DB_HOST') || !defined('DB_NAME') || !defined('DB_USER') || !defined('DB_PASSWORD')) {
+        return;
+      }
+      
+      $mysql_host = $this->get_mysql_pdo_host(DB_HOST);
+      
+      if (!$mysql_host) {
         return;
       }
     }
@@ -65,7 +74,7 @@ class TNTSearch {
       $this->tnt->loadConfig(array(
         'driver'    => 'mysql',
         'engine'    => \TeamTNT\TNTSearch\Engines\MysqlEngine::class,
-        'host'      => DB_HOST,
+        'host'      => $mysql_host,
         'database'  => DB_NAME,
         'username'  => DB_USER,
         'password'  => DB_PASSWORD,
@@ -130,7 +139,11 @@ class TNTSearch {
    * @return void
    */
   private function create_index_path() {
-    mkdir($this->index_path, 0755, true);
+    $wp_filesystem = $this->get_wp_filesystem();
+
+    if ($wp_filesystem) {
+      $wp_filesystem->mkdir($this->index_path, 0755, true);
+    }
   }
   
   /**
@@ -139,7 +152,73 @@ class TNTSearch {
    * @return void
    */
   private function secure_index_path() {
-    file_put_contents($this->index_path . '.htaccess', "Deny from all\n");
+    $wp_filesystem = $this->get_wp_filesystem();
+
+    if ($wp_filesystem) {
+      $wp_filesystem->put_contents($this->index_path . '.htaccess', "Deny from all\n", FS_CHMOD_FILE);
+    }
+  }
+
+  /**
+   * Get initialized WordPress filesystem object
+   *
+   * @return WP_Filesystem_Base|false
+   */
+  private function get_wp_filesystem() {
+    global $wp_filesystem;
+
+    if (!function_exists('WP_Filesystem')) {
+      require_once ABSPATH . 'wp-admin/includes/file.php';
+    }
+
+    if (!$wp_filesystem) {
+      WP_Filesystem();
+    }
+
+    return $wp_filesystem ? $wp_filesystem : false;
+  }
+
+  /**
+   * Convert WordPress DB_HOST into a PDO-friendly host DSN segment.
+   *
+   * Handles:
+   * - host
+   * - host:port
+   * - host:/path/to/mysql.sock
+   *
+   * @param  string $db_host Raw DB_HOST
+   * @return string
+   */
+  private function get_mysql_pdo_host($db_host) {
+    $db_host = trim((string) $db_host);
+    
+    if (!$db_host) {
+      return '';
+    }
+
+    $socket_pos = strpos($db_host, ':/');
+    if ($socket_pos !== false) {
+      $host   = substr($db_host, 0, $socket_pos);
+      $socket = substr($db_host, $socket_pos + 1);
+      
+      if (!$host || !$socket) {
+        return '';
+      }
+      
+      return $host . ';unix_socket=' . $socket;
+    }
+
+    if (substr_count($db_host, ':') === 1) {
+      $parts = explode(':', $db_host, 2);
+      $host  = isset($parts[0]) ? trim($parts[0]) : '';
+      $port  = isset($parts[1]) ? trim($parts[1]) : '';
+      
+      if ($host && ctype_digit($port)) {
+        return $host . ';port=' . $port;
+      }
+    }
+
+    return $db_host;
   }
 
 }

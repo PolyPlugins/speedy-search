@@ -4,6 +4,8 @@ namespace PolyPlugins\Speedy_Search\Backend\Admin;
 
 use PolyPlugins\Speedy_Search\Utils;
 
+if (!defined('ABSPATH')) exit;
+
 class Settings {
 
   /**
@@ -56,11 +58,11 @@ class Settings {
 		add_action('admin_init', array($this, 'load_setting_fields'));
     add_filter('plugin_action_links_' . plugin_basename($this->plugin), array($this, 'add_setting_link'));
     
-    $repo_enabled = Utils::get_option('repo_enabled');
+    // $repo_enabled = Utils::get_option('repo_enabled');
 
-    if ($repo_enabled) {
-		  add_action('admin_menu', array($this, 'advanced_repo_search'));
-    }
+    // if ($repo_enabled) {
+		//   add_action('admin_menu', array($this, 'advanced_repo_search'));
+    // }
   }
 
 	/**
@@ -70,16 +72,19 @@ class Settings {
 	 */
 	public function add_admin_menu() {
     add_action('admin_notices', array($this, 'maybe_show_indexing_notice'));
+    add_action('admin_notices', array($this, 'maybe_show_orders_indexing_notice'));
     add_action('admin_notices', array($this, 'maybe_show_missing_extensions_notice'));
 		add_menu_page(__('Snappy Search', 'speedy-search'), __('Snappy Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'), 'dashicons-search');
     add_submenu_page('speedy-search', __('General', 'speedy-search'), __('General', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
     add_submenu_page('speedy-search', __('Popular', 'speedy-search'), __('Popular', 'speedy-search'), 'manage_options', 'speedy-search-popular', array($this, 'redirect_to_popular_tab'));
+    add_submenu_page('speedy-search', __('Synonyms', 'speedy-search'), __('Synonyms', 'speedy-search'), 'manage_options', 'speedy-search-synonyms', array($this, 'redirect_to_synonyms_tab'));
     add_submenu_page('speedy-search', __('Posts', 'speedy-search'), __('Posts', 'speedy-search'), 'manage_options', 'speedy-search-posts', array($this, 'redirect_to_posts_tab'));
     add_submenu_page('speedy-search', __('Pages', 'speedy-search'), __('Pages', 'speedy-search'), 'manage_options', 'speedy-search-pages', array($this, 'redirect_to_pages_tab'));
     
     if (class_exists('WooCommerce')) {
       add_submenu_page('speedy-search', __('Products', 'speedy-search'), __('Products', 'speedy-search'), 'manage_options', 'speedy-search-products', array($this, 'redirect_to_products_tab'));
       add_submenu_page('speedy-search', __('Orders', 'speedy-search'), __('Orders', 'speedy-search'), 'manage_options', 'speedy-search-orders', array($this, 'redirect_to_orders_tab'));
+      add_submenu_page('speedy-search', __('Filters', 'speedy-search'), __('Filters', 'speedy-search'), 'manage_options', 'speedy-search-filters', array($this, 'redirect_to_filters_tab'));
     }
 
     if (class_exists('Easy_Digital_Downloads')) {
@@ -87,7 +92,7 @@ class Settings {
     }
 
     add_submenu_page('speedy-search', __('Advanced', 'speedy-search'), __('Advanced', 'speedy-search'), 'manage_options', 'speedy-search-advanced', array($this, 'redirect_to_advanced_tab'));
-    add_submenu_page('speedy-search', __('Repo', 'speedy-search'), __('Repo', 'speedy-search'), 'manage_options', 'speedy-search-repo', array($this, 'redirect_to_repo_tab'));
+    // add_submenu_page('speedy-search', __('Repo', 'speedy-search'), __('Repo', 'speedy-search'), 'manage_options', 'speedy-search-repo', array($this, 'redirect_to_repo_tab'));
 	}
   
   /**
@@ -102,6 +107,11 @@ class Settings {
       return;
     }
 
+    $screen = get_current_screen();
+    if ($screen && ($screen->id === 'woocommerce_page_wc-orders' || $screen->id === 'edit-shop_order')) {
+      return;
+    }
+
     $is_indexing = Utils::is_indexing();
     ?>
     <?php if ($is_indexing) : ?>
@@ -109,6 +119,52 @@ class Settings {
         <p><?php esc_html_e('Snappy Search is currently indexing.', 'speedy-search'); ?></p>
       </div>
     <?php endif; ?>
+    <?php
+  }
+
+  /**
+   * Notice on WooCommerce orders list while the orders search index is still building.
+   *
+   * @return void
+   */
+  public function maybe_show_orders_indexing_notice() {
+    if (!class_exists('WooCommerce')) {
+      return;
+    }
+
+    if (!current_user_can('edit_shop_orders')) {
+      return;
+    }
+
+    $enabled = Utils::get_option('enabled');
+    if (!$enabled) {
+      return;
+    }
+
+    $order_options   = Utils::get_option('orders');
+    $orders_enabled  = isset($order_options['enabled']) ? $order_options['enabled'] : 0;
+    if (!$orders_enabled) {
+      return;
+    }
+
+    $screen = get_current_screen();
+    if (!$screen) {
+      return;
+    }
+
+    $is_wc_orders_list = ($screen->id === 'woocommerce_page_wc-orders' || $screen->id === 'edit-shop_order');
+    if (!$is_wc_orders_list) {
+      return;
+    }
+
+    if (Utils::is_orders_index_complete()) {
+      return;
+    }
+
+    ?>
+    <div class="notice notice-warning">
+      <p><?php esc_html_e('Snappy Search is still building the orders search index. Standard WooCommerce order search is in use until indexing finishes.', 'speedy-search'); ?></p>
+    </div>
     <?php
   }
   
@@ -154,13 +210,15 @@ class Settings {
     $field_classes = array(
       'advanced'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Advanced',
       'downloads' => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Downloads',
+      'filters'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Filters',
       'general'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\General',
       'pages'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Pages',
       'popular'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Popular',
       'orders'    => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Orders',
       'posts'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Posts',
       'products'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Products',
-      'repo'      => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Repo',
+      // 'repo'      => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Repo',
+      'synonyms'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Synonyms',
     );
 
     foreach ($field_classes as $key => $class) {
@@ -206,6 +264,12 @@ class Settings {
                   </a>
                 </li>
                 <li>
+                  <a href="javascript:void(0);" data-section="synonyms">
+                    <i class="bi bi-chat-left-text-fill"></i>
+                    <?php esc_html_e('Synonyms', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <li>
                   <a href="javascript:void(0);" data-section="posts">
                     <i class="bi bi-pencil"></i>
                     <?php esc_html_e('Posts', 'speedy-search'); ?>
@@ -230,6 +294,12 @@ class Settings {
                       <?php esc_html_e('Orders', 'speedy-search'); ?>
                     </a>
                   </li>
+                  <li>
+                    <a href="javascript:void(0);" data-section="filters">
+                      <i class="bi bi-funnel-fill"></i>
+                      <?php esc_html_e('Filters', 'speedy-search'); ?>
+                    </a>
+                  </li>
                 <?php endif; ?>
                 <?php if (class_exists('Easy_Digital_Downloads')) : ?>
                   <li>
@@ -241,16 +311,18 @@ class Settings {
                 <?php endif; ?>
                 <li>
                   <a href="javascript:void(0);" data-section="advanced">
-                    <i class="bi bi-funnel-fill"></i>
+                    <i class="bi bi-sliders"></i>
                     <?php esc_html_e('Advanced', 'speedy-search'); ?>
                   </a>
                 </li>
+                <?php /*
                 <li>
                   <a href="javascript:void(0);" data-section="repo">
                     <i class="bi bi-plug-fill"></i>
                     <?php esc_html_e('Repo', 'speedy-search'); ?>
                   </a>
                 </li>
+                */ ?>
                 <li>
                   <a href="javascript:void(0);" data-section="reindex">
                     <i class="bi bi-database-fill"></i>
@@ -261,6 +333,11 @@ class Settings {
             </div>
             <div class="tabs col-12 col-md-6 col-xl-6">
               <div class="tab general">
+                <?php if (!wp_using_ext_object_cache()) : ?>
+                  <div class="danger">
+                    <?php esc_html_e('You do not currently have a persistent object cache enabled. For best Snappy Search performance, we recommend enabling a persistent object cache (Redis/Memcached). Snappy Search will still work without it, but caching may be less effective.', 'speedy-search'); ?>
+                  </div>
+                <?php endif; ?>
                 <?php
                 do_settings_sections('speedy_search_general_polyplugins');
                 ?>
@@ -269,6 +346,12 @@ class Settings {
               <div class="tab popular" style="display: none;">
                 <?php
                 do_settings_sections('speedy_search_popular_polyplugins');
+                ?>
+              </div>
+
+              <div class="tab synonyms" style="display: none;">
+                <?php
+                do_settings_sections('speedy_search_synonyms_polyplugins');
                 ?>
               </div>
 
@@ -293,6 +376,11 @@ class Settings {
                 <div class="tab orders" style="display: none;">
                   <?php
                   do_settings_sections('speedy_search_orders_polyplugins');
+                  ?>
+                </div>
+                <div class="tab filters" style="display: none;">
+                  <?php
+                  do_settings_sections('speedy_search_filters_polyplugins');
                   ?>
                 </div>
               <?php endif; ?>
@@ -359,6 +447,12 @@ class Settings {
     exit;
   }
 
+  public function redirect_to_filters_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=filters'));
+    
+    exit;
+  }
+
   public function redirect_to_pages_tab() {
     wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=pages'));
     
@@ -368,6 +462,12 @@ class Settings {
   public function redirect_to_popular_tab() {
     wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=popular'));
     
+    exit;
+  }
+
+  public function redirect_to_synonyms_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=synonyms'));
+
     exit;
   }
 
@@ -442,9 +542,37 @@ class Settings {
 			$sanitary_values['typing_delay'] = sanitize_text_field($input['typing_delay']);
 		}
 
+    if (isset($input['shortcode_filters_enabled']) && $input['shortcode_filters_enabled']) {
+      $sanitary_values['shortcode_filters_enabled'] = $input['shortcode_filters_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['shortcode_filters_enabled'] = false;
+    }
+
+    if (isset($input['selector_filters_enabled']) && $input['selector_filters_enabled']) {
+      $sanitary_values['selector_filters_enabled'] = $input['selector_filters_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['selector_filters_enabled'] = false;
+    }
+
     if (isset($input['selector']) && $input['selector']) {
 			$sanitary_values['selector'] = sanitize_text_field($input['selector']);
 		}
+
+    if (isset($input['filters_custom_fields']) && $input['filters_custom_fields']) {
+			$sanitary_values['filters_custom_fields'] = sanitize_text_field($input['filters_custom_fields']);
+		}
+
+    if (isset($input['filters_rating_enabled']) && $input['filters_rating_enabled']) {
+      $sanitary_values['filters_rating_enabled'] = $input['filters_rating_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['filters_rating_enabled'] = false;
+    }
+
+    if (isset($input['filters_price_range_enabled']) && $input['filters_price_range_enabled']) {
+      $sanitary_values['filters_price_range_enabled'] = $input['filters_price_range_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['filters_price_range_enabled'] = false;
+    }
 
     if (isset($input['popular']['enabled']) && $input['popular']['enabled']) {
       $sanitary_values['popular']['enabled'] = $input['popular']['enabled'] === 'on' ? true : false;
@@ -475,6 +603,30 @@ class Settings {
     if (isset($input['popular']['blacklist']) && $input['popular']['blacklist']) {
 			$sanitary_values['popular']['blacklist'] = sanitize_text_field($input['popular']['blacklist']);
 		}
+
+    $sanitary_values['synonyms'] = array();
+
+    if (isset($input['synonyms']) && is_array($input['synonyms'])) {
+      foreach ($input['synonyms'] as $row) {
+        if (!is_array($row)) {
+          continue;
+        }
+
+        $word          = isset($row['word']) ? sanitize_text_field($row['word']) : '';
+        $synonyms_raw  = isset($row['synonyms']) ? sanitize_text_field($row['synonyms']) : '';
+        $synonym_items = array_filter(array_map('trim', explode(',', $synonyms_raw)));
+        $synonym_items = array_unique(array_map('sanitize_text_field', $synonym_items));
+
+        if ($word === '' || empty($synonym_items)) {
+          continue;
+        }
+
+        $sanitary_values['synonyms'][] = array(
+          'word'     => $word,
+          'synonyms' => implode(', ', $synonym_items),
+        );
+      }
+    }
 
     if (isset($input['posts']['enabled']) && $input['posts']['enabled']) {
       $sanitary_values['posts']['enabled'] = $input['posts']['enabled'] === 'on' ? true : false;
@@ -535,6 +687,12 @@ class Settings {
     if (isset($input['products']['result_limit']) && is_numeric($input['products']['result_limit'])) {
 			$sanitary_values['products']['result_limit'] = sanitize_text_field($input['products']['result_limit']);
 		}
+
+    if (isset($input['products']['out_of_stock_last']) && $input['products']['out_of_stock_last']) {
+      $sanitary_values['products']['out_of_stock_last'] = $input['products']['out_of_stock_last'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['out_of_stock_last'] = false;
+    }
 
     if (isset($input['orders']['enabled']) && $input['orders']['enabled']) {
       $sanitary_values['orders']['enabled'] = $input['orders']['enabled'] === 'on' ? true : false;
@@ -598,6 +756,12 @@ class Settings {
     if (isset($input['advanced']['placeholder']) && $input['advanced']['placeholder']) {
 			$sanitary_values['advanced']['placeholder'] = sanitize_text_field($input['advanced']['placeholder']);
 		}
+
+    if (isset($input['advanced']['filters_enabled']) && $input['advanced']['filters_enabled']) {
+      $sanitary_values['advanced']['filters_enabled'] = $input['advanced']['filters_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['advanced']['filters_enabled'] = false;
+    }
 
     if (isset($input['repo_enabled']) && $input['repo_enabled']) {
       $sanitary_values['repo_enabled'] = $input['repo_enabled'] === 'on' ? true : false;

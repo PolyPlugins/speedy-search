@@ -1,6 +1,6 @@
 const { __, _x, _n, _nx } = wp.i18n;
 
-let selector          = '#orders-search-input-search-input';
+let selector          = '#orders-search-input-search-input, #post-search-input';
 let characters        = speedy_search_object.options?.characters ?? 4;
 let typing_delay      = speedy_search_object.options?.typing_delay ?? 300;
 let posts_enabled     = speedy_search_object.options?.posts?.enabled ?? false;
@@ -8,6 +8,21 @@ let pages_enabled     = speedy_search_object.options?.pages?.enabled ?? false;
 let products_enabled  = speedy_search_object.options?.products?.enabled ?? false;
 let downloads_enabled = speedy_search_object.options?.downloads?.enabled ?? false;
 let currency          = speedy_search_object.currency ?? '$';
+let has_custom_file   = speedy_search_object.endpoints?.has_custom_file ?? false;
+let search_endpoint   = speedy_search_object.endpoints?.search ?? '';
+let orders_endpoint   = speedy_search_object.endpoints?.orders ?? "/wp-json/speedy-search-search/v1/orders";
+let unavailableLabel  = 'Error';
+
+if (has_custom_file && search_endpoint) {
+  try {
+    const endpointUrl = new URL(search_endpoint, window.location.origin);
+
+    endpointUrl.searchParams.set('endpoint', 'orders');
+    orders_endpoint = endpointUrl.toString();
+  } catch (e) {
+    orders_endpoint = speedy_search_object.endpoints?.orders ?? orders_endpoint;
+  }
+}
 
 jQuery(document).ready(function ($) {
   if (!selector) return;
@@ -58,12 +73,12 @@ jQuery(document).ready(function ($) {
       });
     }
 
-    fetchResults(query, 'orders');
+    fetchResults(query);
   }
 
-  function fetchResults(query, endpoint) {
+  function fetchResults(query) {
     $.ajax({
-      url: "/wp-json/speedy-search-search/v1/" + endpoint,
+      url: orders_endpoint,
       data: { search: query },
       dataType: "json",
       beforeSend: function (xhr) {
@@ -81,53 +96,10 @@ jQuery(document).ready(function ($) {
         } else {
           $orderList.empty(); // Clear existing rows
           $orderList.removeClass('skeleton-loading');
+          const columns = getOrderColumns();
+
           data.forEach(function(order) {
-            var row = `
-              <tr id="order-${order.id}" class="order-${order.id} type-shop_order status-${order.order_status}">
-                <th scope="row" class="check-column">
-                  <input id="cb-select-${order.id}" type="checkbox" name="id[]" value="${order.id}">
-                </th>
-                <td class="order_number column-order_number has-row-actions column-primary" data-colname="Order">
-                  <a href="#" class="order-preview" data-order-id="${order.id}" title="Preview">Preview</a>
-                  <a href="/wp-admin/post.php?post=${order.id}&action=edit" class="order-view">
-                    <strong>#${order.order_number} ${order.billing_first_name} ${order.billing_last_name}</strong>
-                  </a>
-                  <div class="order_date small-screen-only">
-                    <time datetime="${order.order_date}">${formatDate(order.order_date)}</time>
-                  </div>
-                  <div class="order_status small-screen-only">
-                    <mark class="order-status status-${order.order_status} tips"><span>${toTitleCase(order.order_status.replace(/-/g, ' '))}</span></mark>
-                  </div>
-                  <button type="button" class="toggle-row"><span class="screen-reader-text">Show more details</span></button>
-                </td>
-                <td class="order_date column-order_date" data-colname="Date">
-                  <time datetime="${order.order_date}">${formatDate(order.order_date)}</time>
-                </td>
-                <td class="order_status column-order_status" data-colname="Status">
-                  <mark class="order-status status-${order.order_status} tips"><span>${toTitleCase(order.order_status.replace(/-/g, ' '))}</span></mark>
-                </td>
-                <td class="billing_address column-billing_address hidden" data-colname="Billing">
-                  ${order.billing_first_name} ${order.billing_last_name}, ${order.billing_address_1}, ${order.billing_city}<span class="description"></span>
-                </td>
-                <td class="shipping_address column-shipping_address hidden" data-colname="Ship to">
-                  ${order.shipping_first_name} ${order.shipping_last_name}, ${order.shipping_address_1}, ${order.shipping_city}<span class="description"></span>
-                </td>
-                <td class="order_total column-order_total" data-colname="Total">
-                  <span class="tips">
-                    <span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">$</span>${order.total}</span>
-                  </span>
-                </td>
-                <td class="wc_actions column-wc_actions hidden" data-colname="Actions">
-                  <p>
-                    <a class="button wc-action-button wc-action-button-processing processing" href="#" aria-label="Processing">Processing</a>
-                    <a class="button wc-action-button wc-action-button-complete complete" href="#" aria-label="Complete">Complete</a>
-                  </p>
-                </td>
-                <td class="origin column-origin" data-colname="Origin">
-                  <span class="origin-text">${formatOrigin(order.origin) || '—'}</span>
-                </td>
-              </tr>
-            `;
+            const row = renderOrderRow(order, columns);
             $orderList.append(row);
           });
 
@@ -162,11 +134,157 @@ jQuery(document).ready(function ($) {
   }
 
   function formatOrigin(raw) {
+    if (!raw) {
+      return '';
+    }
+
     return raw
       .replace(/[()]/g, '')                  // remove parentheses
       .split(/\s+/)                          // split by space
       .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // capitalize each
       .join(' ');
+  }
+
+  function getOrderColumns() {
+    const columns = [];
+
+    $('table.wp-list-table thead tr:first-child').find('th, td').each(function () {
+      const $cell = $(this);
+      const className = $cell.attr('class') || '';
+      const classes = className.split(/\s+/);
+      const columnClass = classes.find(function(c) {
+        return c.indexOf('column-') === 0;
+      });
+
+      if ($cell.hasClass('check-column')) {
+        columns.push({
+          type: 'check',
+          hidden: $cell.hasClass('hidden')
+        });
+        return;
+      }
+
+      if (!columnClass) {
+        return;
+      }
+
+      const key = columnClass.replace('column-', '');
+      const label = $.trim($cell.find('span').first().text()) || $.trim($cell.text()) || key;
+
+      columns.push({
+        type: 'data',
+        key: key,
+        label: label,
+        hidden: $cell.hasClass('hidden')
+      });
+    });
+
+    return columns;
+  }
+
+  function renderOrderRow(order, columns) {
+    const orderId = escapeHtml(order.id ?? '');
+    const rowClass = escapeHtml(`iedit post-${order.id} type-shop_order status-${order.order_status}`);
+    let row = `<tr id="post-${orderId}" class="${rowClass}">`;
+
+    columns.forEach(function(column) {
+      if (column.type === 'check') {
+        row += `
+          <th scope="row" class="check-column">
+            <input id="cb-select-${orderId}" type="checkbox" name="post[]" value="${orderId}">
+          </th>
+        `;
+        return;
+      }
+
+      row += renderOrderCell(column, order);
+    });
+
+    row += '</tr>';
+
+    return row;
+  }
+
+  function renderOrderCell(column, order) {
+    const hiddenClass = column.hidden ? ' hidden' : '';
+    const cellClass = `${column.key} column-${column.key}${hiddenClass}`;
+    const colname = escapeHtml(column.label || column.key);
+    const fullName = `${order.billing_first_name || ''} ${order.billing_last_name || ''}`.trim();
+    const escapedName = escapeHtml(fullName || unavailableLabel);
+    const statusRaw = (order.order_status || '').replace(/^wc[-_]/i, '').replace(/-/g, ' ');
+    const statusLabel = escapeHtml(toTitleCase(statusRaw || 'unknown'));
+    const normalizedStatusClass = (order.order_status || '').replace(/^wc[-_]/i, '') || 'unknown';
+    const statusClass = escapeHtml(normalizedStatusClass);
+    const orderDate = order.order_date ? formatDate(order.order_date) : unavailableLabel;
+
+    switch (column.key) {
+      case 'order_number':
+        return `
+          <td class="${cellClass} has-row-actions column-primary" data-colname="${colname}">
+            <a href="#" class="order-preview" data-order-id="${escapeHtml(order.id)}" title="Preview">Preview</a>
+            <a href="/wp-admin/post.php?post=${escapeHtml(order.id)}&action=edit" class="order-view">
+              <strong>#${escapeHtml(order.order_number || order.id)} ${escapedName}</strong>
+            </a>
+            <div class="order_date small-screen-only">
+              <time datetime="${escapeHtml(order.order_date || '')}">${escapeHtml(orderDate)}</time>
+            </div>
+            <div class="order_status small-screen-only">
+              <mark class="order-status status-${statusClass} tips"><span>${statusLabel}</span></mark>
+            </div>
+            <button type="button" class="toggle-row"><span class="screen-reader-text">Show more details</span></button>
+          </td>
+        `;
+      case 'order_date':
+        return `
+          <td class="${cellClass}" data-colname="${colname}">
+            <time datetime="${escapeHtml(order.order_date || '')}">${escapeHtml(orderDate)}</time>
+          </td>
+        `;
+      case 'order_status':
+        return `
+          <td class="${cellClass}" data-colname="${colname}">
+            <mark class="order-status status-${statusClass} tips"><span>${statusLabel}</span></mark>
+          </td>
+        `;
+      case 'billing_address':
+        return `<td class="${cellClass}" data-colname="${colname}">${escapeHtml(buildAddress(order, 'billing'))}</td>`;
+      case 'shipping_address':
+        return `<td class="${cellClass}" data-colname="${colname}">${escapeHtml(buildAddress(order, 'shipping'))}</td>`;
+      case 'order_total':
+        return `
+          <td class="${cellClass}" data-colname="${colname}">
+            <span class="tips">
+              <span class="woocommerce-Price-amount amount"><span class="woocommerce-Price-currencySymbol">${escapeHtml(currency)}</span>${escapeHtml(order.total || '0.00')}</span>
+            </span>
+          </td>
+        `;
+      case 'wc_actions':
+        return `<td class="${cellClass}" data-colname="${colname}"><p><span aria-hidden="true">${escapeHtml(unavailableLabel)}</span></p></td>`;
+      case 'origin':
+        return `<td class="${cellClass}" data-colname="${colname}"><span class="origin-text">${escapeHtml(formatOrigin(order.origin) || unavailableLabel)}</span></td>`;
+      default:
+        return `<td class="${cellClass}" data-colname="${colname}"><span aria-hidden="true">${escapeHtml(unavailableLabel)}</span></td>`;
+    }
+  }
+
+  function buildAddress(order, type) {
+    const firstName = order[`${type}_first_name`] || '';
+    const lastName = order[`${type}_last_name`] || '';
+    const address1 = order[`${type}_address_1`] || '';
+    const city = order[`${type}_city`] || '';
+    const combined = [firstName, lastName].filter(Boolean).join(' ').trim();
+    const parts = [combined, address1, city].filter(Boolean);
+
+    return parts.length ? parts.join(', ') : unavailableLabel;
+  }
+
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
   }
 
 });

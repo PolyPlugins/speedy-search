@@ -7,6 +7,8 @@ use PolyPlugins\Speedy_Search\Utils;
 use WP_REST_Request;
 use WP_REST_Response;
 
+if (!defined('ABSPATH')) exit;
+
 class API {
   
   /**
@@ -84,6 +86,38 @@ class API {
         )
       );
 	  }
+
+    if ($posts_enabled || $pages_enabled || $products_enabled || $downloads_enabled) {
+      register_rest_route(
+        'speedy-search/v1',
+        '/search/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_search'),
+          'permission_callback' => '__return_true',
+        )
+      );
+
+      register_rest_route(
+        'speedy-search/v1',
+        '/preload/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_preload'),
+          'permission_callback' => '__return_true',
+        )
+      );
+
+      register_rest_route(
+        'speedy-search/v1',
+        '/latest/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_latest'),
+          'permission_callback' => '__return_true',
+        )
+      );
+    }
     
     $orders         = Utils::get_option('orders');
     $orders_enabled = isset($orders['enabled']) ? $orders['enabled'] : 0;
@@ -166,7 +200,135 @@ class API {
         )
       );
 	  }
+
+    if ($posts_enabled || $pages_enabled || $products_enabled || $downloads_enabled) {
+      register_rest_route(
+        'snappy-search/v1',
+        '/search/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_search'),
+          'permission_callback' => '__return_true',
+        )
+      );
+
+      register_rest_route(
+        'snappy-search/v1',
+        '/preload/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_preload'),
+          'permission_callback' => '__return_true',
+        )
+      );
+
+      register_rest_route(
+        'snappy-search/v1',
+        '/latest/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_latest'),
+          'permission_callback' => '__return_true',
+        )
+      );
+    }
 	}
+
+  /**
+   * Get combined search results
+   *
+   * @param  mixed $request
+   * @return void
+   */
+  public function get_search(WP_REST_Request $request) {
+    $get_search_query = $request->get_param('search');
+    $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
+    $expanded_query   = $this->expand_search_query($search_query);
+    $search_key       = strtolower(trim($expanded_query));
+    $cache_key        = 'speedy_search_combined_' . md5($search_key);
+    $cached_results   = Utils::get_api_cache($cache_key);
+
+    if ($cached_results !== false) {
+      return new WP_REST_Response($cached_results, 200);
+    }
+
+    $results = array();
+    $types   = array(
+      'posts' => array(
+        'option' => 'posts',
+        'method' => 'get_posts',
+      ),
+      'pages' => array(
+        'option' => 'pages',
+        'method' => 'get_pages',
+      ),
+      'products' => array(
+        'option' => 'products',
+        'method' => 'get_products',
+      ),
+      'downloads' => array(
+        'option' => 'downloads',
+        'method' => 'get_downloads',
+      ),
+    );
+
+    foreach ($types as $type => $args) {
+      $options = Utils::get_option($args['option']);
+      $enabled = isset($options['enabled']) ? $options['enabled'] : false;
+
+      if (!$enabled) {
+        $results[$type] = array();
+        continue;
+      }
+
+      $response = call_user_func(array($this, $args['method']), $request);
+
+      if ($response instanceof WP_REST_Response) {
+        if ($response->get_status() >= 400) {
+          return $response;
+        }
+
+        $results[$type] = $response->get_data();
+      } else {
+        $results[$type] = array();
+      }
+    }
+
+    Utils::set_api_cache($cache_key, $results, 600);
+
+    return new WP_REST_Response($results, 200);
+  }
+
+  /**
+   * Get preload data for empty search state
+   *
+   * @param WP_REST_Request $request
+   * @return WP_REST_Response
+   */
+  public function get_preload(WP_REST_Request $request) {
+    return $this->get_latest($request);
+  }
+
+  /**
+   * Get latest data for empty search state
+   *
+   * @param WP_REST_Request $request
+   * @return WP_REST_Response
+   */
+  public function get_latest(WP_REST_Request $request) {
+    $cache_key      = 'speedy_search_latest_v3';
+    $cached_results = Utils::get_api_cache($cache_key);
+
+    if ($cached_results !== false) {
+      return new WP_REST_Response($cached_results, 200);
+    }
+
+    $results = $this->get_latest_enabled_results();
+
+    Utils::set_api_cache($cache_key, $results, 600);
+
+    return new WP_REST_Response($results, 200);
+  }
   
   /**
    * Get posts
@@ -193,11 +355,13 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_posts_' . md5($search_query);
+    $cache_key = 'speedy_search_posts_' . md5($expanded_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -212,7 +376,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($search_query, $result_limit); // Limit to 10 results
+    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -234,12 +398,12 @@ class API {
           'id'        => $post->ID,
           'title'     => get_the_title($post->ID),
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
-          'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
+      Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -270,11 +434,13 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_pages_' . md5($search_query);
+    $cache_key = 'speedy_search_pages_' . md5($expanded_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -289,7 +455,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($search_query, $result_limit); // Limit to 10 results
+    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -311,12 +477,12 @@ class API {
           'id'        => $post->ID,
           'title'     => get_the_title($post->ID),
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
-          'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
+      Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -332,6 +498,9 @@ class API {
 		$options          = Utils::get_option('products');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $out_of_stock_last = isset($options['out_of_stock_last']) ? (bool) $options['out_of_stock_last'] : false;
+    $custom_fields_raw = Utils::get_option('filters_custom_fields');
+    $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -347,11 +516,14 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_products_' . md5($search_query);
+    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -366,7 +538,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($search_query, $result_limit); // Limit to 10 results
+    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -382,42 +554,74 @@ class API {
       ));
 
       $posts_data = array();
-      $rated = array();
-      $unrated = array();
 
       foreach ($posts as $post) {
+        $product = wc_get_product($post->ID);
+
+        if ($product && $product->get_catalog_visibility() === 'hidden') {
+          continue;
+        }
+
         $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
+        $is_featured = $product ? $product->is_featured() : false;
+        $is_variable = $product ? $product->is_type('variable') : false;
+        $is_in_stock = $product ? $product->is_in_stock() : true;
+        $add_to_cart_url = $product ? $product->add_to_cart_url() : get_permalink($post->ID);
+        $product_custom_fields = array();
 
         $tags = array(
           'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
           'span' => array('class' => array(), 'style' => array()),
         );
+
+        if (!empty($custom_fields)) {
+          foreach ($custom_fields as $custom_field) {
+            $meta_key   = sanitize_key($custom_field);
+            $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
+            $product_custom_fields[$meta_key] = $meta_values;
+          }
+        }
         
         $data = array(
           'id'             => $post->ID,
           'title'          => get_the_title($post->ID),
           'price'          => get_post_meta($post->ID, '_price', true),
           'thumbnail'      => get_the_post_thumbnail_url($post->ID, 'medium'),
-          'excerpt'        => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'excerpt'        => $this->get_excerpt($post->post_content),
           'average_rating' => $average_rating ? (float) $average_rating : 0,
           'rating'         => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
-          'permalink'      => get_permalink($post->ID)
+          'is_featured'    => (bool) $is_featured,
+          'is_variable'    => (bool) $is_variable,
+          'is_in_stock'    => (bool) $is_in_stock,
+          'add_to_cart_url' => esc_url_raw($add_to_cart_url),
+          'permalink'      => get_permalink($post->ID),
+          'custom_fields'  => $product_custom_fields,
+          'title_match'   => $this->title_contains_search_terms(get_the_title($post->ID), $title_terms),
         );
-
-        if ($average_rating > 0) {
-          $rated[] = $data;
-        } else {
-          $unrated[] = $data;
-        }
+        $posts_data[] = $data;
       }
 
-      usort($rated, function($a, $b) {
+      usort($posts_data, function($a, $b) use ($out_of_stock_last) {
+        if ($out_of_stock_last && $a['is_in_stock'] !== $b['is_in_stock']) {
+          return $a['is_in_stock'] ? -1 : 1;
+        }
+
+        if ($a['is_featured'] !== $b['is_featured']) {
+          return $a['is_featured'] ? -1 : 1;
+        }
+
+        if ($a['title_match'] !== $b['title_match']) {
+          return $a['title_match'] ? -1 : 1;
+        }
+
         return $b['average_rating'] <=> $a['average_rating'];
       });
 
-      $posts_data = array_merge($rated, $unrated);
+      foreach ($posts_data as $index => $item) {
+        unset($posts_data[$index]['title_match']);
+      }
 
-      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
+      Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -448,11 +652,13 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_downloads_' . md5($search_query);
+    $cache_key = 'speedy_search_downloads_' . md5($expanded_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -467,7 +673,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($search_query, $result_limit); // Limit to 10 results
+    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -492,12 +698,12 @@ class API {
           'title'     => get_the_title($post->ID),
           'price'     => is_array($price) ? sanitize_text_field(implode(', ', $price)) : sanitize_text_field($price),
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
-          'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
         );
       }
 
-      wp_cache_set($cache_key, $posts_data, 'speedy_search_api', 600);
+      Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
     }
@@ -528,11 +734,13 @@ class API {
       ), 400);
     }
 
+    $expanded_query = $this->expand_search_query($search_query);
+
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_orders_' . md5($search_query);
+    $cache_key = 'speedy_search_orders_' . md5($expanded_query);
 
     // Check if results exist in WordPress Object Cache
-    $cached_results = wp_cache_get($cache_key, 'speedy_search_api');
+    $cached_results = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -547,7 +755,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results    = $tnt->search($search_query, $result_limit);
+    $results    = $tnt->search($expanded_query, $result_limit);
     $result_ids = isset($results['ids']) ? array_map('absint', $results['ids']) : array();
 
     if (empty($result_ids)) {
@@ -581,13 +789,460 @@ class API {
       );
     }
 
-    wp_cache_set($cache_key, $orders_data, 'speedy_search_api', 600);
+    Utils::set_api_cache($cache_key, $orders_data, 600);
 
     return new WP_REST_Response($orders_data, 200);
   }
 
   public function check_permissions() {
     return current_user_can('manage_woocommerce');
+  }
+
+  /**
+   * Expand query with configured synonyms.
+   *
+   * @param string $search_query
+   * @return string
+   */
+  private function expand_search_query($search_query) {
+    $search_query = sanitize_text_field((string) $search_query);
+    $normalized   = strtolower(trim($search_query));
+
+    if ($normalized === '') {
+      return $search_query;
+    }
+
+    $synonym_map = $this->get_synonym_map();
+    $additions   = array();
+
+    if (isset($synonym_map[$normalized])) {
+      $additions[] = $synonym_map[$normalized];
+    }
+
+    $tokens = preg_split('/\s+/', $normalized);
+
+    if (is_array($tokens)) {
+      foreach ($tokens as $token) {
+        if ($token === '' || !isset($synonym_map[$token])) {
+          continue;
+        }
+
+        $additions[] = $synonym_map[$token];
+      }
+    }
+
+    $additions = array_filter(array_unique(array_map('trim', $additions)));
+
+    if (empty($additions)) {
+      return $search_query;
+    }
+
+    return trim($search_query . ' ' . implode(' ', $additions));
+  }
+
+  /**
+   * Build synonym map from settings.
+   *
+   * @return array
+   */
+  private function get_synonym_map() {
+    $rows = Utils::get_option('synonyms');
+    $map  = array();
+
+    if (!is_array($rows)) {
+      return $map;
+    }
+
+    foreach ($rows as $row) {
+      if (!is_array($row)) {
+        continue;
+      }
+
+      $word_raw     = isset($row['word']) ? $row['word'] : '';
+      $synonyms_raw = isset($row['synonyms']) ? $row['synonyms'] : '';
+      $word         = strtolower(trim(sanitize_text_field((string) $word_raw)));
+      $synonyms     = array_filter(array_map('trim', explode(',', (string) $synonyms_raw)));
+      $synonyms     = array_unique(array_map('sanitize_text_field', $synonyms));
+
+      if ($word === '' || empty($synonyms)) {
+        continue;
+      }
+
+      $map[$word] = implode(' ', $synonyms);
+    }
+
+    return $map;
+  }
+
+  /**
+   * Build all search terms including synonyms.
+   *
+   * @param string $search_query
+   * @return array
+   */
+  private function get_search_terms_with_synonyms($search_query) {
+    $search_query = sanitize_text_field((string) $search_query);
+    $normalized   = strtolower(trim($search_query));
+    $synonym_map  = $this->get_synonym_map();
+    $terms        = array();
+
+    if ($normalized !== '') {
+      $terms[] = $normalized;
+    }
+
+    $tokens = preg_split('/\s+/', $normalized);
+
+    if (is_array($tokens)) {
+      foreach ($tokens as $token) {
+        if ($token !== '') {
+          $terms[] = $token;
+        }
+      }
+    }
+
+    if (isset($synonym_map[$normalized])) {
+      $terms = array_merge($terms, preg_split('/\s+/', strtolower($synonym_map[$normalized])));
+    }
+
+    if (is_array($tokens)) {
+      foreach ($tokens as $token) {
+        if ($token === '' || !isset($synonym_map[$token])) {
+          continue;
+        }
+
+        $terms = array_merge($terms, preg_split('/\s+/', strtolower($synonym_map[$token])));
+      }
+    }
+
+    $terms = array_filter(array_unique(array_map('trim', $terms)));
+
+    return array_values($terms);
+  }
+
+  /**
+   * Check if title contains any search term.
+   *
+   * @param string $title
+   * @param array $terms
+   * @return bool
+   */
+  private function title_contains_search_terms($title, $terms) {
+    $title = strtolower(trim(sanitize_text_field((string) $title)));
+
+    if ($title === '' || !is_array($terms) || empty($terms)) {
+      return false;
+    }
+
+    foreach ($terms as $term) {
+      $term = strtolower(trim(sanitize_text_field((string) $term)));
+
+      if ($term === '') {
+        continue;
+      }
+
+      if (strpos($title, $term) !== false) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Get custom field values from a product and its variations
+   *
+   * @param int $product_id
+   * @param string $meta_key
+   * @param mixed $product
+   * @return array
+   */
+  private function get_product_custom_field_values($product_id, $meta_key, $product) {
+    $values = $this->normalize_custom_field_values(get_post_meta($product_id, $meta_key, true));
+
+    if ($product && $product->is_type('variable')) {
+      $variation_ids = $product->get_children();
+
+      if (!empty($variation_ids)) {
+        foreach ($variation_ids as $variation_id) {
+          $variation_values = $this->normalize_custom_field_values(get_post_meta($variation_id, $meta_key, true));
+
+          if (!empty($variation_values)) {
+            $values = array_merge($values, $variation_values);
+          }
+        }
+      }
+    }
+
+    return array_values(array_unique($values));
+  }
+
+  /**
+   * Normalize custom field values to a sanitized array
+   *
+   * @param mixed $meta_value
+   * @return array
+   */
+  private function normalize_custom_field_values($meta_value) {
+    $values = array();
+
+    if (is_array($meta_value)) {
+      foreach ($meta_value as $value) {
+        if (is_array($value)) {
+          continue;
+        }
+
+        $sanitized_value = sanitize_text_field((string) $value);
+
+        if ($sanitized_value !== '') {
+          $values[] = $sanitized_value;
+        }
+      }
+    } else {
+      $sanitized_value = sanitize_text_field((string) $meta_value);
+
+      if ($sanitized_value !== '') {
+        $values[] = $sanitized_value;
+      }
+    }
+
+    return $values;
+  }
+
+  /**
+   * Get latest post type entries for preload rendering
+   *
+   * @param string $post_type
+   * @param array $options
+   * @return array
+   */
+  private function get_latest_content_items($post_type, $options) {
+    $safe_limit   = 12;
+    $posts        = get_posts(array(
+      'post_type'      => $post_type,
+      'post_status'    => 'publish',
+      'orderby'        => 'date',
+      'order'          => 'DESC',
+      'posts_per_page' => $safe_limit,
+    ));
+    $posts_data    = array();
+
+    foreach ($posts as $post) {
+      $posts_data[] = array(
+        'id'        => $post->ID,
+        'title'     => get_the_title($post->ID),
+        'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
+        'excerpt'   => $this->get_excerpt($post->post_content),
+        'permalink' => get_permalink($post->ID),
+      );
+    }
+
+    return $posts_data;
+  }
+
+  /**
+   * Get latest enabled post type entries for preload/latest rendering
+   *
+   * @return array
+   */
+  private function get_latest_enabled_results() {
+    $posts_options     = Utils::get_option('posts');
+    $pages_options     = Utils::get_option('pages');
+    $products_options  = Utils::get_option('products');
+    $downloads_options = Utils::get_option('downloads');
+    $posts_enabled     = isset($posts_options['enabled']) ? $posts_options['enabled'] : 1;
+    $pages_enabled     = isset($pages_options['enabled']) ? $pages_options['enabled'] : 0;
+    $products_enabled  = isset($products_options['enabled']) ? $products_options['enabled'] : 0;
+    $downloads_enabled = isset($downloads_options['enabled']) ? $downloads_options['enabled'] : 0;
+    $results           = array();
+
+    if ($posts_enabled) {
+      $results['posts'] = $this->get_latest_content_items('post', $posts_options);
+    }
+
+    if ($pages_enabled) {
+      $results['pages'] = $this->get_latest_content_items('page', $pages_options);
+    }
+
+    if ($products_enabled) {
+      $results['products'] = $this->get_latest_products($products_options);
+    }
+
+    if ($downloads_enabled) {
+      $results['downloads'] = $this->get_latest_content_items('download', $downloads_options);
+    }
+
+    return $results;
+  }
+
+  /**
+   * Get latest published products for preload/latest rendering
+   *
+   * @param array $options
+   * @return array
+   */
+  private function get_latest_products($options) {
+    if (!class_exists('WooCommerce')) {
+      return array();
+    }
+
+    $safe_limit       = 12;
+    $query_limit      = 48;
+    $custom_fields_raw = Utils::get_option('filters_custom_fields');
+    $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+    $posts      = get_posts(array(
+      'post_type'      => 'product',
+      'post_status'    => 'publish',
+      'orderby'        => 'date',
+      'order'          => 'DESC',
+      'posts_per_page' => $query_limit,
+    ));
+    $posts_data = array();
+    $tags = array(
+      'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
+      'span' => array('class' => array(), 'style' => array()),
+    );
+
+    foreach ($posts as $post) {
+      $product = wc_get_product($post->ID);
+
+      if (!$product || $product->get_catalog_visibility() === 'hidden' || !$product->is_in_stock()) {
+        continue;
+      }
+
+      $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
+      $is_featured    = $product->is_featured();
+      $is_variable    = $product->is_type('variable');
+      $add_to_cart_url = $product->add_to_cart_url();
+      $product_custom_fields = array();
+
+      if (!empty($custom_fields)) {
+        foreach ($custom_fields as $custom_field) {
+          $meta_key   = sanitize_key($custom_field);
+          $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
+          $product_custom_fields[$meta_key] = $meta_values;
+        }
+      }
+
+      $posts_data[] = array(
+        'id'              => $post->ID,
+        'title'           => get_the_title($post->ID),
+        'price'           => get_post_meta($post->ID, '_price', true),
+        'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
+        'excerpt'         => $this->get_excerpt($post->post_content),
+        'average_rating'  => $average_rating ? (float) $average_rating : 0,
+        'rating'          => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
+        'is_featured'     => (bool) $is_featured,
+        'is_variable'     => (bool) $is_variable,
+        'is_in_stock'     => true,
+        'add_to_cart_url' => esc_url_raw($add_to_cart_url),
+        'permalink'       => get_permalink($post->ID),
+        'custom_fields'   => $product_custom_fields,
+      );
+
+      if (count($posts_data) >= $safe_limit) {
+        break;
+      }
+    }
+
+    if (empty($posts_data)) {
+      return $posts_data;
+    }
+
+    $featured_posts = array();
+    $regular_posts  = array();
+
+    foreach ($posts_data as $post_data) {
+      if (!empty($post_data['is_featured'])) {
+        $featured_posts[] = $post_data;
+      } else {
+        $regular_posts[] = $post_data;
+      }
+    }
+
+    return array_merge($featured_posts, $regular_posts);
+  }
+
+  /**
+   * Get top selling, in stock products for preload rendering
+   *
+   * @param array $options
+   * @return array
+   */
+  private function get_top_selling_in_stock_products($options) {
+    if (!class_exists('WooCommerce')) {
+      return array();
+    }
+
+    $result_limit = isset($options['result_limit']) ? (int) $options['result_limit'] : 10;
+    $safe_limit   = $result_limit > 0 ? $result_limit : 10;
+    $posts        = get_posts(array(
+      'post_type'      => 'product',
+      'post_status'    => 'publish',
+      'posts_per_page' => $safe_limit,
+      'meta_key'       => 'total_sales',
+      'orderby'        => 'meta_value_num',
+      'order'          => 'DESC',
+      'meta_query'     => array(
+        array(
+          'key'     => '_stock_status',
+          'value'   => 'instock',
+          'compare' => '=',
+        ),
+      ),
+    ));
+    $posts_data = array();
+    $tags = array(
+      'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
+      'span' => array('class' => array(), 'style' => array()),
+    );
+
+    foreach ($posts as $post) {
+      $product = wc_get_product($post->ID);
+
+      if (!$product || $product->get_catalog_visibility() === 'hidden' || !$product->is_in_stock()) {
+        continue;
+      }
+
+      $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
+      $is_featured    = $product->is_featured();
+      $is_variable    = $product->is_type('variable');
+      $add_to_cart_url = $product->add_to_cart_url();
+
+      $posts_data[] = array(
+        'id'              => $post->ID,
+        'title'           => get_the_title($post->ID),
+        'price'           => get_post_meta($post->ID, '_price', true),
+        'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
+        'excerpt'         => $this->get_excerpt($post->post_content),
+        'average_rating'  => $average_rating ? (float) $average_rating : 0,
+        'rating'          => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
+        'is_featured'     => (bool) $is_featured,
+        'is_variable'     => (bool) $is_variable,
+        'is_in_stock'     => true,
+        'add_to_cart_url' => esc_url_raw($add_to_cart_url),
+        'permalink'       => get_permalink($post->ID),
+        'custom_fields'   => array(),
+      );
+    }
+
+    return $posts_data;
+  }
+
+  /**
+   * Get a trimmed excerpt
+   *
+   * @param string $content
+   * @return string
+   */
+  private function get_excerpt($content) {
+    $plain = wp_strip_all_tags((string) $content);
+    $text  = function_exists('mb_substr') ? trim(mb_substr($plain, 0, 150)) : trim(substr($plain, 0, 150));
+
+    if ($text === '') {
+      return '';
+    }
+
+    return $text . '...';
   }
 
 }

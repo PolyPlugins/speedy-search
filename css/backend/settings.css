@@ -59,7 +59,7 @@ input[type=checkbox]:checked::before {
 
 .tab .danger {
   background-color: #DC3545;
-  color: #333;
+  color: #fff;
   border-top-right-radius: 5px;
   border-top-left-radius: 5px;
   padding: 8px 12px;
@@ -380,4 +380,43 @@ a.btn.btn-dark {
 
 .validation {
   border-color: #DC3545!important;
+}
+
+.snappy-synonyms-wrapper .snappy-synonym-row {
+  border: 1px solid #F0F0F1;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.snappy-synonyms-wrapper .snappy-synonym-label {
+  margin: 0 0 6px;
+}
+
+.snappy-synonyms-wrapper input[type="text"] {
+  margin-bottom: 12px;
+}
+
+.snappy-synonyms-wrapper .snappy-synonym-remove {
+  margin-top: 10px;
+}
+
+.snappy-synonyms-wrapper .snappy-synonym-add {
+  margin-top: 5px;
+  margin-bottom: 12px;
+}
+
+.snappy-synonyms-wrapper > p {
+  margin-top: 0;
+}
+
+.snappy-synonyms-wrapper .button-primary {
+  background-color: #46BEA4 !important;
+  border-color: #46BEA4 !important;
+}
+
+.snappy-synonyms-wrapper .button-secondary {
+  background-color: #DC3545 !important;
+  border-color: #DC3545 !important;
+  color: #fff !important;
 }
