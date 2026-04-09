@@ -398,7 +398,7 @@ class API {
           'id'        => $post->ID,
           'title'     => get_the_title($post->ID),
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
-          'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
         );
       }
@@ -477,7 +477,7 @@ class API {
           'id'        => $post->ID,
           'title'     => get_the_title($post->ID),
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
-          'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
         );
       }
@@ -587,7 +587,7 @@ class API {
           'title'          => get_the_title($post->ID),
           'price'          => get_post_meta($post->ID, '_price', true),
           'thumbnail'      => get_the_post_thumbnail_url($post->ID, 'medium'),
-          'excerpt'        => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'excerpt'        => $this->get_excerpt($post->post_content),
           'average_rating' => $average_rating ? (float) $average_rating : 0,
           'rating'         => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
           'is_featured'    => (bool) $is_featured,
@@ -698,7 +698,7 @@ class API {
           'title'     => get_the_title($post->ID),
           'price'     => is_array($price) ? sanitize_text_field(implode(', ', $price)) : sanitize_text_field($price),
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
-          'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+          'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
         );
       }
@@ -1031,7 +1031,7 @@ class API {
         'id'        => $post->ID,
         'title'     => get_the_title($post->ID),
         'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
-        'excerpt'   => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+        'excerpt'   => $this->get_excerpt($post->post_content),
         'permalink' => get_permalink($post->ID),
       );
     }
@@ -1128,7 +1128,7 @@ class API {
         'title'           => get_the_title($post->ID),
         'price'           => get_post_meta($post->ID, '_price', true),
         'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
-        'excerpt'         => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+        'excerpt'         => $this->get_excerpt($post->post_content),
         'average_rating'  => $average_rating ? (float) $average_rating : 0,
         'rating'          => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
         'is_featured'     => (bool) $is_featured,
@@ -1213,7 +1213,7 @@ class API {
         'title'           => get_the_title($post->ID),
         'price'           => get_post_meta($post->ID, '_price', true),
         'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
-        'excerpt'         => rtrim(substr(wp_strip_all_tags($post->post_content), 0, 150)) . '...',
+        'excerpt'         => $this->get_excerpt($post->post_content),
         'average_rating'  => $average_rating ? (float) $average_rating : 0,
         'rating'          => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
         'is_featured'     => (bool) $is_featured,
@@ -1226,6 +1226,23 @@ class API {
     }
 
     return $posts_data;
+  }
+
+  /**
+   * Get a trimmed excerpt
+   *
+   * @param string $content
+   * @return string
+   */
+  private function get_excerpt($content) {
+    $plain = wp_strip_all_tags((string) $content);
+    $text  = function_exists('mb_substr') ? trim(mb_substr($plain, 0, 150)) : trim(substr($plain, 0, 150));
+
+    if ($text === '') {
+      return '';
+    }
+
+    return $text . '...';
   }
 
 }
