@@ -87,6 +87,14 @@ class Products {
 		);
 
 		add_settings_field(
+			'products_title_only_search',
+			__('Title Only Search?', 'speedy-search'),
+			array($this, 'products_title_only_search_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
 			'products_out_of_stock_last',
 			__('Out Of Stock Last?', 'speedy-search'),
 			array($this, 'products_out_of_stock_last_render'),
@@ -140,6 +148,22 @@ class Products {
       <input type="checkbox" name="speedy_search_settings_polyplugins[products][tab_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Show the products tab on non advanced search.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Title Only Search Field
+	 *
+	 * @return void
+	 */
+	public function products_title_only_search_render() {
+		$options = Utils::get_option('products');
+    $option  = isset($options['title_only_search']) ? $options['title_only_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][title_only_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Only return product results where the product title matches the search terms.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

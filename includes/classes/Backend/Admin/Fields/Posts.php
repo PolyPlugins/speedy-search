@@ -87,6 +87,14 @@ class Posts {
 		);
 
 		add_settings_field(
+			'posts_title_only_search',
+			__('Title Only Search?', 'speedy-search'),
+			array($this, 'posts_title_only_search_render'),
+			'speedy_search_posts_polyplugins',
+			'speedy_search_posts_section_polyplugins'
+		);
+
+		add_settings_field(
 			'posts_batch',
 		  __('Batch', 'speedy-search'),
 			array($this, 'posts_batch_render'),
@@ -132,6 +140,22 @@ class Posts {
       <input type="checkbox" name="speedy_search_settings_polyplugins[posts][tab_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Show the posts tab on non advanced search.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Title Only Search Field
+	 *
+	 * @return void
+	 */
+	public function posts_title_only_search_render() {
+		$options = Utils::get_option('posts');
+    $option  = isset($options['title_only_search']) ? $options['title_only_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[posts][title_only_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Only return post results where the post title matches the search terms.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

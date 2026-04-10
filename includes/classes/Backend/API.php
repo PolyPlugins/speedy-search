@@ -245,7 +245,11 @@ class API {
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
     $expanded_query   = $this->expand_search_query($search_query);
     $search_key       = strtolower(trim($expanded_query));
-    $cache_key        = 'speedy_search_combined_' . md5($search_key);
+    $posts_title_only_search     = $this->is_title_only_search_enabled('posts');
+    $pages_title_only_search     = $this->is_title_only_search_enabled('pages');
+    $products_title_only_search  = $this->is_title_only_search_enabled('products');
+    $downloads_title_only_search = $this->is_title_only_search_enabled('downloads');
+    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search);
     $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
@@ -340,6 +344,7 @@ class API {
 		$options          = Utils::get_option('posts');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $title_only_search = $this->is_title_only_search_enabled('posts');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -356,9 +361,10 @@ class API {
     }
 
     $expanded_query = $this->expand_search_query($search_query);
+    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_posts_' . md5($expanded_query);
+    $cache_key = 'speedy_search_posts_' . md5($expanded_query . '|' . (int) $title_only_search);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -394,9 +400,15 @@ class API {
       $posts_data = array();
 
       foreach ($posts as $post) {
+        $title = get_the_title($post->ID);
+
+        if ($title_only_search && !$this->title_contains_search_terms($title, $title_terms)) {
+          continue;
+        }
+
         $posts_data[] = array(
           'id'        => $post->ID,
-          'title'     => get_the_title($post->ID),
+          'title'     => $title,
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
@@ -419,6 +431,7 @@ class API {
 		$options          = Utils::get_option('pages');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $title_only_search = $this->is_title_only_search_enabled('pages');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -435,9 +448,10 @@ class API {
     }
 
     $expanded_query = $this->expand_search_query($search_query);
+    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_pages_' . md5($expanded_query);
+    $cache_key = 'speedy_search_pages_' . md5($expanded_query . '|' . (int) $title_only_search);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -473,9 +487,15 @@ class API {
       $posts_data = array();
 
       foreach ($posts as $post) {
+        $title = get_the_title($post->ID);
+
+        if ($title_only_search && !$this->title_contains_search_terms($title, $title_terms)) {
+          continue;
+        }
+
         $posts_data[] = array(
           'id'        => $post->ID,
-          'title'     => get_the_title($post->ID),
+          'title'     => $title,
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
@@ -499,6 +519,7 @@ class API {
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $out_of_stock_last = isset($options['out_of_stock_last']) ? (bool) $options['out_of_stock_last'] : false;
+    $title_only_search = $this->is_title_only_search_enabled('products');
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
     $get_search_query = $request->get_param('search');
@@ -520,7 +541,7 @@ class API {
     $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last);
+    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -557,8 +578,13 @@ class API {
 
       foreach ($posts as $post) {
         $product = wc_get_product($post->ID);
+        $title   = get_the_title($post->ID);
 
         if ($product && $product->get_catalog_visibility() === 'hidden') {
+          continue;
+        }
+
+        if ($title_only_search && !$this->title_contains_search_terms($title, $title_terms)) {
           continue;
         }
 
@@ -584,7 +610,7 @@ class API {
         
         $data = array(
           'id'             => $post->ID,
-          'title'          => get_the_title($post->ID),
+          'title'          => $title,
           'price'          => get_post_meta($post->ID, '_price', true),
           'thumbnail'      => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'        => $this->get_excerpt($post->post_content),
@@ -637,6 +663,7 @@ class API {
 		$options          = Utils::get_option('downloads');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $title_only_search = $this->is_title_only_search_enabled('downloads');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -653,9 +680,10 @@ class API {
     }
 
     $expanded_query = $this->expand_search_query($search_query);
+    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_downloads_' . md5($expanded_query);
+    $cache_key = 'speedy_search_downloads_' . md5($expanded_query . '|' . (int) $title_only_search);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -692,10 +720,15 @@ class API {
 
       foreach ($posts as $post) {
         $price = get_post_meta($post->ID, 'edd_price', true);
+        $title = get_the_title($post->ID);
+
+        if ($title_only_search && !$this->title_contains_search_terms($title, $title_terms)) {
+          continue;
+        }
 
         $posts_data[] = array(
           'id'        => $post->ID,
-          'title'     => get_the_title($post->ID),
+          'title'     => $title,
           'price'     => is_array($price) ? sanitize_text_field(implode(', ', $price)) : sanitize_text_field($price),
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'   => $this->get_excerpt($post->post_content),
@@ -1243,6 +1276,21 @@ class API {
     }
 
     return $text . '...';
+  }
+
+  /**
+   * Is title only search enabled
+   *
+   * @return bool
+   */
+  private function is_title_only_search_enabled($type) {
+    $options = Utils::get_option($type);
+
+    if (!is_array($options) || !isset($options['title_only_search'])) {
+      return false;
+    }
+
+    return !empty($options['title_only_search']);
   }
 
 }

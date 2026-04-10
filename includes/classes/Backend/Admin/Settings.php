@@ -640,6 +640,12 @@ class Settings {
       $sanitary_values['posts']['tab_enabled'] = false;
     }
 
+    if (isset($input['posts']['title_only_search']) && $input['posts']['title_only_search']) {
+      $sanitary_values['posts']['title_only_search'] = $input['posts']['title_only_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['posts']['title_only_search'] = false;
+    }
+
     if (isset($input['posts']['batch']) && is_numeric($input['posts']['batch'])) {
 			$sanitary_values['posts']['batch'] = sanitize_text_field($input['posts']['batch']);
 		}
@@ -660,6 +666,12 @@ class Settings {
       $sanitary_values['pages']['tab_enabled'] = false;
     }
 
+    if (isset($input['pages']['title_only_search']) && $input['pages']['title_only_search']) {
+      $sanitary_values['pages']['title_only_search'] = $input['pages']['title_only_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['pages']['title_only_search'] = false;
+    }
+
     if (isset($input['pages']['batch']) && is_numeric($input['pages']['batch'])) {
 			$sanitary_values['pages']['batch'] = sanitize_text_field($input['pages']['batch']);
 		}
@@ -678,6 +690,12 @@ class Settings {
       $sanitary_values['products']['tab_enabled'] = $input['products']['tab_enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['products']['tab_enabled'] = false;
+    }
+
+    if (isset($input['products']['title_only_search']) && $input['products']['title_only_search']) {
+      $sanitary_values['products']['title_only_search'] = $input['products']['title_only_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['title_only_search'] = false;
     }
 
     if (isset($input['products']['batch']) && is_numeric($input['products']['batch'])) {
@@ -718,6 +736,12 @@ class Settings {
       $sanitary_values['downloads']['tab_enabled'] = $input['downloads']['tab_enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['downloads']['tab_enabled'] = false;
+    }
+
+    if (isset($input['downloads']['title_only_search']) && $input['downloads']['title_only_search']) {
+      $sanitary_values['downloads']['title_only_search'] = $input['downloads']['title_only_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['downloads']['title_only_search'] = false;
     }
 
     if (isset($input['downloads']['batch']) && is_numeric($input['downloads']['batch'])) {

@@ -87,6 +87,14 @@ class Downloads {
 		);
 
 		add_settings_field(
+			'downloads_title_only_search',
+			__('Title Only Search?', 'speedy-search'),
+			array($this, 'downloads_title_only_search_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
+		);
+
+		add_settings_field(
 			'downloads_batch',
 		  __('Batch', 'speedy-search'),
 			array($this, 'downloads_batch_render'),
@@ -132,6 +140,22 @@ class Downloads {
       <input type="checkbox" name="speedy_search_settings_polyplugins[dowloads][tab_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Show the dowloads tab on non advanced search.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Title Only Search Field
+	 *
+	 * @return void
+	 */
+	public function downloads_title_only_search_render() {
+		$options = Utils::get_option('downloads');
+    $option  = isset($options['title_only_search']) ? $options['title_only_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[downloads][title_only_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Only return download results where the download title matches the search terms.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

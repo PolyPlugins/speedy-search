@@ -87,6 +87,14 @@ class Pages {
 		);
 
 		add_settings_field(
+			'pages_title_only_search',
+			__('Title Only Search?', 'speedy-search'),
+			array($this, 'pages_title_only_search_render'),
+			'speedy_search_pages_polyplugins',
+			'speedy_search_pages_section_polyplugins'
+		);
+
+		add_settings_field(
 			'pages_batch',
 		  __('Batch', 'speedy-search'),
 			array($this, 'pages_batch_render'),
@@ -132,6 +140,22 @@ class Pages {
       <input type="checkbox" name="speedy_search_settings_polyplugins[pages][tab_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Show the pages tab on non advanced search.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Title Only Search Field
+	 *
+	 * @return void
+	 */
+	public function pages_title_only_search_render() {
+		$options = Utils::get_option('pages');
+    $option  = isset($options['title_only_search']) ? $options['title_only_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[pages][title_only_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Only return page results where the page title matches the search terms.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

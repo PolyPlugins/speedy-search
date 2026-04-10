@@ -88,6 +88,9 @@ By default, it will index 10 posts per minute.
 
 ## Changelog
 
+### 1.7.0
+* Added: Ability to only show results with title matches
+
 ### 1.6.0
 * Added: Handling for standalone Snappy Search API for huge speed increases
 * Added: A crossfade transition for result updates when using the custom standalone Snappy Search API, making fast responses feel smoother and more instant.
@@ -113,7 +116,6 @@ By default, it will index 10 posts per minute.
 * Bugfix: Indexing can fail on orders
 * Bugfix: Order search not working on non HPOS installs
 * Bugfix: Extra columns on orders from other plugins shift the layout, added Unavailable messaging to take it's place
-* Bugfix: Order search not working on non HPOS installs
 * Bugfix: Popular searches not populating when enabled
 * Removed: Popular search text to allow for more badges
 * Removed: Advanced WordPress Repo Search due to lack of interest

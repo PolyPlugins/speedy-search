@@ -16,6 +16,11 @@
 [ ] When a product has variations have a popup list all the options to choose from
 [ ] Add filtering by category
 [ ] Maybe add a footer in search to indicate how fast it loaded
+[ ] Update Readme
+[ ] Update Screenshots
+[ ] Scan Standalone Snappy Search API
+[ ] Plugin Scan
+[ ] Add new version to updater
 
 # General
 [ ] Add scroll to load more results
@@ -30,6 +35,9 @@
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
+
+# 1.7.0
+[X] Title only search
 
 # 1.6.0
 [X] Add support for indexing categories, tags, and custom fields (Meta)
