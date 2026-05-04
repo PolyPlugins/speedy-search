@@ -9,6 +9,7 @@ use PolyPlugins\Speedy_Search\Backend\Background_Worker;
 use PolyPlugins\Speedy_Search\Backend\Cache;
 use PolyPlugins\Speedy_Search\Backend\Enqueue;
 use PolyPlugins\Speedy_Search\Backend\Index_Updater;
+use PolyPlugins\Speedy_Search\Backend\CLI;
 use PolyPlugins\Speedy_Search\Backend\Notices;
 use PolyPlugins\Speedy_Search\Backend\Reindexer;
 
@@ -62,6 +63,16 @@ class Backend_Loader {
     $this->load_index_updater();
     $this->load_reindexer();
     $this->load_notices();
+    $this->load_cli();
+  }
+
+  /**
+   * Load WP-CLI commands when available.
+   *
+   * @return void
+   */
+  public function load_cli() {
+    CLI::register();
   }
   
   /**
