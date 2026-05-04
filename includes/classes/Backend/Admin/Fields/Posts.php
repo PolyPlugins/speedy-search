@@ -95,6 +95,14 @@ class Posts {
 		);
 
 		add_settings_field(
+			'posts_boolean_search',
+			__('Boolean Search?', 'speedy-search'),
+			array($this, 'posts_boolean_search_render'),
+			'speedy_search_posts_polyplugins',
+			'speedy_search_posts_section_polyplugins'
+		);
+
+		add_settings_field(
 			'posts_batch',
 		  __('Batch', 'speedy-search'),
 			array($this, 'posts_batch_render'),
@@ -155,7 +163,23 @@ class Posts {
     <div class="form-check form-switch">
       <input type="checkbox" name="speedy_search_settings_polyplugins[posts][title_only_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
-    <p><strong><?php esc_html_e('Only return post results where the post title matches the search terms.', 'speedy-search'); ?></strong></p>
+    <p><strong><?php esc_html_e('Only return post results where the post title contains each search term (every word in the query). The title check uses what you type, so misspellings usually will not match.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Boolean Search Field
+	 *
+	 * @return void
+	 */
+	public function posts_boolean_search_render() {
+		$options = Utils::get_option('posts');
+    $option  = isset($options['boolean_search']) ? $options['boolean_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[posts][boolean_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('When the visitor types multiple words, require every word to match (AND).', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

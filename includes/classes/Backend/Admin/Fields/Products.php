@@ -95,6 +95,14 @@ class Products {
 		);
 
 		add_settings_field(
+			'products_boolean_search',
+			__('Boolean Search?', 'speedy-search'),
+			array($this, 'products_boolean_search_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
 			'products_out_of_stock_last',
 			__('Out Of Stock Last?', 'speedy-search'),
 			array($this, 'products_out_of_stock_last_render'),
@@ -163,7 +171,23 @@ class Products {
     <div class="form-check form-switch">
       <input type="checkbox" name="speedy_search_settings_polyplugins[products][title_only_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
-    <p><strong><?php esc_html_e('Only return product results where the product title matches the search terms.', 'speedy-search'); ?></strong></p>
+    <p><strong><?php esc_html_e('Only return product results where the product title contains each search term (every word in the query). The title check uses what you type, so misspellings usually will not match.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Boolean Search Field
+	 *
+	 * @return void
+	 */
+	public function products_boolean_search_render() {
+		$options = Utils::get_option('products');
+    $option  = isset($options['boolean_search']) ? $options['boolean_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][boolean_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('When the visitor types multiple words, require every word to match (AND).', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

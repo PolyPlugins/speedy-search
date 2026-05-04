@@ -245,11 +245,15 @@ class API {
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
     $expanded_query   = $this->expand_search_query($search_query);
     $search_key       = strtolower(trim($expanded_query));
-    $posts_title_only_search     = $this->is_title_only_search_enabled('posts');
-    $pages_title_only_search     = $this->is_title_only_search_enabled('pages');
-    $products_title_only_search  = $this->is_title_only_search_enabled('products');
-    $downloads_title_only_search = $this->is_title_only_search_enabled('downloads');
-    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search);
+    $posts_title_only_search      = $this->is_title_only_search_enabled('posts');
+    $pages_title_only_search      = $this->is_title_only_search_enabled('pages');
+    $products_title_only_search   = $this->is_title_only_search_enabled('products');
+    $downloads_title_only_search  = $this->is_title_only_search_enabled('downloads');
+    $posts_boolean_search         = $this->is_boolean_search_enabled('posts');
+    $pages_boolean_search         = $this->is_boolean_search_enabled('pages');
+    $products_boolean_search      = $this->is_boolean_search_enabled('products');
+    $downloads_boolean_search     = $this->is_boolean_search_enabled('downloads');
+    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search . '|' . (int) $posts_boolean_search . '|' . (int) $pages_boolean_search . '|' . (int) $products_boolean_search . '|' . (int) $downloads_boolean_search);
     $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
@@ -344,7 +348,8 @@ class API {
 		$options          = Utils::get_option('posts');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
-    $title_only_search = $this->is_title_only_search_enabled('posts');
+    $title_only_search  = $this->is_title_only_search_enabled('posts');
+    $boolean_search     = $this->is_boolean_search_enabled('posts');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -361,10 +366,9 @@ class API {
     }
 
     $expanded_query = $this->expand_search_query($search_query);
-    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_posts_' . md5($expanded_query . '|' . (int) $title_only_search);
+    $cache_key = 'speedy_search_posts_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -382,7 +386,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
+    $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -402,7 +406,7 @@ class API {
       foreach ($posts as $post) {
         $title = get_the_title($post->ID);
 
-        if ($title_only_search && !$this->title_contains_search_terms($title, $title_terms)) {
+        if ($title_only_search && !$this->title_contains_search_terms($title, $search_query)) {
           continue;
         }
 
@@ -432,6 +436,7 @@ class API {
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $title_only_search = $this->is_title_only_search_enabled('pages');
+    $boolean_search    = $this->is_boolean_search_enabled('pages');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -448,10 +453,9 @@ class API {
     }
 
     $expanded_query = $this->expand_search_query($search_query);
-    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_pages_' . md5($expanded_query . '|' . (int) $title_only_search);
+    $cache_key = 'speedy_search_pages_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -469,7 +473,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
+    $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -489,7 +493,7 @@ class API {
       foreach ($posts as $post) {
         $title = get_the_title($post->ID);
 
-        if ($title_only_search && !$this->title_contains_search_terms($title, $title_terms)) {
+        if ($title_only_search && !$this->title_contains_search_terms($title, $search_query)) {
           continue;
         }
 
@@ -520,6 +524,7 @@ class API {
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $out_of_stock_last = isset($options['out_of_stock_last']) ? (bool) $options['out_of_stock_last'] : false;
     $title_only_search = $this->is_title_only_search_enabled('products');
+    $boolean_search    = $this->is_boolean_search_enabled('products');
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
     $get_search_query = $request->get_param('search');
@@ -538,10 +543,9 @@ class API {
     }
 
     $expanded_query = $this->expand_search_query($search_query);
-    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search);
+    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search . '|' . (int) $boolean_search);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -559,7 +563,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
+    $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -584,7 +588,7 @@ class API {
           continue;
         }
 
-        if ($title_only_search && !$this->title_contains_search_terms($title, $title_terms)) {
+        if ($title_only_search && !$this->title_contains_search_terms($title, $search_query)) {
           continue;
         }
 
@@ -622,7 +626,7 @@ class API {
           'add_to_cart_url' => esc_url_raw($add_to_cart_url),
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
-          'title_match'   => $this->title_contains_search_terms(get_the_title($post->ID), $title_terms),
+          'title_match'   => $this->title_contains_search_terms(get_the_title($post->ID), $search_query),
         );
         $posts_data[] = $data;
       }
@@ -664,6 +668,7 @@ class API {
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $title_only_search = $this->is_title_only_search_enabled('downloads');
+    $boolean_search    = $this->is_boolean_search_enabled('downloads');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -680,10 +685,9 @@ class API {
     }
 
     $expanded_query = $this->expand_search_query($search_query);
-    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_downloads_' . md5($expanded_query . '|' . (int) $title_only_search);
+    $cache_key = 'speedy_search_downloads_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -701,7 +705,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
+    $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -722,7 +726,7 @@ class API {
         $price = get_post_meta($post->ID, 'edd_price', true);
         $title = get_the_title($post->ID);
 
-        if ($title_only_search && !$this->title_contains_search_terms($title, $title_terms)) {
+        if ($title_only_search && !$this->title_contains_search_terms($title, $search_query)) {
           continue;
         }
 
@@ -752,6 +756,7 @@ class API {
 		$options          = Utils::get_option('orders');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 100;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $boolean_search   = $this->is_boolean_search_enabled('orders');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -770,7 +775,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_orders_' . md5($expanded_query);
+    $cache_key = 'speedy_search_orders_' . md5($expanded_query . '|' . (int) $boolean_search);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -788,7 +793,7 @@ class API {
     $tnt->fuzziness = true;
 
     // Perform the search
-    $results    = $tnt->search($expanded_query, $result_limit);
+    $results    = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
     $result_ids = isset($results['ids']) ? array_map('absint', $results['ids']) : array();
 
     if (empty($result_ids)) {
@@ -908,77 +913,66 @@ class API {
   }
 
   /**
-   * Build all search terms including synonyms.
-   *
-   * @param string $search_query
-   * @return array
-   */
-  private function get_search_terms_with_synonyms($search_query) {
-    $search_query = sanitize_text_field((string) $search_query);
-    $normalized   = strtolower(trim($search_query));
-    $synonym_map  = $this->get_synonym_map();
-    $terms        = array();
-
-    if ($normalized !== '') {
-      $terms[] = $normalized;
-    }
-
-    $tokens = preg_split('/\s+/', $normalized);
-
-    if (is_array($tokens)) {
-      foreach ($tokens as $token) {
-        if ($token !== '') {
-          $terms[] = $token;
-        }
-      }
-    }
-
-    if (isset($synonym_map[$normalized])) {
-      $terms = array_merge($terms, preg_split('/\s+/', strtolower($synonym_map[$normalized])));
-    }
-
-    if (is_array($tokens)) {
-      foreach ($tokens as $token) {
-        if ($token === '' || !isset($synonym_map[$token])) {
-          continue;
-        }
-
-        $terms = array_merge($terms, preg_split('/\s+/', strtolower($synonym_map[$token])));
-      }
-    }
-
-    $terms = array_filter(array_unique(array_map('trim', $terms)));
-
-    return array_values($terms);
-  }
-
-  /**
-   * Check if title contains any search term.
+   * Title-only filter: every whitespace-separated query token must appear in the title (AND).
+   * Per token, the literal token or any synonym word from settings counts as a match (OR).
    *
    * @param string $title
-   * @param array $terms
+   * @param string $search_query
    * @return bool
    */
-  private function title_contains_search_terms($title, $terms) {
-    $title = strtolower(trim(sanitize_text_field((string) $title)));
+  private function title_contains_search_terms($title, $search_query) {
+    $title        = strtolower(trim(sanitize_text_field((string) $title)));
+    $search_query = strtolower(trim(sanitize_text_field((string) $search_query)));
 
-    if ($title === '' || !is_array($terms) || empty($terms)) {
+    if ($title === '' || $search_query === '') {
       return false;
     }
 
-    foreach ($terms as $term) {
-      $term = strtolower(trim(sanitize_text_field((string) $term)));
+    $synonym_map = $this->get_synonym_map();
+    $tokens      = preg_split('/\s+/', $search_query);
 
-      if ($term === '') {
+    if (!is_array($tokens)) {
+      return false;
+    }
+
+    $had_token = false;
+
+    foreach ($tokens as $token) {
+      $token = trim($token);
+
+      if ($token === '') {
         continue;
       }
 
-      if (strpos($title, $term) !== false) {
-        return true;
+      $had_token = true;
+
+      if (strpos($title, $token) !== false) {
+        continue;
+      }
+
+      $matched_synonym = false;
+
+      if (isset($synonym_map[$token])) {
+        $syn_parts = preg_split('/\s+/', strtolower(trim($synonym_map[$token])));
+
+        if (is_array($syn_parts)) {
+          foreach ($syn_parts as $syn) {
+            $syn = trim($syn);
+
+            if ($syn !== '' && strpos($title, $syn) !== false) {
+              $matched_synonym = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!$matched_synonym) {
+        return false;
       }
     }
 
-    return false;
+    return $had_token;
   }
 
   /**
@@ -1291,6 +1285,80 @@ class API {
     }
 
     return !empty($options['title_only_search']);
+  }
+
+  /**
+   * Whether boolean AND search is enabled for a settings group (posts, pages, products, downloads, orders).
+   *
+   * @param string $type Settings key.
+   * @return bool
+   */
+  private function is_boolean_search_enabled($type) {
+    $options = Utils::get_option($type);
+
+    if (!is_array($options) || !isset($options['boolean_search'])) {
+      return false;
+    }
+
+    return !empty($options['boolean_search']);
+  }
+
+  /**
+   * Run TNTSearch relevance search or boolean AND when enabled (multi-word user query).
+   *
+   * @param object $tnt               TeamTNT TNTSearch instance.
+   * @param string $expanded_query    Query after synonym expansion (single-token path).
+   * @param int    $result_limit      Max results.
+   * @param bool   $boolean_search    Settings flag.
+   * @param string $user_search_query Raw user query for token boundaries (AND operands).
+   * @return array                    Same shape as $tnt->search().
+   */
+  private function perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $user_search_query) {
+    if (!$boolean_search) {
+      return $tnt->search($expanded_query, $result_limit);
+    }
+
+    $user_search_query = trim((string) $user_search_query);
+
+    if ($user_search_query === '') {
+      return $tnt->search($expanded_query, $result_limit);
+    }
+
+    $tokens = array_values(array_filter($tnt->breakIntoTokens($user_search_query)));
+
+    if (count($tokens) < 2) {
+      return $tnt->search($expanded_query, $result_limit);
+    }
+
+    $safe = array();
+
+    foreach ($tokens as $token) {
+      $token = (string) $token;
+
+      if ($token === '') {
+        continue;
+      }
+
+      if (preg_match('/[&|~()]/', $token)) {
+        continue;
+      }
+
+      $safe[] = $token;
+    }
+
+    if (count($safe) < 2) {
+      return $tnt->search($expanded_query, $result_limit);
+    }
+
+    // Expression::lex() turns every space into '&', so "a & b" becomes invalid extra operators — join with '&' only.
+    $phrase  = implode('&', $safe);
+    $results = $tnt->searchBoolean($phrase, $result_limit);
+
+    if (isset($results['ids']) && is_array($results['ids'])) {
+      $results['ids'] = array_values(array_filter(array_map('absint', $results['ids'])));
+    }
+
+    return $results;
   }
 
 }
