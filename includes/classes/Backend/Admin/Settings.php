@@ -760,6 +760,18 @@ class Settings {
       $sanitary_values['products']['out_of_stock_last'] = false;
     }
 
+    if (isset($input['products']['top_sellers_first']) && $input['products']['top_sellers_first']) {
+      $sanitary_values['products']['top_sellers_first'] = $input['products']['top_sellers_first'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['top_sellers_first'] = false;
+    }
+
+    if (isset($input['products']['sort_by_rating']) && $input['products']['sort_by_rating']) {
+      $sanitary_values['products']['sort_by_rating'] = $input['products']['sort_by_rating'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['sort_by_rating'] = false;
+    }
+
     if (isset($input['orders']['enabled']) && $input['orders']['enabled']) {
       $sanitary_values['orders']['enabled'] = $input['orders']['enabled'] === 'on' ? true : false;
     } else {

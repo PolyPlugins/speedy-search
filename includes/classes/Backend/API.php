@@ -253,7 +253,10 @@ class API {
     $pages_boolean_search         = $this->is_boolean_search_enabled('pages');
     $products_boolean_search      = $this->is_boolean_search_enabled('products');
     $downloads_boolean_search     = $this->is_boolean_search_enabled('downloads');
-    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search . '|' . (int) $posts_boolean_search . '|' . (int) $pages_boolean_search . '|' . (int) $products_boolean_search . '|' . (int) $downloads_boolean_search);
+    $products_options_for_cache   = Utils::get_option('products');
+    $products_top_sellers_first   = !empty($products_options_for_cache['top_sellers_first']);
+    $products_sort_by_rating      = !isset($products_options_for_cache['sort_by_rating']) || !empty($products_options_for_cache['sort_by_rating']);
+    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search . '|' . (int) $posts_boolean_search . '|' . (int) $pages_boolean_search . '|' . (int) $products_boolean_search . '|' . (int) $downloads_boolean_search . '|' . (int) $products_top_sellers_first . '|' . (int) $products_sort_by_rating);
     $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
@@ -523,6 +526,8 @@ class API {
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $out_of_stock_last = isset($options['out_of_stock_last']) ? (bool) $options['out_of_stock_last'] : false;
+    $top_sellers_first = !empty($options['top_sellers_first']);
+    $sort_by_rating    = !isset($options['sort_by_rating']) || !empty($options['sort_by_rating']);
     $title_only_search = $this->is_title_only_search_enabled('products');
     $boolean_search    = $this->is_boolean_search_enabled('products');
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
@@ -545,7 +550,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search . '|' . (int) $boolean_search);
+    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . (int) $top_sellers_first . '|' . (int) $sort_by_rating);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -578,7 +583,8 @@ class API {
         'posts_per_page' => count($results['ids']),
       ));
 
-      $posts_data = array();
+      $posts_data    = array();
+      $relevance_idx = 0;
 
       foreach ($posts as $post) {
         $product = wc_get_product($post->ID);
@@ -626,12 +632,15 @@ class API {
           'add_to_cart_url' => esc_url_raw($add_to_cart_url),
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
-          'title_match'   => $this->title_contains_search_terms(get_the_title($post->ID), $search_query),
+          'title_match'      => $this->title_contains_search_terms(get_the_title($post->ID), $search_query),
+          'total_sales'      => (int) get_post_meta($post->ID, '_total_sales', true),
+          'relevance_order'  => $relevance_idx,
         );
         $posts_data[] = $data;
+        $relevance_idx++;
       }
 
-      usort($posts_data, function($a, $b) use ($out_of_stock_last) {
+      usort($posts_data, function($a, $b) use ($out_of_stock_last, $top_sellers_first, $sort_by_rating) {
         if ($out_of_stock_last && $a['is_in_stock'] !== $b['is_in_stock']) {
           return $a['is_in_stock'] ? -1 : 1;
         }
@@ -644,11 +653,29 @@ class API {
           return $a['title_match'] ? -1 : 1;
         }
 
-        return $b['average_rating'] <=> $a['average_rating'];
+        if ($top_sellers_first) {
+          $by_sales = $b['total_sales'] <=> $a['total_sales'];
+
+          if ($by_sales !== 0) {
+            return $by_sales;
+          }
+        }
+
+        if ($sort_by_rating) {
+          $by_rating = $b['average_rating'] <=> $a['average_rating'];
+
+          if ($by_rating !== 0) {
+            return $by_rating;
+          }
+        }
+
+        return $a['relevance_order'] <=> $b['relevance_order'];
       });
 
       foreach ($posts_data as $index => $item) {
         unset($posts_data[$index]['title_match']);
+        unset($posts_data[$index]['total_sales']);
+        unset($posts_data[$index]['relevance_order']);
       }
 
       Utils::set_api_cache($cache_key, $posts_data, 600);
