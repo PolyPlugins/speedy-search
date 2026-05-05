@@ -102,15 +102,38 @@ class Enqueue {
     $selector         = isset($this->options['selector']) ? $this->options['selector'] : '';
     $advanced_enabled = isset($this->advanced_options['enabled']) ? $this->advanced_options['enabled'] : '';
 
+    // Advanced template pages use their own script/input; loading selector/shortcode breaks the header widget on those URLs.
+    if ($this->is_current_page_advanced_search_template()) {
+      $this->enqueue_advanced_search();
+
+      return;
+    }
+
     if ($selector) {
       $this->enqueue_selector_search();
     } else {
       $this->enqueue_shortcode_search();
     }
-    
+
     if ($advanced_enabled) {
       $this->enqueue_advanced_search();
     }
+  }
+
+  /**
+   * Whether the main query is a Page using the Advanced Snappy Search template.
+   *
+   * @return bool
+   */
+  private function is_current_page_advanced_search_template() {
+    if (!is_singular('page')) {
+      return false;
+    }
+
+    $slug = (string) get_page_template_slug();
+
+    return $slug === 'snappy-search-advanced-search-form.php'
+      || $slug === 'snappy-search-advanced-search-form-stacked.php';
   }
   
   /**

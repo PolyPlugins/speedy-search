@@ -741,12 +741,12 @@ class Utils {
   /**
    * WooCommerce product attributes for client-side filter UI (global taxonomies, local attributes, variations).
    *
-   * @param int               $product_id
-   * @param array             $allowed_keys Attribute keys from settings; empty array returns no attributes.
-   * @param \WC_Product|null $product       Already-loaded product for this ID (avoids duplicate wc_get_product).
+   * @param int              $product_id
+   * @param array            $allowed_keys Attribute keys from settings; empty array returns no attributes.
+   * @param \WC_Product|null $wc_product   Optional product instance for this ID (avoids a duplicate wc_get_product).
    * @return array Attribute key => array with keys label, values (each value: slug, name).
    */
-  public static function get_product_attributes_for_filter($product_id, $allowed_keys = array(), $product = null) {
+  public static function get_product_attributes_for_filter($product_id, $allowed_keys = array(), $wc_product = null) {
     $product_id = (int) $product_id;
 
     if ($product_id < 1 || !function_exists('wc_get_product')) {
@@ -757,11 +757,13 @@ class Utils {
       return array();
     }
 
-    if (!($product instanceof \WC_Product && (int) $product->get_id() === $product_id)) {
-      $product = wc_get_product($product_id);
+    $allowed_lookup = array_flip($allowed_keys);
+
+    if (!$wc_product instanceof \WC_Product || (int) $wc_product->get_id() !== $product_id) {
+      $wc_product = wc_get_product($product_id);
     }
 
-    if (!$product) {
+    if (!$wc_product) {
       return array();
     }
 
@@ -776,7 +778,11 @@ class Utils {
       }
     };
 
-    $add_term = function ($key, $label, $slug, $name) use (&$slugmap, $ensure_key) {
+    $add_term = function ($key, $label, $slug, $name) use (&$slugmap, $ensure_key, $allowed_lookup) {
+      if (!isset($allowed_lookup[$key])) {
+        return;
+      }
+
       $slug = sanitize_title((string) $slug);
       $name = sanitize_text_field((string) $name);
 
@@ -788,7 +794,7 @@ class Utils {
       $slugmap[$key]['terms'][$slug] = $name;
     };
 
-    foreach ($product->get_attributes() as $attr) {
+    foreach ($wc_product->get_attributes() as $attr) {
       if (!$attr instanceof \WC_Product_Attribute) {
         continue;
       }
@@ -819,8 +825,8 @@ class Utils {
       }
     }
 
-    if ($product->is_type('variable')) {
-      foreach ($product->get_children() as $child_id) {
+    if ($wc_product->is_type('variable')) {
+      foreach ($wc_product->get_children() as $child_id) {
         $child = wc_get_product($child_id);
 
         if (!$child) {
@@ -843,13 +849,22 @@ class Utils {
           $tax_name = str_replace('attribute_', '', (string) $meta_key);
 
           if (taxonomy_exists($tax_name)) {
+            if (!isset($allowed_lookup[$tax_name])) {
+              continue;
+            }
+
             $term = get_term_by('slug', $slug, $tax_name);
             $nm   = ($term && !is_wp_error($term)) ? sanitize_text_field($term->name) : $slug;
 
             $add_term($tax_name, wc_attribute_label($tax_name), $slug, $nm);
           } else {
             $key = 'attr_' . sanitize_title($tax_name);
-            $nm  = sanitize_text_field($slug);
+
+            if (!isset($allowed_lookup[$key])) {
+              continue;
+            }
+
+            $nm = sanitize_text_field($slug);
 
             $add_term($key, sanitize_text_field(wc_clean($tax_name)), sanitize_title($slug), $nm);
           }
@@ -857,14 +872,20 @@ class Utils {
       }
     }
 
-    // Only load terms for taxonomies the filter UI requested — not every global attribute.
-    if (function_exists('wc_get_product_terms')) {
-      foreach ($allowed_keys as $tax_name) {
-        if (!is_string($tax_name) || strpos($tax_name, 'pa_') !== 0) {
-          continue;
-        }
+    $needs_pa_terms_scan = false;
 
-        if (!taxonomy_exists($tax_name)) {
+    foreach ($allowed_keys as $ak) {
+      if (strpos((string) $ak, 'pa_') === 0) {
+        $needs_pa_terms_scan = true;
+        break;
+      }
+    }
+
+    if ($needs_pa_terms_scan && function_exists('wc_get_attribute_taxonomies') && function_exists('wc_attribute_taxonomy_name') && function_exists('wc_get_product_terms')) {
+      foreach (wc_get_attribute_taxonomies() as $tax_row) {
+        $tax_name = wc_attribute_taxonomy_name($tax_row->attribute_name);
+
+        if (!isset($allowed_lookup[$tax_name])) {
           continue;
         }
 
@@ -874,7 +895,7 @@ class Utils {
           continue;
         }
 
-        $label = wc_attribute_label($tax_name);
+        $label = !empty($tax_row->attribute_label) ? sanitize_text_field($tax_row->attribute_label) : wc_attribute_label($tax_name);
 
         foreach ($terms as $term) {
           if (!isset($term->slug)) {

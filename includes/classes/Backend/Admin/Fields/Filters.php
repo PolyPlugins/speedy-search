@@ -146,7 +146,7 @@ class Filters {
     <div class="form-check form-switch">
       <input type="checkbox" name="speedy_search_settings_polyplugins[shortcode_filters_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
-    <p><strong><?php esc_html_e('Enable product filters (rating and price) on shortcode results.', 'speedy-search'); ?></strong></p>
+    <p><strong><?php esc_html_e('Enable product filters on shortcode results.', 'speedy-search'); ?></strong></p>
 	  <?php
 	}
 
@@ -161,7 +161,7 @@ class Filters {
     <div class="form-check form-switch">
       <input type="checkbox" name="speedy_search_settings_polyplugins[selector_filters_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
-    <p><strong><?php esc_html_e('Enable product filters (rating and price) on selector results.', 'speedy-search'); ?></strong></p>
+    <p><strong><?php esc_html_e('Enable product filters on selector results.', 'speedy-search'); ?></strong></p>
 	  <?php
 	}
 
@@ -177,7 +177,7 @@ class Filters {
     <div class="form-check form-switch">
       <input type="checkbox" name="speedy_search_settings_polyplugins[advanced][filters_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
-    <p><strong><?php esc_html_e('Enable product filters (rating and price) on advanced results.', 'speedy-search'); ?></strong></p>
+    <p><strong><?php esc_html_e('Enable product filters on advanced results.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 
