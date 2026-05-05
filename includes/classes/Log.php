@@ -67,12 +67,21 @@ class Log {
   /**
    * Get log directory path
    *
+   * SHORTINIT (e.g. standalone search.php) never defines WP_CONTENT_URL; wp_upload_dir() fatals there.
+   * Default uploads path matches _wp_upload_dir() when upload_path is empty.
+   *
    * @return string
    */
   private static function get_log_dir() {
     if (self::$log_dir === null) {
-      $upload_dir = wp_upload_dir();
-      self::$log_dir = $upload_dir['basedir'] . '/logs/snappy-search';
+      if (defined('WP_CONTENT_URL')) {
+        $upload_dir    = wp_upload_dir();
+        self::$log_dir = $upload_dir['basedir'] . '/logs/snappy-search';
+      } elseif (defined('WP_CONTENT_DIR')) {
+        self::$log_dir = WP_CONTENT_DIR . '/uploads/logs/snappy-search';
+      } else {
+        self::$log_dir = ABSPATH . 'wp-content/uploads/logs/snappy-search';
+      }
     }
 
     return self::$log_dir;
