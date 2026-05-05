@@ -772,6 +772,12 @@ class Settings {
       $sanitary_values['products']['sort_by_rating'] = false;
     }
 
+    if (isset($input['products']['featured_first']) && $input['products']['featured_first']) {
+      $sanitary_values['products']['featured_first'] = $input['products']['featured_first'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['featured_first'] = false;
+    }
+
     if (isset($input['orders']['enabled']) && $input['orders']['enabled']) {
       $sanitary_values['orders']['enabled'] = $input['orders']['enabled'] === 'on' ? true : false;
     } else {

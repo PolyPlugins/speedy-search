@@ -256,7 +256,8 @@ class API {
     $products_options_for_cache   = Utils::get_option('products');
     $products_top_sellers_first   = !empty($products_options_for_cache['top_sellers_first']);
     $products_sort_by_rating      = !isset($products_options_for_cache['sort_by_rating']) || !empty($products_options_for_cache['sort_by_rating']);
-    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search . '|' . (int) $posts_boolean_search . '|' . (int) $pages_boolean_search . '|' . (int) $products_boolean_search . '|' . (int) $downloads_boolean_search . '|' . (int) $products_top_sellers_first . '|' . (int) $products_sort_by_rating);
+    $products_featured_first      = !isset($products_options_for_cache['featured_first']) || !empty($products_options_for_cache['featured_first']);
+    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search . '|' . (int) $posts_boolean_search . '|' . (int) $pages_boolean_search . '|' . (int) $products_boolean_search . '|' . (int) $downloads_boolean_search . '|' . (int) $products_top_sellers_first . '|' . (int) $products_sort_by_rating . '|' . (int) $products_featured_first);
     $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
@@ -327,8 +328,10 @@ class API {
    * @return WP_REST_Response
    */
   public function get_latest(WP_REST_Request $request) {
-    $cache_key      = 'speedy_search_latest_v3';
-    $cached_results = Utils::get_api_cache($cache_key);
+    $products_opts    = Utils::get_option('products');
+    $featured_latest  = !isset($products_opts['featured_first']) || !empty($products_opts['featured_first']);
+    $cache_key        = 'speedy_search_latest_v4_' . (int) $featured_latest;
+    $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -528,6 +531,7 @@ class API {
     $out_of_stock_last = isset($options['out_of_stock_last']) ? (bool) $options['out_of_stock_last'] : false;
     $top_sellers_first = !empty($options['top_sellers_first']);
     $sort_by_rating    = !isset($options['sort_by_rating']) || !empty($options['sort_by_rating']);
+    $featured_first    = !isset($options['featured_first']) || !empty($options['featured_first']);
     $title_only_search = $this->is_title_only_search_enabled('products');
     $boolean_search    = $this->is_boolean_search_enabled('products');
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
@@ -550,7 +554,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . (int) $top_sellers_first . '|' . (int) $sort_by_rating);
+    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . (int) $top_sellers_first . '|' . (int) $sort_by_rating . '|' . (int) $featured_first);
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -599,7 +603,7 @@ class API {
         }
 
         $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
-        $is_featured = $product ? $product->is_featured() : false;
+        $is_featured = $featured_first && $product && $product->is_featured();
         $is_variable = $product ? $product->is_type('variable') : false;
         $is_in_stock = $product ? $product->is_in_stock() : true;
         $add_to_cart_url = $product ? $product->add_to_cart_url() : get_permalink($post->ID);
@@ -640,12 +644,12 @@ class API {
         $relevance_idx++;
       }
 
-      usort($posts_data, function($a, $b) use ($out_of_stock_last, $top_sellers_first, $sort_by_rating) {
+      usort($posts_data, function($a, $b) use ($out_of_stock_last, $featured_first, $top_sellers_first, $sort_by_rating) {
         if ($out_of_stock_last && $a['is_in_stock'] !== $b['is_in_stock']) {
           return $a['is_in_stock'] ? -1 : 1;
         }
 
-        if ($a['is_featured'] !== $b['is_featured']) {
+        if ($featured_first && $a['is_featured'] !== $b['is_featured']) {
           return $a['is_featured'] ? -1 : 1;
         }
 
@@ -1139,6 +1143,7 @@ class API {
       return array();
     }
 
+    $featured_first   = !isset($options['featured_first']) || !empty($options['featured_first']);
     $safe_limit       = 12;
     $query_limit      = 48;
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
@@ -1164,7 +1169,7 @@ class API {
       }
 
       $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
-      $is_featured    = $product->is_featured();
+      $is_featured    = $featured_first && $product->is_featured();
       $is_variable    = $product->is_type('variable');
       $add_to_cart_url = $product->add_to_cart_url();
       $product_custom_fields = array();
@@ -1202,6 +1207,10 @@ class API {
       return $posts_data;
     }
 
+    if (!$featured_first) {
+      return $posts_data;
+    }
+
     $featured_posts = array();
     $regular_posts  = array();
 
@@ -1227,6 +1236,7 @@ class API {
       return array();
     }
 
+    $featured_first = !isset($options['featured_first']) || !empty($options['featured_first']);
     $result_limit = isset($options['result_limit']) ? (int) $options['result_limit'] : 10;
     $safe_limit   = $result_limit > 0 ? $result_limit : 10;
     $posts        = get_posts(array(
@@ -1258,7 +1268,7 @@ class API {
       }
 
       $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
-      $is_featured    = $product->is_featured();
+      $is_featured    = $featured_first && $product->is_featured();
       $is_variable    = $product->is_type('variable');
       $add_to_cart_url = $product->add_to_cart_url();
 

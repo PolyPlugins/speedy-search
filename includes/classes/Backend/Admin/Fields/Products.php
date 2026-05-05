@@ -103,6 +103,14 @@ class Products {
 		);
 
 		add_settings_field(
+			'products_featured_first',
+			__('Featured Products First?', 'speedy-search'),
+			array($this, 'products_featured_first_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
 			'products_top_sellers_first',
 			__('Top Sellers First?', 'speedy-search'),
 			array($this, 'products_top_sellers_first_render'),
@@ -204,6 +212,22 @@ class Products {
       <input type="checkbox" name="speedy_search_settings_polyplugins[products][boolean_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('When the visitor types multiple words, require every word to match (AND).', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Featured ordering and badge in product results.
+	 *
+	 * @return void
+	 */
+	public function products_featured_first_render() {
+		$options = Utils::get_option('products');
+    $option  = array_key_exists('featured_first', $options) ? !empty($options['featured_first']) : true;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][featured_first]" class="form-check-input" role="switch" <?php checked(true, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('List featured products first and show the featured badge in results. When off, featured items are not prioritized and the badge is hidden.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 
