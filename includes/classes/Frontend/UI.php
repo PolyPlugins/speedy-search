@@ -2,6 +2,8 @@
 
 namespace PolyPlugins\Speedy_Search\Frontend;
 
+use PolyPlugins\Speedy_Search\Log;
+
 if (!defined('ABSPATH')) exit;
 
 class UI {
@@ -44,7 +46,7 @@ class UI {
    * @return void
    */
   public function init() {
-    
+    Log::debug('Snappy Search frontend UI initialized.');
   }
   
 }

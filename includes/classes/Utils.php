@@ -93,6 +93,8 @@ class Utils {
     );
 
     if ($result === false) {
+      Log::error('Snappy Search failed to persist version option.');
+
       return false;
     }
 
@@ -266,6 +268,8 @@ class Utils {
     try {
       $tnt->selectIndex($index_name);
     } catch (\Exception $e) {
+      Log::debug(sprintf('delete_db_index: could not select index %s (%s)', $index_name, $e->getMessage()));
+
       return;
     }
 
@@ -328,6 +332,8 @@ class Utils {
   public static function send_error($message, $code = 400) {
     $message = $message ? sanitize_text_field($message) : __('Error', 'speedy-search');
     $code    = is_numeric($code) ? (int) $code : 400;
+
+    Log::error(sprintf('Snappy Search request error (%d): %s', $code, $message));
 
     wp_send_json_error(array(
       'message' => sanitize_text_field($message),

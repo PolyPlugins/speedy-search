@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -39,6 +40,10 @@ class DB {
       ),
       array('%s', '%s', '%d', '%s')
     );
+
+    if (!empty($wpdb->last_error)) {
+      Log::warning(sprintf('Term log insert failed: %s', $wpdb->last_error));
+    }
   }
   
   /**
@@ -66,6 +71,10 @@ class DB {
       array('%d', '%s'),
       array('%d')
     );
+
+    if (!empty($wpdb->last_error)) {
+      Log::warning(sprintf('Term log update failed: %s', $wpdb->last_error));
+    }
   }
 
   /**
@@ -135,6 +144,10 @@ class DB {
         $cutoff_date
       )
     );
+
+    if (!empty($wpdb->last_error)) {
+      Log::warning(sprintf('Term log cleanup failed: %s', $wpdb->last_error));
+    }
   }
 
 }

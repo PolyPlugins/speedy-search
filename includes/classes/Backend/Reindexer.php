@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
 
@@ -55,6 +56,8 @@ class Reindexer {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search admin reindex AJAX registered.');
+
 		add_action('wp_ajax_speedy_search_reindex_all', array($this, 'reindex_all'));
   }
 
@@ -66,6 +69,8 @@ class Reindexer {
     if (!current_user_can('manage_options')) {
       Utils::send_error('Unauthorized', 401);
     }
+
+    Log::info('Snappy Search full reindex triggered from admin.');
 
     Utils::reindex();
 

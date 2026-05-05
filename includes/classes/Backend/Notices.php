@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -20,6 +21,8 @@ class Notices {
   }
 
   public function init() {
+    Log::debug('Snappy Search admin notices initialized.');
+
     add_action('admin_notices', array($this, 'maybe_show_notice'));
     add_action('wp_ajax_speedy_search_dismiss_notice_nonce', array($this, 'dismiss_notice'));
   }

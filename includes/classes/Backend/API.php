@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
 use WP_REST_Request;
@@ -17,6 +18,8 @@ class API {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search REST API module initialized.');
+
     add_action('rest_api_init', array($this, 'add_endpoints'));
     add_action('rest_api_init', array($this, 'add_new_endpoints'));
   }
@@ -297,6 +300,12 @@ class API {
 
       if ($response instanceof WP_REST_Response) {
         if ($response->get_status() >= 400) {
+          Log::warning(sprintf(
+            'Combined search sub-request failed for %s with HTTP %d.',
+            $type,
+            $response->get_status()
+          ));
+
           return $response;
         }
 

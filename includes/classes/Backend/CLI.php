@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
 use WP_Query;
@@ -21,6 +22,8 @@ class CLI {
     }
 
     \WP_CLI::add_command('snappy-search', __CLASS__);
+
+    Log::debug('Snappy Search WP-CLI commands registered.');
   }
 
   /**
@@ -55,6 +58,8 @@ class CLI {
     $missing = Utils::is_missing_extensions();
 
     if ($missing !== false) {
+      Log::error(sprintf('CLI reindex aborted: missing PHP extensions: %s', implode(', ', $missing)));
+
       \WP_CLI::error(sprintf('Missing PHP extensions: %s', implode(', ', $missing)));
     }
 
@@ -69,6 +74,8 @@ class CLI {
 
     if ($orders_only) {
       if (!class_exists('WooCommerce')) {
+        Log::error('CLI reindex aborted: --orders-only requires WooCommerce.');
+
         \WP_CLI::error('--orders-only requires WooCommerce to be active.');
       }
 

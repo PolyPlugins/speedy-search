@@ -12,6 +12,8 @@ class Deactivation {
    * @return void
    */
   public static function init() {
+    Log::info('Snappy Search deactivated.');
+
     self::clear_cron();
   }
   

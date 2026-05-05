@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
 use WP_Query;
@@ -16,9 +17,12 @@ class Background_Worker {
   /**
    * __construct
    *
+   * @param mixed $plugin          Unused; accepts loader signature for consistency.
+   * @param mixed $version         Unused.
+   * @param mixed $plugin_dir_url   Unused.
    * @return void
    */
-  public function __construct() {
+  public function __construct($plugin = null, $version = null, $plugin_dir_url = null) {
     $this->tnt     = TNTSearch::get_instance()->tnt();
     $this->options = Utils::get_options();
   }
@@ -29,6 +33,8 @@ class Background_Worker {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search background cron hooks registered.');
+
     add_action('wp', array($this, 'maybe_add_cron'));
     add_action('snappy_search_background_worker', array($this, 'background_worker'));
     add_action('snappy_search_orders_background_worker', array($this, 'orders_background_worker'));
@@ -192,72 +198,76 @@ class Background_Worker {
 
     $index_name = Utils::get_index_name($post_type);
 
-    if (!$index) {
-      $this->tnt->createIndex($index_name);
-    }
+    try {
+      if (!$index) {
+        $this->tnt->createIndex($index_name);
+      }
 
-    $this->tnt->selectIndex($index_name);
+      $this->tnt->selectIndex($index_name);
 
-    $progress = isset($index['progress']) ? $index['progress'] : 1;
+      $progress = isset($index['progress']) ? $index['progress'] : 1;
 
-    $args = array(
-      'post_type'      => $post_type, 
-      'posts_per_page' => isset($this->options[$type]['batch']) ? $this->options[$type]['batch'] : 20,
-      'offset'         => $progress,
-      'orderby'        => 'date',
-      'order'          => 'ASC',
-      'post_status'    => 'publish'
-    );
+      $args = array(
+        'post_type'      => $post_type, 
+        'posts_per_page' => isset($this->options[$type]['batch']) ? $this->options[$type]['batch'] : 20,
+        'offset'         => $progress,
+        'orderby'        => 'date',
+        'order'          => 'ASC',
+        'post_status'    => 'publish'
+      );
 
-    $query = new WP_Query($args);
+      $query = new WP_Query($args);
 
-    if ($query->have_posts()) {
-      $index = $this->tnt->getIndex();
+      if ($query->have_posts()) {
+        $index = $this->tnt->getIndex();
 
-      while ($query->have_posts()) {
-        $query->the_post();
+        while ($query->have_posts()) {
+          $query->the_post();
 
-        $post_id = get_the_ID();
-        $title   = get_the_title();
-        $content = get_the_content();
+          $post_id = get_the_ID();
+          $title   = get_the_title();
+          $content = get_the_content();
 
-        $args = array(
-          'id'      => intval($post_id),
-          'title'   => sanitize_text_field($title),
-          'content' => sanitize_text_field($content),
-          'author'  => Utils::get_index_author_text($post_id),
-        );
+          $args = array(
+            'id'      => intval($post_id),
+            'title'   => sanitize_text_field($title),
+            'content' => sanitize_text_field($content),
+            'author'  => Utils::get_index_author_text($post_id),
+          );
 
-        $args = Utils::add_taxonomy_terms_to_document($post_id, $args);
+          $args = Utils::add_taxonomy_terms_to_document($post_id, $args);
 
-        if ($post_type === 'product') {
-          $product    = wc_get_product($post_id);
-          $visibility = $product->get_catalog_visibility();
+          if ($post_type === 'product') {
+            $product    = wc_get_product($post_id);
+            $visibility = $product->get_catalog_visibility();
 
-          // If product does not have search visibility remove it
-          if ($visibility === 'hidden' || $visibility === 'catalog') {
-            continue;
+            // If product does not have search visibility remove it
+            if ($visibility === 'hidden' || $visibility === 'catalog') {
+              continue;
+            }
+
+            $sku                    = get_post_meta($post_id, '_sku', true);
+            $args['sku']            = sanitize_text_field($sku);
+            $args['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
+            $args                   = Utils::add_product_custom_fields_to_document($post_id, $args, $product);
           }
 
-          $sku                    = get_post_meta($post_id, '_sku', true);
-          $args['sku']            = sanitize_text_field($sku);
-          $args['sku_normalized'] = sanitize_text_field(strtolower(str_replace('-', '', $sku)));
-          $args                   = Utils::add_product_custom_fields_to_document($post_id, $args, $product);
+          $args = Utils::apply_index_field_settings_to_document($post_type, $args);
+          $args = Utils::sanitize_index_document($args, 255);
+          $index->insert($args);
+
+          $progress++;
+
+          Utils::update_index($type, 'progress', $progress);
         }
-
-        $args = Utils::apply_index_field_settings_to_document($post_type, $args);
-        $args = Utils::sanitize_index_document($args, 255);
-        $index->insert($args);
-
-        $progress++;
-
-        Utils::update_index($type, 'progress', $progress);
+      } else {
+        Utils::update_index($type, 'complete', true);
       }
-    } else {
-      Utils::update_index($type, 'complete', true);
-    }
 
-    wp_reset_postdata();
+      wp_reset_postdata();
+    } catch (\Throwable $e) {
+      Log::error(sprintf('Background indexer failed for post_type %s: %s', $post_type, $e->getMessage()));
+    }
   }
 
   /**
@@ -285,60 +295,64 @@ class Background_Worker {
 
     $index_name = Utils::get_index_name($post_type);
 
-    if (!$index) {
-      $this->tnt->createIndex($index_name);
-    }
-
-    $this->tnt->selectIndex($index_name);
-
-    $progress = isset($index['progress']) ? $index['progress'] : 1;
-    $batch    = isset($this->options[$type]['batch']) ? $this->options[$type]['batch'] : 100;
-
-    $args = array(
-      'limit'     => $batch,
-      'offset'    => $progress - 1,
-      'type'      => 'shop_order',
-      'orderby'   => 'date',
-      'order'     => 'ASC',
-      'return'    => 'objects',
-    );
-
-    $orders = wc_get_orders($args);
-
-    if (!empty($orders)) {
-      $index = $this->tnt->getIndex();
-
-      foreach ($orders as $order) {
-        $order_id = $order->get_id();
-        $order_number = method_exists($order, 'get_order_number')
-          ? $order->get_order_number()
-          : $order_id;
-
-        $args = array(
-          'id'                  => intval($order_id),
-          'order_number'        => sanitize_text_field((string) $order_number),
-          'billing_first_name'  => sanitize_text_field($order->get_billing_first_name()),
-          'billing_last_name'   => sanitize_text_field($order->get_billing_last_name()),
-          'billing_address_1'   => sanitize_text_field($order->get_billing_address_1()),
-          'billing_address_2'   => sanitize_text_field($order->get_billing_address_2()),
-          'billing_city'        => sanitize_text_field($order->get_billing_city()),
-          'billing_email'       => sanitize_email($order->get_billing_email()),
-          'billing_phone'       => sanitize_text_field($order->get_billing_phone()),
-          'shipping_first_name' => sanitize_text_field($order->get_shipping_first_name()),
-          'shipping_last_name'  => sanitize_text_field($order->get_shipping_last_name()),
-          'shipping_address_1'  => sanitize_text_field($order->get_shipping_address_1()),
-          'shipping_address_2'  => sanitize_text_field($order->get_shipping_address_2()),
-          'shipping_city'       => sanitize_text_field($order->get_shipping_city()),
-        );
-
-        $args = Utils::sanitize_index_document($args, 255);
-        $index->insert($args);
-        $progress++;
-
-        Utils::update_index($type, 'progress', $progress);
+    try {
+      if (!$index) {
+        $this->tnt->createIndex($index_name);
       }
-    } else {
-      Utils::update_index($type, 'complete', true);
+
+      $this->tnt->selectIndex($index_name);
+
+      $progress = isset($index['progress']) ? $index['progress'] : 1;
+      $batch    = isset($this->options[$type]['batch']) ? $this->options[$type]['batch'] : 100;
+
+      $args = array(
+        'limit'     => $batch,
+        'offset'    => $progress - 1,
+        'type'      => 'shop_order',
+        'orderby'   => 'date',
+        'order'     => 'ASC',
+        'return'    => 'objects',
+      );
+
+      $orders = wc_get_orders($args);
+
+      if (!empty($orders)) {
+        $index = $this->tnt->getIndex();
+
+        foreach ($orders as $order) {
+          $order_id = $order->get_id();
+          $order_number = method_exists($order, 'get_order_number')
+            ? $order->get_order_number()
+            : $order_id;
+
+          $args = array(
+            'id'                  => intval($order_id),
+            'order_number'        => sanitize_text_field((string) $order_number),
+            'billing_first_name'  => sanitize_text_field($order->get_billing_first_name()),
+            'billing_last_name'   => sanitize_text_field($order->get_billing_last_name()),
+            'billing_address_1'   => sanitize_text_field($order->get_billing_address_1()),
+            'billing_address_2'   => sanitize_text_field($order->get_billing_address_2()),
+            'billing_city'        => sanitize_text_field($order->get_billing_city()),
+            'billing_email'       => sanitize_email($order->get_billing_email()),
+            'billing_phone'       => sanitize_text_field($order->get_billing_phone()),
+            'shipping_first_name' => sanitize_text_field($order->get_shipping_first_name()),
+            'shipping_last_name'  => sanitize_text_field($order->get_shipping_last_name()),
+            'shipping_address_1'  => sanitize_text_field($order->get_shipping_address_1()),
+            'shipping_address_2'  => sanitize_text_field($order->get_shipping_address_2()),
+            'shipping_city'       => sanitize_text_field($order->get_shipping_city()),
+          );
+
+          $args = Utils::sanitize_index_document($args, 255);
+          $index->insert($args);
+          $progress++;
+
+          Utils::update_index($type, 'progress', $progress);
+        }
+      } else {
+        Utils::update_index($type, 'complete', true);
+      }
+    } catch (\Throwable $e) {
+      Log::error(sprintf('Background orders indexer failed: %s', $e->getMessage()));
     }
   }
 

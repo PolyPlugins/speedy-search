@@ -3,6 +3,7 @@
 namespace PolyPlugins\Speedy_Search\Frontend;
 
 use PolyPlugins\Speedy_Search\Backend\DB;
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -71,6 +72,8 @@ class Enqueue {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search frontend asset hooks registered.');
+
     add_action('wp_enqueue_scripts', array($this, 'enqueue'));
   }
   

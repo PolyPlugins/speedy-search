@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend\Admin;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -53,6 +54,8 @@ class Settings {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search settings admin initialized.');
+
 		add_action('admin_menu', array($this, 'add_admin_menu'));
 		add_action('admin_init', array($this, 'register_settings'));
 		add_action('admin_init', array($this, 'load_setting_fields'));
@@ -536,6 +539,12 @@ class Settings {
       $sanitary_values['enabled'] = false;
     }
 
+    if (isset($input['debug']['enabled']) && $input['debug']['enabled']) {
+      $sanitary_values['debug']['enabled'] = $input['debug']['enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['debug']['enabled'] = false;
+    }
+
     if (isset($input['default_result_type']) && $input['default_result_type']) {
       if (array_key_exists($input['default_result_type'], $allowed_post_types)) {
 			  $sanitary_values['default_result_type'] = sanitize_text_field($input['default_result_type']);
@@ -921,6 +930,8 @@ class Settings {
 
     if ($n === 0) {
       add_settings_error('speedy_search_messages', 'speedy_indexing_none', __('Keep at least one source enabled for indexing.', 'speedy-search'), 'error');
+
+      Log::warning('Indexing settings save rejected: all sources were disabled; restored defaults or previous values.');
 
       $restore = array();
 

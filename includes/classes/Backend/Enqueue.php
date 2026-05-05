@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -52,6 +53,8 @@ class Enqueue {
     $is_orders_screen = $hook_suffix === 'woocommerce_page_wc-orders' || ($screen && $screen->id === 'edit-shop_order');
 
     if ($hook_suffix === 'toplevel_page_speedy-search') {
+      Log::debug('Snappy Search admin assets enqueued.');
+
       $this->enqueue_styles();
       $this->enqueue_scripts();
       $this->enqueue_wordpress();

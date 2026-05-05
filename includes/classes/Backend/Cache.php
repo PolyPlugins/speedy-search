@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -19,6 +20,8 @@ class Cache {
   }
 
   public function init() {
+    Log::debug('Snappy Search API cache invalidation hooks registered.');
+
     add_action('save_post', array($this, 'maybe_clear_api_cache_on_save_post'), 10, 3);
     add_action('delete_post', array($this, 'maybe_clear_api_cache_on_delete_post'));
     add_action('woocommerce_product_set_stock_status', array($this, 'maybe_clear_api_cache_on_stock_status_change'), 10, 3);
@@ -54,6 +57,8 @@ class Cache {
     }
 
     Utils::clear_api_cache();
+
+    Log::debug(sprintf('API cache cleared after save_post %d (%s).', (int) $post_id, $post_type));
   }
 
   /**
@@ -89,6 +94,8 @@ class Cache {
     }
 
     Utils::clear_api_cache();
+
+    Log::debug(sprintf('API cache cleared after delete_post %d (%s).', (int) $post_id, $post_type));
   }
 
   /**
@@ -105,6 +112,8 @@ class Cache {
     }
 
     Utils::clear_api_cache();
+
+    Log::debug(sprintf('API cache cleared after stock status change product %d.', (int) $product_id));
   }
 
 }

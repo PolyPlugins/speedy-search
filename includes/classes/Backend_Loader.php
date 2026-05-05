@@ -55,6 +55,8 @@ class Backend_Loader {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search backend modules loading.');
+
     $this->load_enqueue();
     $this->load_settings();
     $this->load_api();

@@ -41,11 +41,15 @@ class Updater {
   }
 
   public function init() {
+    Log::debug('Snappy Search version migration hook registered.');
+
     add_action('wp', array($this, 'maybe_update'));
   }
 
   public function maybe_update() {
-    $stored_version = Utils::get_current_version('speedy_search_version_polyplugins');
+    $version_before = Utils::get_current_version();
+
+    $stored_version = Utils::get_current_version();
 
     if (!$stored_version) {
       $stored_version = $this->version;
@@ -115,6 +119,16 @@ class Updater {
       $this->update_to_160();
 
       Utils::update_current_version($stored_version);
+    }
+
+    $version_after = Utils::get_current_version();
+
+    if ($version_before !== $version_after && $version_after !== false) {
+      Log::info(sprintf(
+        'Snappy Search database version updated from %s to %s.',
+        $version_before ? $version_before : '(none)',
+        $version_after
+      ));
     }
   }
 

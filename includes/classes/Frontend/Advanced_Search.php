@@ -2,7 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Frontend;
 
-use PolyPlugins\Speedy_Search\Utils;
+use PolyPlugins\Speedy_Search\Log;
 
 if (!defined('ABSPATH')) exit;
 
@@ -86,6 +86,8 @@ class Advanced_Search {
         if (file_exists($plugin_template)) {
           return $plugin_template;
         }
+
+        Log::warning(sprintf('Advanced Snappy Search template missing: %s', $plugin_template));
       } else if ($page_template === 'snappy-search-advanced-search-form-stacked.php') {
         $theme_template = locate_template('snappy-search-advanced-search-form-stacked.php');
 
@@ -99,6 +101,8 @@ class Advanced_Search {
         if (file_exists($plugin_template)) {
           return $plugin_template;
         }
+
+        Log::warning(sprintf('Advanced Snappy Search stacked template missing: %s', $plugin_template));
       }
     }
 
