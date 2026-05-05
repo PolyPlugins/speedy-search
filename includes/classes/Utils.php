@@ -557,6 +557,68 @@ class Utils {
   }
 
   /**
+   * Text to index for the post author (display name, slug, login).
+   * Only blog posts (`post`); pages, products, and other types return empty.
+   *
+   * @param int $post_id
+   * @return string
+   */
+  public static function get_index_author_text($post_id) {
+    $post_id = (int) $post_id;
+
+    if ($post_id < 1) {
+      return '';
+    }
+
+    $post = get_post($post_id);
+
+    if (!$post) {
+      return '';
+    }
+
+    if ($post->post_type !== 'post') {
+      return '';
+    }
+
+    $author_id = (int) $post->post_author;
+
+    if ($author_id < 1) {
+      return '';
+    }
+
+    $user = get_userdata($author_id);
+
+    if (!$user) {
+      return '';
+    }
+
+    $raw = array(
+      sanitize_text_field((string) $user->display_name),
+      sanitize_text_field((string) $user->user_nicename),
+      sanitize_text_field((string) $user->user_login),
+    );
+
+    $parts = array();
+
+    foreach ($raw as $part) {
+      if ($part === '') {
+        continue;
+      }
+
+      // Skip bare emails (privacy / noise); keep non-email parts only.
+      if (false !== is_email($part)) {
+        continue;
+      }
+
+      $parts[] = $part;
+    }
+
+    $parts = array_unique($parts);
+
+    return sanitize_text_field(implode(' ', $parts));
+  }
+
+  /**
    * Saved indexing toggles merged with defaults (all on when unset).
    *
    * @return array
@@ -567,6 +629,7 @@ class Utils {
       'content'               => true,
       'categories'            => true,
       'tags'                  => true,
+      'author'                => true,
       'product_sku'           => true,
       'product_custom_fields' => true,
     );
@@ -601,7 +664,7 @@ class Utils {
 
     $n = 0;
 
-    foreach (array('title', 'content', 'categories', 'tags') as $k) {
+    foreach (array('title', 'content', 'categories', 'tags', 'author') as $k) {
       if (!empty($idx[$k])) {
         $n++;
       }
@@ -648,6 +711,10 @@ class Utils {
     if (empty($opts['tags'])) {
       $document['post_tag']    = '';
       $document['product_tag'] = '';
+    }
+
+    if (empty($opts['author'])) {
+      $document['author'] = '';
     }
 
     if ($post_type === 'product') {

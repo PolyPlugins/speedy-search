@@ -886,6 +886,7 @@ class Settings {
       'content'               => true,
       'categories'            => true,
       'tags'                  => true,
+      'author'                => true,
       'product_sku'           => true,
       'product_custom_fields' => true,
     );
@@ -895,6 +896,7 @@ class Settings {
       'content'    => isset($indexing_input['content']) && $indexing_input['content'] === 'on',
       'categories' => isset($indexing_input['categories']) && $indexing_input['categories'] === 'on',
       'tags'       => isset($indexing_input['tags']) && $indexing_input['tags'] === 'on',
+      'author'     => isset($indexing_input['author']) && $indexing_input['author'] === 'on',
     );
 
     if (class_exists('WooCommerce')) {

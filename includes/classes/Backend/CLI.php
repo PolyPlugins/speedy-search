@@ -252,6 +252,7 @@ class CLI {
           'id'      => intval($post_id),
           'title'   => sanitize_text_field($title),
           'content' => sanitize_text_field($content),
+          'author'  => Utils::get_index_author_text($post_id),
         );
 
         $doc = Utils::add_taxonomy_terms_to_document($post_id, $doc);

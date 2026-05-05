@@ -102,6 +102,14 @@ class Indexing {
 			'speedy_search_indexing_section_polyplugins'
 		);
 
+		add_settings_field(
+			'indexing_author',
+			__('Index post author?', 'speedy-search'),
+			array($this, 'indexing_author_render'),
+			'speedy_search_indexing_polyplugins',
+			'speedy_search_indexing_section_polyplugins'
+		);
+
     if (class_exists('WooCommerce')) {
       add_settings_field(
         'indexing_product_sku',
@@ -193,6 +201,19 @@ class Indexing {
       <input type="checkbox" name="speedy_search_settings_polyplugins[indexing][tags]" class="form-check-input snappy-indexing-source" role="switch" <?php checked(true, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Include post tags and product tags in indexed content.', 'speedy-search'); ?></strong></p>
+		<?php
+  }
+
+  /**
+   * @return void
+   */
+  public function indexing_author_render() {
+    $option = $this->get_bool('author');
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[indexing][author]" class="form-check-input snappy-indexing-source" role="switch" <?php checked(true, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Index the post author name in the post index.', 'speedy-search'); ?></strong></p>
 		<?php
   }
 

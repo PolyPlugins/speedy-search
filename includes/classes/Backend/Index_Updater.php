@@ -84,6 +84,7 @@ class Index_Updater {
       'id'      => intval($post_id),
       'title'   => $title,
       'content' => $content,
+      'author'  => Utils::get_index_author_text($post_id),
     );
 
     $data = Utils::add_taxonomy_terms_to_document($post_id, $data);
