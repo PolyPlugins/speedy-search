@@ -114,6 +114,21 @@ class Enqueue {
   }
   
   /**
+   * Options passed to frontend scripts (includes ordered filter keys for UI).
+   *
+   * @return array
+   */
+  private function get_script_options() {
+    return array_merge(
+      $this->options,
+      array(
+        'filters_attributes_ordered_keys'   => Utils::get_filters_attributes_allowed_keys(),
+        'filters_custom_fields_ordered_keys' => Utils::get_filters_custom_fields_ordered_keys(),
+      )
+    );
+  }
+
+  /**
    * Enqueue selector search
    *
    * @return void
@@ -126,7 +141,7 @@ class Enqueue {
         'snappy-search-selector',
         'snappy_search_object',
         array(
-          'options'  => $this->options,
+          'options'  => $this->get_script_options(),
           'popular'  => DB::get_top_terms_last_x_days(),
           'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
           'endpoints' => Utils::get_api_endpoints(),
@@ -153,7 +168,7 @@ class Enqueue {
         'snappy-search-shortcode',
         'snappy_search_object',
         array(
-          'options'  => $this->options,
+          'options'  => $this->get_script_options(),
           'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
           'endpoints' => Utils::get_api_endpoints(),
         )
@@ -183,7 +198,7 @@ class Enqueue {
           'snappy-search-advanced-stacked',
           'snappy_search_object',
           array(
-            'options'  => $this->options,
+            'options'  => $this->get_script_options(),
             'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
             'endpoints' => Utils::get_api_endpoints(),
           )
@@ -195,7 +210,7 @@ class Enqueue {
           'snappy-search-advanced',
           'snappy_search_object',
           array(
-            'options'  => $this->options,
+            'options'  => $this->get_script_options(),
             'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
             'endpoints' => Utils::get_api_endpoints(),
           )

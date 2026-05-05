@@ -651,6 +651,268 @@ class Utils {
   }
 
   /**
+   * Normalize one Filters-tab attribute token to storage key (pa_*, attr_*).
+   *
+   * @param string $token
+   * @return string
+   */
+  public static function normalize_filters_attribute_token($token) {
+    $token = trim((string) $token);
+
+    if ($token === '') {
+      return '';
+    }
+
+    $lower = strtolower($token);
+
+    if (strpos($lower, 'pa_') === 0) {
+      return sanitize_key($lower);
+    }
+
+    if (strpos($lower, 'attr_') === 0) {
+      return sanitize_key($lower);
+    }
+
+    $base = sanitize_title($token);
+
+    if ($base === '') {
+      return '';
+    }
+
+    if (function_exists('wc_attribute_taxonomy_name')) {
+      return wc_attribute_taxonomy_name($base);
+    }
+
+    return 'pa_' . $base;
+  }
+
+  /**
+   * Parsed attribute keys from filters_attributes option (comma-separated).
+   *
+   * @return array
+   */
+  public static function get_filters_attributes_allowed_keys() {
+    $raw = self::get_option('filters_attributes');
+
+    if (!is_string($raw) || trim($raw) === '') {
+      return array();
+    }
+
+    $parts = array_filter(array_map('trim', explode(',', $raw)));
+    $keys  = array();
+
+    foreach ($parts as $p) {
+      $k = self::normalize_filters_attribute_token($p);
+
+      if ($k !== '') {
+        $keys[] = $k;
+      }
+    }
+
+    return array_values(array_unique($keys));
+  }
+
+  /**
+   * Custom field meta keys from filters_custom_fields option in comma order (for filter UI ordering).
+   *
+   * @return array
+   */
+  public static function get_filters_custom_fields_ordered_keys() {
+    $raw = self::get_option('filters_custom_fields');
+
+    if (!is_string($raw) || trim($raw) === '') {
+      return array();
+    }
+
+    $parts = array_filter(array_map('trim', explode(',', $raw)));
+    $keys  = array();
+
+    foreach ($parts as $p) {
+      $k = sanitize_key($p);
+
+      if ($k !== '') {
+        $keys[] = $k;
+      }
+    }
+
+    return array_values(array_unique($keys));
+  }
+
+  /**
+   * WooCommerce product attributes for client-side filter UI (global taxonomies, local attributes, variations).
+   *
+   * @param int   $product_id
+   * @param array $allowed_keys Attribute keys from settings; empty array returns no attributes.
+   * @return array Attribute key => array with keys label, values (each value: slug, name).
+   */
+  public static function get_product_attributes_for_filter($product_id, $allowed_keys = array()) {
+    $product_id = (int) $product_id;
+
+    if ($product_id < 1 || !function_exists('wc_get_product')) {
+      return array();
+    }
+
+    if (!is_array($allowed_keys) || empty($allowed_keys)) {
+      return array();
+    }
+
+    $product = wc_get_product($product_id);
+
+    if (!$product) {
+      return array();
+    }
+
+    $slugmap = array();
+
+    $ensure_key = function ($key, $label) use (&$slugmap) {
+      if (!isset($slugmap[$key])) {
+        $slugmap[$key] = array(
+          'label' => $label,
+          'terms' => array(),
+        );
+      }
+    };
+
+    $add_term = function ($key, $label, $slug, $name) use (&$slugmap, $ensure_key) {
+      $slug = sanitize_title((string) $slug);
+      $name = sanitize_text_field((string) $name);
+
+      if ($slug === '' || $name === '') {
+        return;
+      }
+
+      $ensure_key($key, $label);
+      $slugmap[$key]['terms'][$slug] = $name;
+    };
+
+    foreach ($product->get_attributes() as $attr) {
+      if (!$attr instanceof \WC_Product_Attribute) {
+        continue;
+      }
+
+      $tax_name = $attr->get_name();
+      $label    = wc_attribute_label($tax_name);
+
+      if ($attr->is_taxonomy()) {
+        foreach ((array) $attr->get_options() as $term_id) {
+          $term = get_term((int) $term_id);
+
+          if ($term && !is_wp_error($term)) {
+            $add_term($tax_name, $label, $term->slug, $term->name);
+          }
+        }
+      } else {
+        $key = 'attr_' . sanitize_title($tax_name);
+
+        foreach ((array) $attr->get_options() as $opt) {
+          $opt = sanitize_text_field((string) $opt);
+
+          if ($opt === '') {
+            continue;
+          }
+
+          $add_term($key, $label, sanitize_title($opt), $opt);
+        }
+      }
+    }
+
+    if ($product->is_type('variable')) {
+      foreach ($product->get_children() as $child_id) {
+        $child = wc_get_product($child_id);
+
+        if (!$child) {
+          continue;
+        }
+
+        $va = $child->get_variation_attributes();
+
+        if (empty($va) || !is_array($va)) {
+          continue;
+        }
+
+        foreach ($va as $meta_key => $slug) {
+          $slug = is_string($slug) ? trim($slug) : '';
+
+          if ($slug === '') {
+            continue;
+          }
+
+          $tax_name = str_replace('attribute_', '', (string) $meta_key);
+
+          if (taxonomy_exists($tax_name)) {
+            $term = get_term_by('slug', $slug, $tax_name);
+            $nm   = ($term && !is_wp_error($term)) ? sanitize_text_field($term->name) : $slug;
+
+            $add_term($tax_name, wc_attribute_label($tax_name), $slug, $nm);
+          } else {
+            $key = 'attr_' . sanitize_title($tax_name);
+            $nm  = sanitize_text_field($slug);
+
+            $add_term($key, sanitize_text_field(wc_clean($tax_name)), sanitize_title($slug), $nm);
+          }
+        }
+      }
+    }
+
+    if (function_exists('wc_get_attribute_taxonomies') && function_exists('wc_attribute_taxonomy_name') && function_exists('wc_get_product_terms')) {
+      foreach (wc_get_attribute_taxonomies() as $tax_row) {
+        $tax_name = wc_attribute_taxonomy_name($tax_row->attribute_name);
+        $terms    = wc_get_product_terms($product_id, $tax_name, array('fields' => 'all'));
+
+        if (empty($terms) || is_wp_error($terms)) {
+          continue;
+        }
+
+        $label = !empty($tax_row->attribute_label) ? sanitize_text_field($tax_row->attribute_label) : wc_attribute_label($tax_name);
+
+        foreach ($terms as $term) {
+          if (!isset($term->slug)) {
+            continue;
+          }
+
+          $add_term($tax_name, $label, $term->slug, $term->name);
+        }
+      }
+    }
+
+    $out = array();
+
+    foreach ($slugmap as $key => $data) {
+      if (empty($data['terms'])) {
+        continue;
+      }
+
+      $vals = array();
+
+      foreach ($data['terms'] as $sl => $nm) {
+        $vals[] = array(
+          'slug' => $sl,
+          'name' => $nm,
+        );
+      }
+
+      usort($vals, function ($a, $b) {
+        return strcmp($a['name'], $b['name']);
+      });
+
+      $out[$key] = array(
+        'label'  => $data['label'],
+        'values' => $vals,
+      );
+    }
+
+    $filtered = array();
+
+    foreach ($allowed_keys as $k) {
+      if (isset($out[$k])) {
+        $filtered[$k] = $out[$k];
+      }
+    }
+
+    return $filtered;
+  }
+
+  /**
    * Saved indexing toggles merged with defaults (all on when unset).
    *
    * @return array

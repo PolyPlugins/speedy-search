@@ -536,6 +536,7 @@ class API {
     $boolean_search    = $this->is_boolean_search_enabled('products');
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+    $filters_attributes_allowed = Utils::get_filters_attributes_allowed_keys();
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -637,6 +638,7 @@ class API {
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
           'categories'     => Utils::get_product_categories_for_filter($post->ID),
+          'attributes'     => Utils::get_product_attributes_for_filter($post->ID, $filters_attributes_allowed),
           'title_match'      => $this->title_contains_search_terms(get_the_title($post->ID), $search_query),
           'total_sales'      => (int) get_post_meta($post->ID, '_total_sales', true),
           'relevance_order'  => $relevance_idx,
@@ -1149,6 +1151,7 @@ class API {
     $query_limit      = 48;
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+    $filters_attributes_allowed = Utils::get_filters_attributes_allowed_keys();
     $posts      = get_posts(array(
       'post_type'      => 'product',
       'post_status'    => 'publish',
@@ -1198,6 +1201,7 @@ class API {
         'permalink'       => get_permalink($post->ID),
         'custom_fields'   => $product_custom_fields,
         'categories'      => Utils::get_product_categories_for_filter($post->ID),
+        'attributes'      => Utils::get_product_attributes_for_filter($post->ID, $filters_attributes_allowed),
       );
 
       if (count($posts_data) >= $safe_limit) {
@@ -1257,6 +1261,7 @@ class API {
       ),
     ));
     $posts_data = array();
+    $filters_attributes_allowed = Utils::get_filters_attributes_allowed_keys();
     $tags = array(
       'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
       'span' => array('class' => array(), 'style' => array()),
@@ -1289,6 +1294,7 @@ class API {
         'permalink'       => get_permalink($post->ID),
         'custom_fields'   => array(),
         'categories'      => Utils::get_product_categories_for_filter($post->ID),
+        'attributes'      => Utils::get_product_attributes_for_filter($post->ID, $filters_attributes_allowed),
       );
     }
 

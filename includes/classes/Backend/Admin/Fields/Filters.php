@@ -125,6 +125,14 @@ class Filters {
 			'speedy_search_filters_polyplugins',
 			'speedy_search_filters_section_polyplugins'
 		);
+
+		add_settings_field(
+			'filters_attributes',
+			__('Product Attributes', 'speedy-search'),
+			array($this, 'filters_attributes_render'),
+			'speedy_search_filters_polyplugins',
+			'speedy_search_filters_section_polyplugins'
+		);
   }
 
   /**
@@ -215,6 +223,17 @@ class Filters {
     <p><strong><?php esc_html_e('Add custom product meta keys separated by commas to show as filters. Example: _color,_size', 'speedy-search'); ?></strong></p>
 		<?php
 	}
+
+  /**
+   * @return void
+   */
+  public function filters_attributes_render() {
+    $option = Utils::get_option('filters_attributes');
+    ?>
+    <input type="text" name="speedy_search_settings_polyplugins[filters_attributes]" value="<?php echo esc_attr($option); ?>" />
+    <p><strong><?php esc_html_e('WooCommerce attribute keys to show as filters, comma-separated. Use global attributes as pa_color or color; local attributes as attr_key. Example: pa_color, pa_size', 'speedy-search'); ?></strong></p>
+    <?php
+  }
 
   /**
    * @return void

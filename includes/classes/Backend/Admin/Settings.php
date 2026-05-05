@@ -592,6 +592,10 @@ class Settings {
 			$sanitary_values['filters_custom_fields'] = sanitize_text_field($input['filters_custom_fields']);
 		}
 
+    if (isset($input['filters_attributes']) && $input['filters_attributes']) {
+      $sanitary_values['filters_attributes'] = sanitize_text_field($input['filters_attributes']);
+    }
+
     if (isset($input['filters_rating_enabled']) && $input['filters_rating_enabled']) {
       $sanitary_values['filters_rating_enabled'] = $input['filters_rating_enabled'] === 'on' ? true : false;
     } else {

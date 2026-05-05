@@ -29,7 +29,8 @@ jQuery(document).ready(function ($) {
   let price_range_filter_enabled = snappy_search_object.options?.filters_price_range_enabled ?? false;
   let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
   let category_filter_enabled = snappy_search_object.options?.filters_category_enabled ?? false;
-  let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled || category_filter_enabled;
+  let attribute_filter_enabled = String(snappy_search_object.options?.filters_attributes ?? '').trim().length > 0;
+  let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled || category_filter_enabled || attribute_filter_enabled;
   let search_endpoint       = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
   let latest_endpoint       = snappy_search_object.endpoints?.latest ?? snappy_search_object.endpoints?.preload ?? "/wp-json/speedy-search/v1/latest/";
   let use_search_php        = snappy_search_object.endpoints?.has_custom_file ?? false;
@@ -342,6 +343,10 @@ jQuery(document).ready(function ($) {
       populateCategoryFilters($filters, products);
     }
 
+    if (attribute_filter_enabled) {
+      populateProductAttributeFilters($filters, products);
+    }
+
     if (custom_field_filter_enabled) {
       populateCustomFieldFilters($filters, products);
     }
@@ -368,8 +373,9 @@ jQuery(document).ready(function ($) {
       let price = parsePrice(item.price);
       let customFieldsMatch = custom_field_filter_enabled ? matchCustomFieldFilters($filters, item) : true;
       let categoryMatch = category_filter_enabled ? matchCategoryFilter($filters, item) : true;
+      let attributeMatch = attribute_filter_enabled ? matchProductAttributeFilters($filters, item) : true;
 
-      return rating >= minRating && price >= minPrice && price <= maxPrice && customFieldsMatch && categoryMatch;
+      return rating >= minRating && price >= minPrice && price <= maxPrice && customFieldsMatch && categoryMatch && attributeMatch;
     });
   }
 
@@ -503,6 +509,131 @@ jQuery(document).ready(function ($) {
     return match;
   }
 
+  function populateProductAttributeFilters($filters, products) {
+    let $container = $filters.find('.product-attribute-filters');
+
+    if (!$container.length) {
+      return;
+    }
+
+    let selectedMap = {};
+
+    $container.find('.filter-product-attribute').each(function () {
+      selectedMap[String($(this).data('attribute-key'))] = $(this).val();
+    });
+
+    let fieldMap = {};
+
+    $.each(products, function (_, item) {
+      if (!item.attributes || typeof item.attributes !== 'object') {
+        return;
+      }
+
+      $.each(item.attributes, function (attrKey, attrBlock) {
+        if (!attrBlock || typeof attrBlock !== 'object' || !$.isArray(attrBlock.values)) {
+          return;
+        }
+
+        let label = attrBlock.label ? String(attrBlock.label) : String(attrKey);
+
+        if (!fieldMap[attrKey]) {
+          fieldMap[attrKey] = { label: label, slugNames: {} };
+        }
+
+        $.each(attrBlock.values, function (_, v) {
+          if (v && v.slug != null) {
+            fieldMap[attrKey].slugNames[String(v.slug)] = v.name ? String(v.name) : String(v.slug);
+          }
+        });
+      });
+    });
+
+    $container.empty();
+
+    let orderedAttrKeys = Array.isArray(snappy_search_object.options?.filters_attributes_ordered_keys)
+      ? snappy_search_object.options.filters_attributes_ordered_keys
+      : [];
+    let sortedKeys = [];
+    let attrSeen = {};
+
+    $.each(orderedAttrKeys, function (_, k) {
+      let key = String(k);
+
+      if (Object.prototype.hasOwnProperty.call(fieldMap, key) && !attrSeen[key]) {
+        sortedKeys.push(key);
+        attrSeen[key] = true;
+      }
+    });
+
+    $.each(Object.keys(fieldMap).sort(function (a, b) {
+      return fieldMap[a].label.localeCompare(fieldMap[b].label);
+    }), function (_, k) {
+      if (!attrSeen[k]) {
+        sortedKeys.push(k);
+        attrSeen[k] = true;
+      }
+    });
+
+    $.each(sortedKeys, function (_, attrKey) {
+      let label = fieldMap[attrKey].label;
+      let slugNames = fieldMap[attrKey].slugNames;
+      let slugs = Object.keys(slugNames).sort(function (a, b) {
+        return slugNames[a].localeCompare(slugNames[b]);
+      });
+      let selected = selectedMap[attrKey] || '';
+      let options = '<option value="">' + __('All', 'speedy-search') + '</option>';
+
+      $.each(slugs, function (_, slug) {
+        let sel = selected === slug ? ' selected' : '';
+        options += '<option value="' + slug.replace(/"/g, '&quot;') + '"' + sel + '>' + slugNames[slug].replace(/</g, '&lt;') + '</option>';
+      });
+
+      $container.append(
+        '<label>' + label.replace(/</g, '&lt;') + '</label>' +
+        '<select class="filter-product-attribute" data-attribute-key="' + String(attrKey).replace(/"/g, '&quot;') + '">' +
+          options +
+        '</select>'
+      );
+    });
+  }
+
+  function matchProductAttributeFilters($filters, item) {
+    let attrs = item.attributes && typeof item.attributes === 'object' ? item.attributes : {};
+    let ok = true;
+
+    $filters.find('.filter-product-attribute').each(function () {
+      let selected = String($(this).val() || '').trim();
+      let attrKey = String($(this).data('attribute-key') || '');
+
+      if (!selected || attrKey === '') {
+        return;
+      }
+
+      let block = attrs[attrKey];
+
+      if (!block || !$.isArray(block.values)) {
+        ok = false;
+        return false;
+      }
+
+      let hit = false;
+
+      $.each(block.values, function (_, v) {
+        if (v && String(v.slug) === selected) {
+          hit = true;
+          return false;
+        }
+      });
+
+      if (!hit) {
+        ok = false;
+        return false;
+      }
+    });
+
+    return ok;
+  }
+
   function normalizeCustomFieldKey(fieldKey) {
     return String(fieldKey || '').trim().toLowerCase();
   }
@@ -568,7 +699,30 @@ jQuery(document).ready(function ($) {
 
     $container.empty();
 
-    $.each(fieldValues, function (fieldKey, values) {
+    let orderedCfKeys = Array.isArray(snappy_search_object.options?.filters_custom_fields_ordered_keys)
+      ? snappy_search_object.options.filters_custom_fields_ordered_keys
+      : [];
+    let fieldsToRender = [];
+    let cfSeen = {};
+
+    $.each(orderedCfKeys, function (_, k) {
+      let key = normalizeCustomFieldKey(k);
+
+      if (fieldValues[key] && Object.keys(fieldValues[key]).length && !cfSeen[key]) {
+        fieldsToRender.push(key);
+        cfSeen[key] = true;
+      }
+    });
+
+    $.each(Object.keys(fieldValues).sort(), function (_, fieldKey) {
+      if (!cfSeen[fieldKey] && fieldValues[fieldKey] && Object.keys(fieldValues[fieldKey]).length) {
+        fieldsToRender.push(fieldKey);
+        cfSeen[fieldKey] = true;
+      }
+    });
+
+    $.each(fieldsToRender, function (_, fieldKey) {
+      let values = fieldValues[fieldKey];
       let valueKeys = Object.keys(values).sort();
 
       if (!valueKeys.length) {
@@ -689,6 +843,15 @@ jQuery(document).ready(function ($) {
             </span>
           </h4>
           <div class="product-filters-body">
+          ${price_range_filter_enabled ? `
+          <label>${__('Price Range', 'speedy-search')}</label>
+          <div class="dual-range-slider">
+            <div class="dual-range-track"></div>
+            <div class="dual-range-fill"></div>
+            <input type="range" class="filter-price-min" step="1" value="0">
+            <input type="range" class="filter-price-max" step="1" value="0">
+          </div>
+          <p class="price-range-text"><span class="filter-price-min-label">0.00</span> - <span class="filter-price-max-label">0.00</span></p>` : ''}
           ${rating_filter_enabled ? `
           <label>${__('Rating', 'speedy-search')}</label>
           <select class="filter-rating">
@@ -704,16 +867,8 @@ jQuery(document).ready(function ($) {
           <select class="filter-product-category">
             <option value="">${__('All categories', 'speedy-search')}</option>
           </select>` : ''}
+          ${attribute_filter_enabled ? '<div class="product-attribute-filters"></div>' : ''}
           ${custom_field_filter_enabled ? '<div class="custom-field-filters"></div>' : ''}
-          ${price_range_filter_enabled ? `
-          <label>${__('Price Range', 'speedy-search')}</label>
-          <div class="dual-range-slider">
-            <div class="dual-range-track"></div>
-            <div class="dual-range-fill"></div>
-            <input type="range" class="filter-price-min" step="1" value="0">
-            <input type="range" class="filter-price-max" step="1" value="0">
-          </div>
-          <p class="price-range-text"><span class="filter-price-min-label">0.00</span> - <span class="filter-price-max-label">0.00</span></p>` : ''}
           </div>
         </div>
       `;
