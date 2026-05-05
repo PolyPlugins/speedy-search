@@ -282,10 +282,25 @@ jQuery(document).ready(function ($) {
         return false;
       }
     }
+    if ($(".snappy-indexing-source").length && $(".snappy-indexing-source:checked").length === 0) {
+      Swal.fire({
+        title: __("Error", 'speedy-search'),
+        text: __("Keep at least one indexing source enabled.", 'speedy-search'),
+        icon: "error",
+        confirmButtonColor: "#46BEA4",
+      });
+
+      $(".snappy-indexing-source").addClass("validation");
+
+      return false;
+    }
+
     $("#tracking_delay").removeClass("validation");
     $("#typing_delay").removeClass("validation");
 
     $(".advanced-enabled-types").removeClass("validation");
+
+    $(".snappy-indexing-source").removeClass("validation");
 
     return true;
   }

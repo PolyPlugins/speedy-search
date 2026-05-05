@@ -282,6 +282,7 @@ class CLI {
           $doc                         = Utils::add_product_custom_fields_to_document($post_id, $doc, $product);
         }
 
+        $doc = Utils::apply_index_field_settings_to_document($post_type, $doc);
         $doc = Utils::sanitize_index_document($doc, 255);
         $index_engine->insert($doc);
 

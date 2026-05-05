@@ -91,6 +91,7 @@ class Settings {
       add_submenu_page('speedy-search', __('Downloads', 'speedy-search'), __('Downloads', 'speedy-search'), 'manage_options', 'speedy-search-downloads', array($this, 'redirect_to_downloads_tab'));
     }
 
+    add_submenu_page('speedy-search', __('Indexing', 'speedy-search'), __('Indexing', 'speedy-search'), 'manage_options', 'speedy-search-indexing', array($this, 'redirect_to_indexing_tab'));
     add_submenu_page('speedy-search', __('Advanced', 'speedy-search'), __('Advanced', 'speedy-search'), 'manage_options', 'speedy-search-advanced', array($this, 'redirect_to_advanced_tab'));
     // add_submenu_page('speedy-search', __('Repo', 'speedy-search'), __('Repo', 'speedy-search'), 'manage_options', 'speedy-search-repo', array($this, 'redirect_to_repo_tab'));
 	}
@@ -212,6 +213,7 @@ class Settings {
       'downloads' => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Downloads',
       'filters'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Filters',
       'general'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\General',
+      'indexing'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Indexing',
       'pages'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Pages',
       'popular'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Popular',
       'orders'    => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Orders',
@@ -245,6 +247,7 @@ class Settings {
             <div class="col-3"></div>
             <div class="col-6">
               <h1><?php esc_html_e('Snappy Search Settings', 'speedy-search'); ?></h1>
+              <?php settings_errors(); ?>
             </div>
             <div class="col-3"></div>
           </div>
@@ -294,6 +297,14 @@ class Settings {
                       <?php esc_html_e('Orders', 'speedy-search'); ?>
                     </a>
                   </li>
+                <?php endif; ?>
+                <li>
+                  <a href="javascript:void(0);" data-section="indexing">
+                    <i class="bi bi-ui-checks-grid"></i>
+                    <?php esc_html_e('Indexing', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <?php if (class_exists('WooCommerce')) : ?>
                   <li>
                     <a href="javascript:void(0);" data-section="filters">
                       <i class="bi bi-funnel-fill"></i>
@@ -378,6 +389,19 @@ class Settings {
                   do_settings_sections('speedy_search_orders_polyplugins');
                   ?>
                 </div>
+              <?php endif; ?>
+
+              <div class="tab indexing" style="display: none;">
+                
+                <div class="warning">
+                  <?php esc_html_e('Choose which parts of posts, pages, products, and downloads are written into the search index. At least one option must stay enabled. After changing these settings, the index is rebuilt automatically.', 'speedy-search'); ?>
+                </div>
+                <?php
+                do_settings_sections('speedy_search_indexing_polyplugins');
+                ?>
+              </div>
+
+              <?php if (class_exists('WooCommerce')) : ?>
                 <div class="tab filters" style="display: none;">
                   <?php
                   do_settings_sections('speedy_search_filters_polyplugins');
@@ -449,7 +473,13 @@ class Settings {
 
   public function redirect_to_filters_tab() {
     wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=filters'));
-    
+
+    exit;
+  }
+
+  public function redirect_to_indexing_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=indexing'));
+
     exit;
   }
 
@@ -821,6 +851,79 @@ class Settings {
       $sanitary_values['repo_enabled'] = $input['repo_enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['repo_enabled'] = false;
+    }
+
+    $prev_opts = Utils::get_options();
+
+    if (!is_array($prev_opts)) {
+      $prev_opts = array();
+    }
+
+    $prev_indexing = isset($prev_opts['indexing']) && is_array($prev_opts['indexing']) ? $prev_opts['indexing'] : array();
+
+    $indexing_input = isset($input['indexing']) && is_array($input['indexing']) ? $input['indexing'] : array();
+
+    $idx_defaults = array(
+      'title'                 => true,
+      'content'               => true,
+      'categories'            => true,
+      'tags'                  => true,
+      'product_sku'           => true,
+      'product_custom_fields' => true,
+    );
+
+    $sanitary_idx = array(
+      'title'      => isset($indexing_input['title']) && $indexing_input['title'] === 'on',
+      'content'    => isset($indexing_input['content']) && $indexing_input['content'] === 'on',
+      'categories' => isset($indexing_input['categories']) && $indexing_input['categories'] === 'on',
+      'tags'       => isset($indexing_input['tags']) && $indexing_input['tags'] === 'on',
+    );
+
+    if (class_exists('WooCommerce')) {
+      $sanitary_idx['product_sku']           = isset($indexing_input['product_sku']) && $indexing_input['product_sku'] === 'on';
+      $sanitary_idx['product_custom_fields'] = isset($indexing_input['product_custom_fields']) && $indexing_input['product_custom_fields'] === 'on';
+    } else {
+      $sanitary_idx['product_sku']           = array_key_exists('product_sku', $prev_indexing) ? (bool) $prev_indexing['product_sku'] : true;
+      $sanitary_idx['product_custom_fields'] = array_key_exists('product_custom_fields', $prev_indexing) ? (bool) $prev_indexing['product_custom_fields'] : true;
+    }
+
+    $n = Utils::count_enabled_indexing_sources($sanitary_idx);
+
+    if ($n === 0) {
+      add_settings_error('speedy_search_messages', 'speedy_indexing_none', __('Keep at least one source enabled for indexing.', 'speedy-search'), 'error');
+
+      $restore = array();
+
+      foreach ($idx_defaults as $k => $def) {
+        $restore[$k] = array_key_exists($k, $prev_indexing) ? (bool) $prev_indexing[$k] : $def;
+      }
+
+      if (Utils::count_enabled_indexing_sources($restore) === 0) {
+        $sanitary_values['indexing'] = $idx_defaults;
+      } else {
+        $sanitary_values['indexing'] = $restore;
+      }
+    } else {
+      $sanitary_values['indexing'] = $sanitary_idx;
+
+      $old_flat = array();
+
+      foreach ($idx_defaults as $k => $def) {
+        $old_flat[$k] = array_key_exists($k, $prev_indexing) ? (bool) $prev_indexing[$k] : $def;
+      }
+
+      $changed = false;
+
+      foreach ($idx_defaults as $k => $_) {
+        if ($old_flat[$k] !== $sanitary_idx[$k]) {
+          $changed = true;
+          break;
+        }
+      }
+
+      if ($changed) {
+        Utils::reindex();
+      }
     }
 
     return $sanitary_values;

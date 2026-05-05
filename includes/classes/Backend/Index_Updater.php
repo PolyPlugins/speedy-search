@@ -96,6 +96,7 @@ class Index_Updater {
       $data                   = Utils::add_product_custom_fields_to_document($post_id, $data, $product);
     }
 
+    $data = Utils::apply_index_field_settings_to_document($post_type, $data);
     $data = Utils::sanitize_index_document($data, 255);
     $index->insert($data);
   }

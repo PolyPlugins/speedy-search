@@ -244,6 +244,7 @@ class Background_Worker {
           $args                   = Utils::add_product_custom_fields_to_document($post_id, $args, $product);
         }
 
+        $args = Utils::apply_index_field_settings_to_document($post_type, $args);
         $args = Utils::sanitize_index_document($args, 255);
         $index->insert($args);
 

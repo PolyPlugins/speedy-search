@@ -557,6 +557,127 @@ class Utils {
   }
 
   /**
+   * Saved indexing toggles merged with defaults (all on when unset).
+   *
+   * @return array
+   */
+  public static function get_indexing_field_options() {
+    $defaults = array(
+      'title'                 => true,
+      'content'               => true,
+      'categories'            => true,
+      'tags'                  => true,
+      'product_sku'           => true,
+      'product_custom_fields' => true,
+    );
+
+    $stored = self::get_option('indexing');
+
+    if (!is_array($stored)) {
+      return $defaults;
+    }
+
+    foreach ($defaults as $key => $default_on) {
+      if (!array_key_exists($key, $stored)) {
+        continue;
+      }
+
+      $defaults[$key] = !empty($stored[$key]);
+    }
+
+    return $defaults;
+  }
+
+  /**
+   * How many indexing sources are enabled (used to enforce “at least one” in settings).
+   *
+   * @param array $idx Keys: title, content, categories, tags, optional product_* when WooCommerce is active.
+   * @return int
+   */
+  public static function count_enabled_indexing_sources($idx) {
+    if (!is_array($idx)) {
+      return 0;
+    }
+
+    $n = 0;
+
+    foreach (array('title', 'content', 'categories', 'tags') as $k) {
+      if (!empty($idx[$k])) {
+        $n++;
+      }
+    }
+
+    if (class_exists('WooCommerce')) {
+      foreach (array('product_sku', 'product_custom_fields') as $k) {
+        if (!empty($idx[$k])) {
+          $n++;
+        }
+      }
+    }
+
+    return $n;
+  }
+
+  /**
+   * Remove document fields the admin turned off under Indexing settings.
+   *
+   * @param string $post_type
+   * @param array  $document
+   * @return array
+   */
+  public static function apply_index_field_settings_to_document($post_type, $document) {
+    if (!is_array($document)) {
+      return $document;
+    }
+
+    $opts = self::get_indexing_field_options();
+
+    if (empty($opts['title'])) {
+      $document['title'] = '';
+    }
+
+    if (empty($opts['content'])) {
+      $document['content'] = '';
+    }
+
+    if (empty($opts['categories'])) {
+      $document['category']    = '';
+      $document['product_cat'] = '';
+    }
+
+    if (empty($opts['tags'])) {
+      $document['post_tag']    = '';
+      $document['product_tag'] = '';
+    }
+
+    if ($post_type === 'product') {
+      if (empty($opts['product_sku'])) {
+        $document['sku']              = '';
+        $document['sku_normalized'] = '';
+      }
+
+      if (empty($opts['product_custom_fields'])) {
+        $custom_fields_raw = self::get_option('filters_custom_fields');
+        $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+
+        foreach ($custom_fields as $custom_field) {
+          $meta_key = sanitize_key($custom_field);
+
+          if ($meta_key === '') {
+            continue;
+          }
+
+          if (isset($document[$meta_key])) {
+            unset($document[$meta_key]);
+          }
+        }
+      }
+    }
+
+    return $document;
+  }
+
+  /**
    * Add taxonomy term names into the index document.
    *
    * @param int   $post_id
