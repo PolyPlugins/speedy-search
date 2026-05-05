@@ -875,7 +875,7 @@ jQuery(document).ready(function ($) {
     }
 
     let searchForm = `
-      <div class="instant-search-wrapper">
+      <div class="instant-search-wrapper" style="display: none;">
         ${popularHTML}
         ${tabsHTML}
         <div class="instant-search-layout">

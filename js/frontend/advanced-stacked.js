@@ -93,21 +93,19 @@ jQuery(document).ready(function ($) {
   }
 
   function navigation() {
-    const $tabs = $('.instant-search-tabs .tab');
-    const $sections = $('.instant-search-section');
-
-    if (!$tabs.length) return; // No tabs to navigate
-
-    $tabs.on('click', function () {
+    $(document).off('click.snappyAdvNavStack', '.speedy-search-container.advanced-search .instant-search-tabs .tab');
+    $(document).on('click.snappyAdvNavStack', '.speedy-search-container.advanced-search .instant-search-tabs .tab', function () {
+      let $container = $(this).closest('.speedy-search-container.advanced-search');
+      const $tabs = $container.find('.instant-search-tabs .tab');
+      const $sections = $container.find('.instant-search-section');
       const selectedType = $(this).data('type');
 
-      // Set active tab
       $tabs.removeClass('active');
       $(this).addClass('active');
 
-      // Show corresponding section, hide others
       $sections.each(function () {
         const sectionType = $(this).data('type');
+
         if (sectionType === selectedType) {
           $(this).show();
         } else {
@@ -127,11 +125,22 @@ jQuery(document).ready(function ($) {
   }
   
   function close() {
-    $(".snappy-search-close").on("click", function(e) {
-      $(".speedy-search-container .instant-search-section").empty();
+    $(document).on("click.snappyAdvCloseOutsideStack", function(e) {
+      if (!$(e.target).closest('.speedy-search-container.advanced-search').length) {
+        let $adv = $(".speedy-search-container.advanced-search");
 
-      $(".snappy-search-advanced-input").val('');
-      $(".instant-search-wrapper").hide();
+        $adv.find(".instant-search-section").empty();
+        $adv.find(".snappy-search-advanced-input").val('');
+        $adv.find(".instant-search-wrapper").hide();
+      }
+    });
+
+    $(document).on("click.snappyAdvCloseBtnStack", ".speedy-search-container.advanced-search .snappy-search-close", function(e) {
+      let $container = $(this).closest(".speedy-search-container.advanced-search");
+
+      $container.find(".instant-search-section").empty();
+      $container.find(".snappy-search-advanced-input").val('');
+      $container.find(".instant-search-wrapper").hide();
     });
   }
 
@@ -149,13 +158,13 @@ jQuery(document).ready(function ($) {
       const $sections = $container.find('.instant-search-section');
 
       $sections.each(function () {
-        let $result = $(".speedy-search-container .instant-search-result");
+        let $result = $container.find(".instant-search-result");
 
         if ($result.length) {
           $result.addClass('skeleton-loading');
         } else {
-          $(".speedy-search-container .snappy-search-close").hide();
-          $(".speedy-search-container .loader").show();
+          $container.find(".snappy-search-close").hide();
+          $container.find(".loader").show();
         }
 
         // $section.html('<p>' + __("Searching " + type + "...", "speedy-search") + '</p>');
@@ -189,13 +198,13 @@ jQuery(document).ready(function ($) {
       }
     })
     .always(function() {
-      $(".speedy-search-container .instant-search-wrapper").show();
-      $(".speedy-search-container .snappy-search-close").show();
-      $(".speedy-search-container .loader").hide();
+      $container.find(".instant-search-wrapper").show();
+      $container.find(".snappy-search-close").show();
+      $container.find(".loader").hide();
 
       let allEmpty = true;
-      
-      $(".advanced-search .instant-search-section").each(function () {
+
+      $container.find(".instant-search-section").each(function () {
         if ($(this).find('.instant-search-result').length > 0) {
           allEmpty = false;
 
@@ -204,7 +213,7 @@ jQuery(document).ready(function ($) {
       });
 
       if (allEmpty) {
-        $(".advanced-search .instant-search-section").first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
+        $container.find(".instant-search-section").first().html('<p>' + __("No results found.", "speedy-search") + '</p>');
       }
     });
   }

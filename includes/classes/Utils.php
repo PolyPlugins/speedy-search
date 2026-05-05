@@ -741,11 +741,12 @@ class Utils {
   /**
    * WooCommerce product attributes for client-side filter UI (global taxonomies, local attributes, variations).
    *
-   * @param int   $product_id
-   * @param array $allowed_keys Attribute keys from settings; empty array returns no attributes.
+   * @param int               $product_id
+   * @param array             $allowed_keys Attribute keys from settings; empty array returns no attributes.
+   * @param \WC_Product|null $product       Already-loaded product for this ID (avoids duplicate wc_get_product).
    * @return array Attribute key => array with keys label, values (each value: slug, name).
    */
-  public static function get_product_attributes_for_filter($product_id, $allowed_keys = array()) {
+  public static function get_product_attributes_for_filter($product_id, $allowed_keys = array(), $product = null) {
     $product_id = (int) $product_id;
 
     if ($product_id < 1 || !function_exists('wc_get_product')) {
@@ -756,7 +757,9 @@ class Utils {
       return array();
     }
 
-    $product = wc_get_product($product_id);
+    if (!($product instanceof \WC_Product && (int) $product->get_id() === $product_id)) {
+      $product = wc_get_product($product_id);
+    }
 
     if (!$product) {
       return array();
@@ -854,16 +857,24 @@ class Utils {
       }
     }
 
-    if (function_exists('wc_get_attribute_taxonomies') && function_exists('wc_attribute_taxonomy_name') && function_exists('wc_get_product_terms')) {
-      foreach (wc_get_attribute_taxonomies() as $tax_row) {
-        $tax_name = wc_attribute_taxonomy_name($tax_row->attribute_name);
-        $terms    = wc_get_product_terms($product_id, $tax_name, array('fields' => 'all'));
+    // Only load terms for taxonomies the filter UI requested — not every global attribute.
+    if (function_exists('wc_get_product_terms')) {
+      foreach ($allowed_keys as $tax_name) {
+        if (!is_string($tax_name) || strpos($tax_name, 'pa_') !== 0) {
+          continue;
+        }
+
+        if (!taxonomy_exists($tax_name)) {
+          continue;
+        }
+
+        $terms = wc_get_product_terms($product_id, $tax_name, array('fields' => 'all'));
 
         if (empty($terms) || is_wp_error($terms)) {
           continue;
         }
 
-        $label = !empty($tax_row->attribute_label) ? sanitize_text_field($tax_row->attribute_label) : wc_attribute_label($tax_name);
+        $label = wc_attribute_label($tax_name);
 
         foreach ($terms as $term) {
           if (!isset($term->slug)) {
