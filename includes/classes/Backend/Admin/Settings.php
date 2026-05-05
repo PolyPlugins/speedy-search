@@ -247,7 +247,6 @@ class Settings {
             <div class="col-3"></div>
             <div class="col-6">
               <h1><?php esc_html_e('Snappy Search Settings', 'speedy-search'); ?></h1>
-              <?php settings_errors(); ?>
             </div>
             <div class="col-3"></div>
           </div>
@@ -343,6 +342,7 @@ class Settings {
               </ul>
             </div>
             <div class="tabs col-12 col-md-6 col-xl-6">
+              <?php settings_errors(); ?>
               <div class="tab general">
                 <?php if (!wp_using_ext_object_cache()) : ?>
                   <div class="danger">
