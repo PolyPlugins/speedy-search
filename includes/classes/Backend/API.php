@@ -636,6 +636,7 @@ class API {
           'add_to_cart_url' => esc_url_raw($add_to_cart_url),
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
+          'categories'     => Utils::get_product_categories_for_filter($post->ID),
           'title_match'      => $this->title_contains_search_terms(get_the_title($post->ID), $search_query),
           'total_sales'      => (int) get_post_meta($post->ID, '_total_sales', true),
           'relevance_order'  => $relevance_idx,
@@ -1196,6 +1197,7 @@ class API {
         'add_to_cart_url' => esc_url_raw($add_to_cart_url),
         'permalink'       => get_permalink($post->ID),
         'custom_fields'   => $product_custom_fields,
+        'categories'      => Utils::get_product_categories_for_filter($post->ID),
       );
 
       if (count($posts_data) >= $safe_limit) {
@@ -1286,6 +1288,7 @@ class API {
         'add_to_cart_url' => esc_url_raw($add_to_cart_url),
         'permalink'       => get_permalink($post->ID),
         'custom_fields'   => array(),
+        'categories'      => Utils::get_product_categories_for_filter($post->ID),
       );
     }
 

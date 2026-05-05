@@ -19,7 +19,8 @@ jQuery(document).ready(function ($) {
   let rating_filter_enabled = snappy_search_object.options?.filters_rating_enabled ?? false;
   let price_range_filter_enabled = snappy_search_object.options?.filters_price_range_enabled ?? false;
   let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
-  let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled;
+  let category_filter_enabled = snappy_search_object.options?.filters_category_enabled ?? false;
+  let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled || category_filter_enabled;
   let search_endpoint         = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
   let latest_endpoint         = snappy_search_object.endpoints?.latest ?? snappy_search_object.endpoints?.preload ?? "/wp-json/speedy-search/v1/latest/";
   let use_search_php          = snappy_search_object.endpoints?.has_custom_file ?? false;
@@ -389,6 +390,10 @@ jQuery(document).ready(function ($) {
       }
     }
 
+    if (category_filter_enabled) {
+      populateCategoryFilters($filters, products);
+    }
+
     if (custom_field_filter_enabled) {
       populateCustomFieldFilters($filters, products);
     }
@@ -414,8 +419,9 @@ jQuery(document).ready(function ($) {
       let rating = parseFloat(item.average_rating || 0);
       let price = parsePrice(item.price);
       let customFieldsMatch = custom_field_filter_enabled ? matchCustomFieldFilters($filters, item) : true;
+      let categoryMatch = category_filter_enabled ? matchCategoryFilter($filters, item) : true;
 
-      return rating >= minRating && price >= minPrice && price <= maxPrice && customFieldsMatch;
+      return rating >= minRating && price >= minPrice && price <= maxPrice && customFieldsMatch && categoryMatch;
     });
   }
 
@@ -489,6 +495,64 @@ jQuery(document).ready(function ($) {
       left: left + '%',
       right: right + '%'
     });
+  }
+
+  function populateCategoryFilters($filters, products) {
+    let $select = $filters.find('.filter-product-category');
+
+    if (!$select.length) {
+      return;
+    }
+
+    let selected = String($select.val() || '');
+    let byId = {};
+
+    $.each(products, function (_, item) {
+      if (!item.categories || !$.isArray(item.categories)) {
+        return;
+      }
+
+      $.each(item.categories, function (_, cat) {
+        if (!cat || cat.id == null) {
+          return;
+        }
+
+        let id = String(cat.id);
+        byId[id] = cat.name ? String(cat.name) : id;
+      });
+    });
+
+    let ids = Object.keys(byId).sort(function (a, b) {
+      return byId[a].localeCompare(byId[b]);
+    });
+    let options = '<option value="">' + __('All categories', 'speedy-search') + '</option>';
+
+    $.each(ids, function (_, id) {
+      let sel = selected === id ? ' selected' : '';
+      options += '<option value="' + id + '"' + sel + '>' + byId[id] + '</option>';
+    });
+
+    $select.html(options);
+  }
+
+  function matchCategoryFilter($filters, item) {
+    let selected = String($filters.find('.filter-product-category').val() || '').trim();
+
+    if (!selected) {
+      return true;
+    }
+
+    let cats = item.categories && $.isArray(item.categories) ? item.categories : [];
+    let match = false;
+
+    $.each(cats, function (_, cat) {
+      if (cat && String(cat.id) === selected) {
+        match = true;
+        return false;
+      }
+    });
+
+    return match;
   }
 
   function normalizeCustomFieldKey(fieldKey) {
@@ -634,6 +698,11 @@ jQuery(document).ready(function ($) {
             <option value="3">3.0+</option>
             <option value="2">2.0+</option>
             <option value="1">1.0+</option>
+          </select>` : ''}
+          ${category_filter_enabled ? `
+          <label>${__('Category', 'speedy-search')}</label>
+          <select class="filter-product-category">
+            <option value="">${__('All categories', 'speedy-search')}</option>
           </select>` : ''}
           ${custom_field_filter_enabled ? '<div class="custom-field-filters"></div>' : ''}
           ${price_range_filter_enabled ? `

@@ -604,6 +604,12 @@ class Settings {
       $sanitary_values['filters_price_range_enabled'] = false;
     }
 
+    if (isset($input['filters_category_enabled']) && $input['filters_category_enabled']) {
+      $sanitary_values['filters_category_enabled'] = $input['filters_category_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['filters_category_enabled'] = false;
+    }
+
     if (isset($input['popular']['enabled']) && $input['popular']['enabled']) {
       $sanitary_values['popular']['enabled'] = $input['popular']['enabled'] === 'on' ? true : false;
     } else {

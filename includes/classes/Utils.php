@@ -619,6 +619,38 @@ class Utils {
   }
 
   /**
+   * WooCommerce product categories for client-side filter UI.
+   *
+   * @param int $product_id
+   * @return array
+   */
+  public static function get_product_categories_for_filter($product_id) {
+    $product_id = (int) $product_id;
+
+    if ($product_id < 1 || !function_exists('taxonomy_exists') || !taxonomy_exists('product_cat')) {
+      return array();
+    }
+
+    $terms = get_the_terms($product_id, 'product_cat');
+
+    if (empty($terms) || is_wp_error($terms)) {
+      return array();
+    }
+
+    $out = array();
+
+    foreach ($terms as $term) {
+      $out[] = array(
+        'id'   => (int) $term->term_id,
+        'name' => sanitize_text_field($term->name),
+        'slug' => sanitize_title($term->slug),
+      );
+    }
+
+    return $out;
+  }
+
+  /**
    * Saved indexing toggles merged with defaults (all on when unset).
    *
    * @return array

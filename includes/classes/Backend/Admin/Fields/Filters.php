@@ -111,6 +111,14 @@ class Filters {
 		);
 
 		add_settings_field(
+			'filters_category_enabled',
+			__('Show category filter?', 'speedy-search'),
+			array($this, 'filters_category_enabled_render'),
+			'speedy_search_filters_polyplugins',
+			'speedy_search_filters_section_polyplugins'
+		);
+
+		add_settings_field(
 			'filters_custom_fields',
 			__('Custom Product Fields', 'speedy-search'),
 			array($this, 'filters_custom_fields_render'),
@@ -207,5 +215,18 @@ class Filters {
     <p><strong><?php esc_html_e('Add custom product meta keys separated by commas to show as filters. Example: _color,_size', 'speedy-search'); ?></strong></p>
 		<?php
 	}
+
+  /**
+   * @return void
+   */
+  public function filters_category_enabled_render() {
+    $option = Utils::get_option('filters_category_enabled');
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[filters_category_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Show a WooCommerce product category dropdown alongside other product filters.', 'speedy-search'); ?></strong></p>
+    <?php
+  }
 
 }
