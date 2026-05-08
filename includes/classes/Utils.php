@@ -1283,4 +1283,213 @@ class Utils {
     );
   }
 
+  /**
+   * Cache key fragment that changes when exclusion rules change.
+   *
+   * @return string
+   */
+  public static function get_exclusions_cache_signature() {
+    $normalized = self::get_normalized_exclusion_rules();
+
+    if ($normalized === array()) {
+      return '0';
+    }
+
+    return md5(wp_json_encode($normalized));
+  }
+
+  /**
+   * Drop search rows whose text matches active exclusion terms for this query.
+   *
+   * @param string $search_query Raw user query (same as request param).
+   * @param array  $results      List of associative arrays (API / standalone rows).
+   * @return array
+   */
+  public static function filter_search_results_by_exclusions($search_query, $results) {
+    if (!is_array($results) || $results === array()) {
+      return $results;
+    }
+
+    $terms = self::get_active_exclusion_terms_for_query($search_query);
+
+    if ($terms === array()) {
+      return $results;
+    }
+
+    $filtered = array();
+
+    foreach ($results as $row) {
+      if (!is_array($row)) {
+        continue;
+      }
+
+      $haystack = self::flatten_search_result_for_exclusion_check($row);
+      $drop     = false;
+
+      foreach ($terms as $term) {
+        if (self::exclusion_term_matches_haystack($haystack, $term)) {
+          $drop = true;
+          break;
+        }
+      }
+
+      if (!$drop) {
+        $filtered[] = $row;
+      }
+    }
+
+    return $filtered;
+  }
+
+  /**
+   * @return array
+   */
+  private static function get_normalized_exclusion_rules() {
+    $rows = self::get_option('exclusions');
+
+    if (!is_array($rows)) {
+      return array();
+    }
+
+    $out = array();
+
+    foreach ($rows as $row) {
+      if (!is_array($row)) {
+        continue;
+      }
+
+      $when_raw    = isset($row['when']) ? $row['when'] : '';
+      $exclude_raw = isset($row['exclude']) ? $row['exclude'] : '';
+      $when        = strtolower(trim(sanitize_text_field((string) $when_raw)));
+      $when        = preg_replace('/\s+/', ' ', $when);
+      $exclude_parts = array_filter(array_map('trim', explode(',', (string) $exclude_raw)));
+      $exclude_parts = array_unique(array_map('sanitize_text_field', $exclude_parts));
+      $exclude_lower = array();
+
+      foreach ($exclude_parts as $part) {
+        $part = strtolower(trim($part));
+
+        if ($part !== '') {
+          $exclude_lower[] = $part;
+        }
+      }
+
+      $exclude_lower = array_values(array_unique($exclude_lower));
+
+      if ($when === '' || $exclude_lower === array()) {
+        continue;
+      }
+
+      $out[] = array(
+        'when'    => $when,
+        'exclude' => $exclude_lower,
+      );
+    }
+
+    usort($out, function($a, $b) {
+      return strcmp($a['when'], $b['when']);
+    });
+
+    return $out;
+  }
+
+  /**
+   * Union of exclusion terms from every rule whose "when" substring matches the query.
+   *
+   * @param string $search_query
+   * @return array
+   */
+  private static function get_active_exclusion_terms_for_query($search_query) {
+    $search_query = strtolower(trim(sanitize_text_field((string) $search_query)));
+
+    if ($search_query === '') {
+      return array();
+    }
+
+    $normalized_query = preg_replace('/\s+/', ' ', $search_query);
+    $terms            = array();
+
+    foreach (self::get_normalized_exclusion_rules() as $rule) {
+      if ($rule['when'] === '') {
+        continue;
+      }
+
+      if (strpos($normalized_query, $rule['when']) === false) {
+        continue;
+      }
+
+      foreach ($rule['exclude'] as $ex) {
+        $terms[$ex] = true;
+      }
+    }
+
+    return array_keys($terms);
+  }
+
+  /**
+   * @param array $row
+   * @return string
+   */
+  private static function flatten_search_result_for_exclusion_check($row) {
+    $parts = array();
+
+    self::collect_strings_for_exclusion_check($row, $parts);
+
+    return strtolower(implode("\n", $parts));
+  }
+
+  /**
+   * @param mixed $data
+   * @param array $parts
+   * @return void
+   */
+  private static function collect_strings_for_exclusion_check($data, &$parts) {
+    if (is_string($data)) {
+      $parts[] = wp_strip_all_tags($data);
+
+      return;
+    }
+
+    if (is_int($data) || is_float($data)) {
+      $parts[] = (string) $data;
+
+      return;
+    }
+
+    if (is_bool($data)) {
+      return;
+    }
+
+    if (!is_array($data)) {
+      return;
+    }
+
+    foreach ($data as $v) {
+      self::collect_strings_for_exclusion_check($v, $parts);
+    }
+  }
+
+  /**
+   * Single-word terms use word boundaries; phrases use substring match.
+   *
+   * @param string $haystack Lowercase flattened result text.
+   * @param string $term     Lowercase exclusion term.
+   * @return bool            True when this term should remove the row.
+   */
+  private static function exclusion_term_matches_haystack($haystack, $term) {
+    $term = trim((string) $term);
+
+    if ($term === '' || $haystack === '') {
+      return false;
+    }
+
+    $term_l = strtolower($term);
+
+    if (strpos($term_l, ' ') !== false) {
+      return strpos($haystack, $term_l) !== false;
+    }
+
+    return (bool) preg_match('/\b' . preg_quote($term_l, '/') . '\b/u', $haystack);
+  }
+
 }

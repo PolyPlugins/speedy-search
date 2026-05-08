@@ -81,6 +81,7 @@ class Settings {
     add_submenu_page('speedy-search', __('General', 'speedy-search'), __('General', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
     add_submenu_page('speedy-search', __('Popular', 'speedy-search'), __('Popular', 'speedy-search'), 'manage_options', 'speedy-search-popular', array($this, 'redirect_to_popular_tab'));
     add_submenu_page('speedy-search', __('Synonyms', 'speedy-search'), __('Synonyms', 'speedy-search'), 'manage_options', 'speedy-search-synonyms', array($this, 'redirect_to_synonyms_tab'));
+    add_submenu_page('speedy-search', __('Exclusions', 'speedy-search'), __('Exclusions', 'speedy-search'), 'manage_options', 'speedy-search-exclusions', array($this, 'redirect_to_exclusions_tab'));
     add_submenu_page('speedy-search', __('Posts', 'speedy-search'), __('Posts', 'speedy-search'), 'manage_options', 'speedy-search-posts', array($this, 'redirect_to_posts_tab'));
     add_submenu_page('speedy-search', __('Pages', 'speedy-search'), __('Pages', 'speedy-search'), 'manage_options', 'speedy-search-pages', array($this, 'redirect_to_pages_tab'));
     
@@ -214,6 +215,7 @@ class Settings {
     $field_classes = array(
       'advanced'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Advanced',
       'downloads' => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Downloads',
+      'exclusions' => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Exclusions',
       'filters'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Filters',
       'general'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\General',
       'indexing'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Indexing',
@@ -270,8 +272,14 @@ class Settings {
                 </li>
                 <li>
                   <a href="javascript:void(0);" data-section="synonyms">
-                    <i class="bi bi-chat-left-text-fill"></i>
+                    <i class="bi bi-arrow-left-right"></i>
                     <?php esc_html_e('Synonyms', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <li>
+                  <a href="javascript:void(0);" data-section="exclusions">
+                    <i class="bi bi-slash-circle"></i>
+                    <?php esc_html_e('Exclusions', 'speedy-search'); ?>
                   </a>
                 </li>
                 <li>
@@ -366,6 +374,12 @@ class Settings {
               <div class="tab synonyms" style="display: none;">
                 <?php
                 do_settings_sections('speedy_search_synonyms_polyplugins');
+                ?>
+              </div>
+
+              <div class="tab exclusions" style="display: none;">
+                <?php
+                do_settings_sections('speedy_search_exclusions_polyplugins');
                 ?>
               </div>
 
@@ -500,6 +514,12 @@ class Settings {
 
   public function redirect_to_synonyms_tab() {
     wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=synonyms'));
+
+    exit;
+  }
+
+  public function redirect_to_exclusions_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=exclusions'));
 
     exit;
   }
@@ -673,6 +693,31 @@ class Settings {
         $sanitary_values['synonyms'][] = array(
           'word'     => $word,
           'synonyms' => implode(', ', $synonym_items),
+        );
+      }
+    }
+
+    $sanitary_values['exclusions'] = array();
+
+    if (isset($input['exclusions']) && is_array($input['exclusions'])) {
+      foreach ($input['exclusions'] as $row) {
+        if (!is_array($row)) {
+          continue;
+        }
+
+        $when_raw      = isset($row['when']) ? sanitize_text_field($row['when']) : '';
+        $when          = preg_replace('/\s+/', ' ', trim($when_raw));
+        $exclude_raw   = isset($row['exclude']) ? sanitize_text_field($row['exclude']) : '';
+        $exclude_items = array_filter(array_map('trim', explode(',', $exclude_raw)));
+        $exclude_items = array_unique(array_map('sanitize_text_field', $exclude_items));
+
+        if ($when === '' || empty($exclude_items)) {
+          continue;
+        }
+
+        $sanitary_values['exclusions'][] = array(
+          'when'    => $when,
+          'exclude' => implode(', ', $exclude_items),
         );
       }
     }

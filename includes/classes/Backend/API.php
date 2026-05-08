@@ -260,7 +260,8 @@ class API {
     $products_top_sellers_first   = !empty($products_options_for_cache['top_sellers_first']);
     $products_sort_by_rating      = !isset($products_options_for_cache['sort_by_rating']) || !empty($products_options_for_cache['sort_by_rating']);
     $products_featured_first      = !isset($products_options_for_cache['featured_first']) || !empty($products_options_for_cache['featured_first']);
-    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search . '|' . (int) $posts_boolean_search . '|' . (int) $pages_boolean_search . '|' . (int) $products_boolean_search . '|' . (int) $downloads_boolean_search . '|' . (int) $products_top_sellers_first . '|' . (int) $products_sort_by_rating . '|' . (int) $products_featured_first);
+    $exclusions_sig               = Utils::get_exclusions_cache_signature();
+    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search . '|' . (int) $posts_boolean_search . '|' . (int) $pages_boolean_search . '|' . (int) $products_boolean_search . '|' . (int) $downloads_boolean_search . '|' . (int) $products_top_sellers_first . '|' . (int) $products_sort_by_rating . '|' . (int) $products_featured_first . '|' . $exclusions_sig);
     $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
@@ -383,7 +384,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_posts_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search);
+    $cache_key = 'speedy_search_posts_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -434,6 +435,8 @@ class API {
         );
       }
 
+      $posts_data = Utils::filter_search_results_by_exclusions($search_query, $posts_data);
+
       Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
@@ -470,7 +473,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_pages_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search);
+    $cache_key = 'speedy_search_pages_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -521,6 +524,8 @@ class API {
         );
       }
 
+      $posts_data = Utils::filter_search_results_by_exclusions($search_query, $posts_data);
+
       Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
@@ -564,7 +569,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . (int) $top_sellers_first . '|' . (int) $sort_by_rating . '|' . (int) $featured_first);
+    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . (int) $top_sellers_first . '|' . (int) $sort_by_rating . '|' . (int) $featured_first . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -694,6 +699,8 @@ class API {
         unset($posts_data[$index]['relevance_order']);
       }
 
+      $posts_data = Utils::filter_search_results_by_exclusions($search_query, $posts_data);
+
       Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
@@ -730,7 +737,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_downloads_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search);
+    $cache_key = 'speedy_search_downloads_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -783,6 +790,8 @@ class API {
         );
       }
 
+      $posts_data = Utils::filter_search_results_by_exclusions($search_query, $posts_data);
+
       Utils::set_api_cache($cache_key, $posts_data, 600);
 
       return new WP_REST_Response($posts_data, 200);
@@ -818,7 +827,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_orders_' . md5($expanded_query . '|' . (int) $boolean_search);
+    $cache_key = 'speedy_search_orders_' . md5($expanded_query . '|' . (int) $boolean_search . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -869,6 +878,8 @@ class API {
         'origin'              => sanitize_text_field($order->get_meta('_wc_order_attribution_utm_source')),
       );
     }
+
+    $orders_data = Utils::filter_search_results_by_exclusions($search_query, $orders_data);
 
     Utils::set_api_cache($cache_key, $orders_data, 600);
 

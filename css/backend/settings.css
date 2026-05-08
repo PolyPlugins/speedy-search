@@ -476,3 +476,42 @@ a.btn.btn-dark {
   border-color: #DC3545 !important;
   color: #fff !important;
 }
+
+.snappy-exclusions-wrapper .snappy-exclusion-row {
+  border: 1px solid #F0F0F1;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.snappy-exclusions-wrapper .snappy-exclusion-label {
+  margin: 0 0 6px;
+}
+
+.snappy-exclusions-wrapper input[type="text"] {
+  margin-bottom: 12px;
+}
+
+.snappy-exclusions-wrapper .snappy-exclusion-remove {
+  margin-top: 10px;
+}
+
+.snappy-exclusions-wrapper .snappy-exclusion-add {
+  margin-top: 5px;
+  margin-bottom: 12px;
+}
+
+.snappy-exclusions-wrapper > p {
+  margin-top: 0;
+}
+
+.snappy-exclusions-wrapper .button-primary {
+  background-color: #46BEA4 !important;
+  border-color: #46BEA4 !important;
+}
+
+.snappy-exclusions-wrapper .button-secondary {
+  background-color: #DC3545 !important;
+  border-color: #DC3545 !important;
+  color: #fff !important;
+}
