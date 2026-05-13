@@ -640,7 +640,7 @@ class API {
         $data = array(
           'id'             => $post->ID,
           'title'          => $title,
-          'price'          => get_post_meta($post->ID, '_price', true),
+          'price'          => $product ? $product->get_price() : '',
           'thumbnail'      => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'        => $this->get_excerpt($post->post_content),
           'average_rating' => $average_rating ? (float) $average_rating : 0,
@@ -1209,7 +1209,7 @@ class API {
       $posts_data[] = array(
         'id'              => $post->ID,
         'title'           => get_the_title($post->ID),
-        'price'           => get_post_meta($post->ID, '_price', true),
+        'price'           => $product ? $product->get_price() : '',
         'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
         'excerpt'         => $this->get_excerpt($post->post_content),
         'average_rating'  => $average_rating ? (float) $average_rating : 0,
@@ -1302,7 +1302,7 @@ class API {
       $posts_data[] = array(
         'id'              => $post->ID,
         'title'           => get_the_title($post->ID),
-        'price'           => get_post_meta($post->ID, '_price', true),
+        'price'           => $product ? $product->get_price() : '',
         'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
         'excerpt'         => $this->get_excerpt($post->post_content),
         'average_rating'  => $average_rating ? (float) $average_rating : 0,
