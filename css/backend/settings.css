@@ -44,7 +44,7 @@ input[type=checkbox]:checked {
   background-color: #46BEA4!important;
 }
 
-input[type=checkbox]:checked::before {
+input[type=checkbox]:checked:not(.form-check-input)::before {
   content: unset!important;
 }
 
@@ -514,4 +514,51 @@ a.btn.btn-dark {
   background-color: #DC3545 !important;
   border-color: #DC3545 !important;
   color: #fff !important;
+}
+
+/* Keep generic checkbox tweaks off Bootstrap switches */
+.bootstrap-wrapper input[type="checkbox"]:not(.form-check-input) {
+  border-radius: 5px !important;
+  background-color: #ccc !important;
+}
+
+/* Render switch toggles with one custom thumb only */
+.bootstrap-wrapper .form-switch .form-check-input {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: none !important;
+  width: 2em;
+  height: 1em;
+  border-radius: 2em !important;
+  border: 1px solid #ccc !important;
+  background-color: #ccc !important;
+  position: relative;
+  margin-top: 2px !important;
+  vertical-align: middle;
+}
+
+.bootstrap-wrapper .form-switch .form-check-input::before {
+  content: none !important;
+}
+
+.bootstrap-wrapper .form-switch .form-check-input::after {
+  content: '' !important;
+  position: absolute;
+  top: 50%;
+  left: 1px;
+  width: calc(1em - 2px);
+  height: calc(1em - 2px);
+  border-radius: 50%;
+  background-color: #fff;
+  transform: translateY(-50%);
+  transition: transform .15s ease-in-out;
+}
+
+.bootstrap-wrapper .form-switch .form-check-input:checked {
+  background-color: #46BEA4 !important;
+  border-color: #46BEA4 !important;
+}
+
+.bootstrap-wrapper .form-switch .form-check-input:checked::after {
+  transform: translate(1em, -50%);
 }
