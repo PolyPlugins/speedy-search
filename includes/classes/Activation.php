@@ -12,6 +12,8 @@ class Activation {
    * @return void
    */
   public static function init() {
+    Log::info('Snappy Search activated.');
+
     self::set_default_options();
     self::maybe_add_cron();
     self::create_tables();

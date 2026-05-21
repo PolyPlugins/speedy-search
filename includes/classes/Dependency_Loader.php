@@ -44,6 +44,8 @@ class Dependency_Loader {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search bootstrap starting.');
+
     $this->load_frontend();
     $this->load_backend();
     $this->load_updater();

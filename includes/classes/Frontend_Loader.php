@@ -50,6 +50,8 @@ class Frontend_Loader {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search frontend loader evaluating database type.');
+
     $database_type = Utils::get_option('database_type') ?: 'mysql';
     
     if ($database_type === 'mysql') {
@@ -58,6 +60,8 @@ class Frontend_Loader {
       $this->load_shortcode();
       $this->load_advanced_search();
       $this->load_analytics();
+    } else {
+      Log::debug('Snappy Search frontend bootstrap skipped: non-MySQL database type.');
     }
   }
   

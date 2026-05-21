@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
 use WP_REST_Request;
@@ -17,6 +18,8 @@ class API {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search REST API module initialized.');
+
     add_action('rest_api_init', array($this, 'add_endpoints'));
     add_action('rest_api_init', array($this, 'add_new_endpoints'));
   }
@@ -245,7 +248,20 @@ class API {
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
     $expanded_query   = $this->expand_search_query($search_query);
     $search_key       = strtolower(trim($expanded_query));
-    $cache_key        = 'speedy_search_combined_' . md5($search_key);
+    $posts_title_only_search      = $this->is_title_only_search_enabled('posts');
+    $pages_title_only_search      = $this->is_title_only_search_enabled('pages');
+    $products_title_only_search   = $this->is_title_only_search_enabled('products');
+    $downloads_title_only_search  = $this->is_title_only_search_enabled('downloads');
+    $posts_boolean_search         = $this->is_boolean_search_enabled('posts');
+    $pages_boolean_search         = $this->is_boolean_search_enabled('pages');
+    $products_boolean_search      = $this->is_boolean_search_enabled('products');
+    $downloads_boolean_search     = $this->is_boolean_search_enabled('downloads');
+    $products_options_for_cache   = Utils::get_option('products');
+    $products_top_sellers_first   = !empty($products_options_for_cache['top_sellers_first']);
+    $products_sort_by_rating      = !isset($products_options_for_cache['sort_by_rating']) || !empty($products_options_for_cache['sort_by_rating']);
+    $products_featured_first      = !isset($products_options_for_cache['featured_first']) || !empty($products_options_for_cache['featured_first']);
+    $exclusions_sig               = Utils::get_exclusions_cache_signature();
+    $cache_key        = 'speedy_search_combined_' . md5($search_key . '|' . (int) $posts_title_only_search . '|' . (int) $pages_title_only_search . '|' . (int) $products_title_only_search . '|' . (int) $downloads_title_only_search . '|' . (int) $posts_boolean_search . '|' . (int) $pages_boolean_search . '|' . (int) $products_boolean_search . '|' . (int) $downloads_boolean_search . '|' . (int) $products_top_sellers_first . '|' . (int) $products_sort_by_rating . '|' . (int) $products_featured_first . '|' . $exclusions_sig);
     $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
@@ -285,6 +301,12 @@ class API {
 
       if ($response instanceof WP_REST_Response) {
         if ($response->get_status() >= 400) {
+          Log::warning(sprintf(
+            'Combined search sub-request failed for %s with HTTP %d.',
+            $type,
+            $response->get_status()
+          ));
+
           return $response;
         }
 
@@ -316,8 +338,10 @@ class API {
    * @return WP_REST_Response
    */
   public function get_latest(WP_REST_Request $request) {
-    $cache_key      = 'speedy_search_latest_v3';
-    $cached_results = Utils::get_api_cache($cache_key);
+    $products_opts    = Utils::get_option('products');
+    $featured_latest  = !isset($products_opts['featured_first']) || !empty($products_opts['featured_first']);
+    $cache_key        = 'speedy_search_latest_v4_' . (int) $featured_latest;
+    $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
@@ -340,6 +364,8 @@ class API {
 		$options          = Utils::get_option('posts');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $title_only_search  = $this->is_title_only_search_enabled('posts');
+    $boolean_search     = $this->is_boolean_search_enabled('posts');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -358,7 +384,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_posts_' . md5($expanded_query);
+    $cache_key = 'speedy_search_posts_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -373,10 +399,10 @@ class API {
     $index_name = Utils::get_index_name('post');
 
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
-    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
+    $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -394,14 +420,22 @@ class API {
       $posts_data = array();
 
       foreach ($posts as $post) {
+        $title = get_the_title($post->ID);
+
+        if ($title_only_search && !$this->title_contains_search_terms($title, $search_query)) {
+          continue;
+        }
+
         $posts_data[] = array(
           'id'        => $post->ID,
-          'title'     => get_the_title($post->ID),
+          'title'     => $title,
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
         );
       }
+
+      $posts_data = Utils::filter_search_results_by_exclusions($search_query, $posts_data);
 
       Utils::set_api_cache($cache_key, $posts_data, 600);
 
@@ -419,6 +453,8 @@ class API {
 		$options          = Utils::get_option('pages');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $title_only_search = $this->is_title_only_search_enabled('pages');
+    $boolean_search    = $this->is_boolean_search_enabled('pages');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -437,7 +473,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_pages_' . md5($expanded_query);
+    $cache_key = 'speedy_search_pages_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -452,10 +488,10 @@ class API {
     $index_name = Utils::get_index_name('page');
 
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
-    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
+    $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -473,14 +509,22 @@ class API {
       $posts_data = array();
 
       foreach ($posts as $post) {
+        $title = get_the_title($post->ID);
+
+        if ($title_only_search && !$this->title_contains_search_terms($title, $search_query)) {
+          continue;
+        }
+
         $posts_data[] = array(
           'id'        => $post->ID,
-          'title'     => get_the_title($post->ID),
+          'title'     => $title,
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
         );
       }
+
+      $posts_data = Utils::filter_search_results_by_exclusions($search_query, $posts_data);
 
       Utils::set_api_cache($cache_key, $posts_data, 600);
 
@@ -499,8 +543,14 @@ class API {
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
     $out_of_stock_last = isset($options['out_of_stock_last']) ? (bool) $options['out_of_stock_last'] : false;
+    $top_sellers_first = !empty($options['top_sellers_first']);
+    $sort_by_rating    = !isset($options['sort_by_rating']) || !empty($options['sort_by_rating']);
+    $featured_first    = !isset($options['featured_first']) || !empty($options['featured_first']);
+    $title_only_search = $this->is_title_only_search_enabled('products');
+    $boolean_search    = $this->is_boolean_search_enabled('products');
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+    $filters_attributes_allowed = Utils::get_filters_attributes_allowed_keys();
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -517,10 +567,9 @@ class API {
     }
 
     $expanded_query = $this->expand_search_query($search_query);
-    $title_terms    = $this->get_search_terms_with_synonyms($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last);
+    $cache_key = 'speedy_search_products_' . md5($expanded_query . '|' . (int) $out_of_stock_last . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . (int) $top_sellers_first . '|' . (int) $sort_by_rating . '|' . (int) $featured_first . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -535,10 +584,10 @@ class API {
     $index_name = Utils::get_index_name('product');
     
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
-    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
+    $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -553,17 +602,31 @@ class API {
         'posts_per_page' => count($results['ids']),
       ));
 
-      $posts_data = array();
+      $posts_data    = array();
+      $relevance_idx = 0;
 
       foreach ($posts as $post) {
         $product = wc_get_product($post->ID);
+        $title   = get_the_title($post->ID);
 
         if ($product && $product->get_catalog_visibility() === 'hidden') {
           continue;
         }
 
+        if ($title_only_search && !$this->title_contains_search_terms($title, $search_query)) {
+          continue;
+        }
+
+        try {
+          if (Utils::is_product_excluded_for_search_query($post->ID, $search_query)) {
+            continue;
+          }
+        } catch (\Throwable $e) {
+          Log::error(sprintf('Product exclusion check failed for product %d: %s', (int) $post->ID, $e->getMessage()));
+        }
+
         $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
-        $is_featured = $product ? $product->is_featured() : false;
+        $is_featured = $featured_first && $product && $product->is_featured();
         $is_variable = $product ? $product->is_type('variable') : false;
         $is_in_stock = $product ? $product->is_in_stock() : true;
         $add_to_cart_url = $product ? $product->add_to_cart_url() : get_permalink($post->ID);
@@ -584,8 +647,8 @@ class API {
         
         $data = array(
           'id'             => $post->ID,
-          'title'          => get_the_title($post->ID),
-          'price'          => get_post_meta($post->ID, '_price', true),
+          'title'          => $title,
+          'price'          => $product ? $product->get_price() : '',
           'thumbnail'      => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'        => $this->get_excerpt($post->post_content),
           'average_rating' => $average_rating ? (float) $average_rating : 0,
@@ -596,17 +659,22 @@ class API {
           'add_to_cart_url' => esc_url_raw($add_to_cart_url),
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
-          'title_match'   => $this->title_contains_search_terms(get_the_title($post->ID), $title_terms),
+          'categories'     => Utils::get_product_categories_for_filter($post->ID),
+          'attributes'     => Utils::get_product_attributes_for_filter($post->ID, $filters_attributes_allowed, $product),
+          'title_match'      => $this->title_contains_search_terms(get_the_title($post->ID), $search_query),
+          'total_sales'      => (int) get_post_meta($post->ID, '_total_sales', true),
+          'relevance_order'  => $relevance_idx,
         );
         $posts_data[] = $data;
+        $relevance_idx++;
       }
 
-      usort($posts_data, function($a, $b) use ($out_of_stock_last) {
+      usort($posts_data, function($a, $b) use ($out_of_stock_last, $featured_first, $top_sellers_first, $sort_by_rating) {
         if ($out_of_stock_last && $a['is_in_stock'] !== $b['is_in_stock']) {
           return $a['is_in_stock'] ? -1 : 1;
         }
 
-        if ($a['is_featured'] !== $b['is_featured']) {
+        if ($featured_first && $a['is_featured'] !== $b['is_featured']) {
           return $a['is_featured'] ? -1 : 1;
         }
 
@@ -614,12 +682,32 @@ class API {
           return $a['title_match'] ? -1 : 1;
         }
 
-        return $b['average_rating'] <=> $a['average_rating'];
+        if ($top_sellers_first) {
+          $by_sales = $b['total_sales'] <=> $a['total_sales'];
+
+          if ($by_sales !== 0) {
+            return $by_sales;
+          }
+        }
+
+        if ($sort_by_rating) {
+          $by_rating = $b['average_rating'] <=> $a['average_rating'];
+
+          if ($by_rating !== 0) {
+            return $by_rating;
+          }
+        }
+
+        return $a['relevance_order'] <=> $b['relevance_order'];
       });
 
       foreach ($posts_data as $index => $item) {
         unset($posts_data[$index]['title_match']);
+        unset($posts_data[$index]['total_sales']);
+        unset($posts_data[$index]['relevance_order']);
       }
+
+      $posts_data = Utils::filter_search_results_by_exclusions($search_query, $posts_data);
 
       Utils::set_api_cache($cache_key, $posts_data, 600);
 
@@ -637,6 +725,8 @@ class API {
 		$options          = Utils::get_option('downloads');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 10;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $title_only_search = $this->is_title_only_search_enabled('downloads');
+    $boolean_search    = $this->is_boolean_search_enabled('downloads');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -655,7 +745,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_downloads_' . md5($expanded_query);
+    $cache_key = 'speedy_search_downloads_' . md5($expanded_query . '|' . (int) $title_only_search . '|' . (int) $boolean_search . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -670,10 +760,10 @@ class API {
     $index_name = Utils::get_index_name('download');
 
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
-    $results = $tnt->search($expanded_query, $result_limit); // Limit to 10 results
+    $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
 
     if (empty($results['ids'])) {
       return new WP_REST_Response([], 200); // No results found
@@ -692,16 +782,23 @@ class API {
 
       foreach ($posts as $post) {
         $price = get_post_meta($post->ID, 'edd_price', true);
+        $title = get_the_title($post->ID);
+
+        if ($title_only_search && !$this->title_contains_search_terms($title, $search_query)) {
+          continue;
+        }
 
         $posts_data[] = array(
           'id'        => $post->ID,
-          'title'     => get_the_title($post->ID),
+          'title'     => $title,
           'price'     => is_array($price) ? sanitize_text_field(implode(', ', $price)) : sanitize_text_field($price),
           'thumbnail' => get_the_post_thumbnail_url($post->ID, 'medium'),
           'excerpt'   => $this->get_excerpt($post->post_content),
           'permalink' => get_permalink($post->ID)
         );
       }
+
+      $posts_data = Utils::filter_search_results_by_exclusions($search_query, $posts_data);
 
       Utils::set_api_cache($cache_key, $posts_data, 600);
 
@@ -719,6 +816,7 @@ class API {
 		$options          = Utils::get_option('orders');
 		$result_limit     = isset($options['result_limit']) ? $options['result_limit'] : 100;
 		$max_characters   = isset($options['max_characters']) ? $options['max_characters'] : 100;
+    $boolean_search   = $this->is_boolean_search_enabled('orders');
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
 
@@ -737,7 +835,7 @@ class API {
     $expanded_query = $this->expand_search_query($search_query);
 
     // Generate a unique cache key for this search
-    $cache_key = 'speedy_search_orders_' . md5($expanded_query);
+    $cache_key = 'speedy_search_orders_' . md5($expanded_query . '|' . (int) $boolean_search . '|' . Utils::get_exclusions_cache_signature());
 
     // Check if results exist in WordPress Object Cache
     $cached_results = Utils::get_api_cache($cache_key);
@@ -752,10 +850,10 @@ class API {
     $index_name = Utils::get_index_name('shop_order');
     
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
-    $results    = $tnt->search($expanded_query, $result_limit);
+    $results    = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
     $result_ids = isset($results['ids']) ? array_map('absint', $results['ids']) : array();
 
     if (empty($result_ids)) {
@@ -788,6 +886,8 @@ class API {
         'origin'              => sanitize_text_field($order->get_meta('_wc_order_attribution_utm_source')),
       );
     }
+
+    $orders_data = Utils::filter_search_results_by_exclusions($search_query, $orders_data);
 
     Utils::set_api_cache($cache_key, $orders_data, 600);
 
@@ -875,77 +975,66 @@ class API {
   }
 
   /**
-   * Build all search terms including synonyms.
-   *
-   * @param string $search_query
-   * @return array
-   */
-  private function get_search_terms_with_synonyms($search_query) {
-    $search_query = sanitize_text_field((string) $search_query);
-    $normalized   = strtolower(trim($search_query));
-    $synonym_map  = $this->get_synonym_map();
-    $terms        = array();
-
-    if ($normalized !== '') {
-      $terms[] = $normalized;
-    }
-
-    $tokens = preg_split('/\s+/', $normalized);
-
-    if (is_array($tokens)) {
-      foreach ($tokens as $token) {
-        if ($token !== '') {
-          $terms[] = $token;
-        }
-      }
-    }
-
-    if (isset($synonym_map[$normalized])) {
-      $terms = array_merge($terms, preg_split('/\s+/', strtolower($synonym_map[$normalized])));
-    }
-
-    if (is_array($tokens)) {
-      foreach ($tokens as $token) {
-        if ($token === '' || !isset($synonym_map[$token])) {
-          continue;
-        }
-
-        $terms = array_merge($terms, preg_split('/\s+/', strtolower($synonym_map[$token])));
-      }
-    }
-
-    $terms = array_filter(array_unique(array_map('trim', $terms)));
-
-    return array_values($terms);
-  }
-
-  /**
-   * Check if title contains any search term.
+   * Title-only filter: every whitespace-separated query token must appear in the title (AND).
+   * Per token, the literal token or any synonym word from settings counts as a match (OR).
    *
    * @param string $title
-   * @param array $terms
+   * @param string $search_query
    * @return bool
    */
-  private function title_contains_search_terms($title, $terms) {
-    $title = strtolower(trim(sanitize_text_field((string) $title)));
+  private function title_contains_search_terms($title, $search_query) {
+    $title        = strtolower(trim(sanitize_text_field((string) $title)));
+    $search_query = strtolower(trim(sanitize_text_field((string) $search_query)));
 
-    if ($title === '' || !is_array($terms) || empty($terms)) {
+    if ($title === '' || $search_query === '') {
       return false;
     }
 
-    foreach ($terms as $term) {
-      $term = strtolower(trim(sanitize_text_field((string) $term)));
+    $synonym_map = $this->get_synonym_map();
+    $tokens      = preg_split('/\s+/', $search_query);
 
-      if ($term === '') {
+    if (!is_array($tokens)) {
+      return false;
+    }
+
+    $had_token = false;
+
+    foreach ($tokens as $token) {
+      $token = trim($token);
+
+      if ($token === '') {
         continue;
       }
 
-      if (strpos($title, $term) !== false) {
-        return true;
+      $had_token = true;
+
+      if (strpos($title, $token) !== false) {
+        continue;
+      }
+
+      $matched_synonym = false;
+
+      if (isset($synonym_map[$token])) {
+        $syn_parts = preg_split('/\s+/', strtolower(trim($synonym_map[$token])));
+
+        if (is_array($syn_parts)) {
+          foreach ($syn_parts as $syn) {
+            $syn = trim($syn);
+
+            if ($syn !== '' && strpos($title, $syn) !== false) {
+              $matched_synonym = true;
+              break;
+            }
+          }
+        }
+      }
+
+      if (!$matched_synonym) {
+        return false;
       }
     }
 
-    return false;
+    return $had_token;
   }
 
   /**
@@ -1085,10 +1174,12 @@ class API {
       return array();
     }
 
+    $featured_first   = !isset($options['featured_first']) || !empty($options['featured_first']);
     $safe_limit       = 12;
     $query_limit      = 48;
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+    $filters_attributes_allowed = Utils::get_filters_attributes_allowed_keys();
     $posts      = get_posts(array(
       'post_type'      => 'product',
       'post_status'    => 'publish',
@@ -1110,7 +1201,7 @@ class API {
       }
 
       $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
-      $is_featured    = $product->is_featured();
+      $is_featured    = $featured_first && $product->is_featured();
       $is_variable    = $product->is_type('variable');
       $add_to_cart_url = $product->add_to_cart_url();
       $product_custom_fields = array();
@@ -1126,7 +1217,7 @@ class API {
       $posts_data[] = array(
         'id'              => $post->ID,
         'title'           => get_the_title($post->ID),
-        'price'           => get_post_meta($post->ID, '_price', true),
+        'price'           => $product ? $product->get_price() : '',
         'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
         'excerpt'         => $this->get_excerpt($post->post_content),
         'average_rating'  => $average_rating ? (float) $average_rating : 0,
@@ -1137,6 +1228,8 @@ class API {
         'add_to_cart_url' => esc_url_raw($add_to_cart_url),
         'permalink'       => get_permalink($post->ID),
         'custom_fields'   => $product_custom_fields,
+        'categories'      => Utils::get_product_categories_for_filter($post->ID),
+        'attributes'      => Utils::get_product_attributes_for_filter($post->ID, $filters_attributes_allowed, $product),
       );
 
       if (count($posts_data) >= $safe_limit) {
@@ -1145,6 +1238,10 @@ class API {
     }
 
     if (empty($posts_data)) {
+      return $posts_data;
+    }
+
+    if (!$featured_first) {
       return $posts_data;
     }
 
@@ -1173,6 +1270,7 @@ class API {
       return array();
     }
 
+    $featured_first = !isset($options['featured_first']) || !empty($options['featured_first']);
     $result_limit = isset($options['result_limit']) ? (int) $options['result_limit'] : 10;
     $safe_limit   = $result_limit > 0 ? $result_limit : 10;
     $posts        = get_posts(array(
@@ -1191,6 +1289,7 @@ class API {
       ),
     ));
     $posts_data = array();
+    $filters_attributes_allowed = Utils::get_filters_attributes_allowed_keys();
     $tags = array(
       'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
       'span' => array('class' => array(), 'style' => array()),
@@ -1204,14 +1303,14 @@ class API {
       }
 
       $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
-      $is_featured    = $product->is_featured();
+      $is_featured    = $featured_first && $product->is_featured();
       $is_variable    = $product->is_type('variable');
       $add_to_cart_url = $product->add_to_cart_url();
 
       $posts_data[] = array(
         'id'              => $post->ID,
         'title'           => get_the_title($post->ID),
-        'price'           => get_post_meta($post->ID, '_price', true),
+        'price'           => $product ? $product->get_price() : '',
         'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
         'excerpt'         => $this->get_excerpt($post->post_content),
         'average_rating'  => $average_rating ? (float) $average_rating : 0,
@@ -1222,6 +1321,8 @@ class API {
         'add_to_cart_url' => esc_url_raw($add_to_cart_url),
         'permalink'       => get_permalink($post->ID),
         'custom_fields'   => array(),
+        'categories'      => Utils::get_product_categories_for_filter($post->ID),
+        'attributes'      => Utils::get_product_attributes_for_filter($post->ID, $filters_attributes_allowed, $product),
       );
     }
 
@@ -1243,6 +1344,95 @@ class API {
     }
 
     return $text . '...';
+  }
+
+  /**
+   * Is title only search enabled
+   *
+   * @return bool
+   */
+  private function is_title_only_search_enabled($type) {
+    $options = Utils::get_option($type);
+
+    if (!is_array($options) || !isset($options['title_only_search'])) {
+      return false;
+    }
+
+    return !empty($options['title_only_search']);
+  }
+
+  /**
+   * Whether boolean AND search is enabled for a settings group (posts, pages, products, downloads, orders).
+   *
+   * @param string $type Settings key.
+   * @return bool
+   */
+  private function is_boolean_search_enabled($type) {
+    $options = Utils::get_option($type);
+
+    if (!is_array($options) || !isset($options['boolean_search'])) {
+      return false;
+    }
+
+    return !empty($options['boolean_search']);
+  }
+
+  /**
+   * Run TNTSearch relevance search or boolean AND when enabled (multi-word user query).
+   *
+   * @param object $tnt               TeamTNT TNTSearch instance.
+   * @param string $expanded_query    Query after synonym expansion (single-token path).
+   * @param int    $result_limit      Max results.
+   * @param bool   $boolean_search    Settings flag.
+   * @param string $user_search_query Raw user query for token boundaries (AND operands).
+   * @return array                    Same shape as $tnt->search().
+   */
+  private function perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $user_search_query) {
+    if (!$boolean_search) {
+      return $tnt->search($expanded_query, $result_limit);
+    }
+
+    $user_search_query = trim((string) $user_search_query);
+
+    if ($user_search_query === '') {
+      return $tnt->search($expanded_query, $result_limit);
+    }
+
+    $tokens = array_values(array_filter($tnt->breakIntoTokens($user_search_query)));
+
+    if (count($tokens) < 2) {
+      return $tnt->search($expanded_query, $result_limit);
+    }
+
+    $safe = array();
+
+    foreach ($tokens as $token) {
+      $token = (string) $token;
+
+      if ($token === '') {
+        continue;
+      }
+
+      if (preg_match('/[&|~()]/', $token)) {
+        continue;
+      }
+
+      $safe[] = $token;
+    }
+
+    if (count($safe) < 2) {
+      return $tnt->search($expanded_query, $result_limit);
+    }
+
+    // Expression::lex() turns every space into '&', so "a & b" becomes invalid extra operators — join with '&' only.
+    $phrase  = implode('&', $safe);
+    $results = $tnt->searchBoolean($phrase, $result_limit);
+
+    if (isset($results['ids']) && is_array($results['ids'])) {
+      $results['ids'] = array_values(array_filter(array_map('absint', $results['ids'])));
+    }
+
+    return $results;
   }
 
 }

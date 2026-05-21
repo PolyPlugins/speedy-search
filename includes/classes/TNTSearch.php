@@ -34,6 +34,8 @@ class TNTSearch {
 
     // Don't continue if missing extensions
     if ($is_missing_extensions) {
+      Log::debug('Snappy Search TNT init skipped: missing PHP extensions.');
+
       return;
     }
 
@@ -58,12 +60,16 @@ class TNTSearch {
 
     if ($database_type === 'mysql') {
       if (!defined('DB_HOST') || !defined('DB_NAME') || !defined('DB_USER') || !defined('DB_PASSWORD')) {
+        Log::warning('Snappy Search TNT init skipped: database constants unavailable.');
+
         return;
       }
       
       $mysql_host = $this->get_mysql_pdo_host(DB_HOST);
       
       if (!$mysql_host) {
+        Log::warning('Snappy Search TNT init skipped: could not parse DB_HOST for PDO.');
+
         return;
       }
     }

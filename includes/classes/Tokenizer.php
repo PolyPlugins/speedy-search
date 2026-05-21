@@ -14,6 +14,8 @@ class Tokenizer extends AbstractTokenizer implements TokenizerInterface
     public function tokenize($text, $stopwords = [])
     {
         if (!is_scalar($text)) {
+            Log::debug('Tokenizer received non-scalar input; returning empty tokens.');
+
             return [];
         }
 

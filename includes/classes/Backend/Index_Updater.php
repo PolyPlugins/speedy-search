@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\TNTSearch;
 use PolyPlugins\Speedy_Search\Utils;
 
@@ -24,6 +25,8 @@ class Index_Updater {
   }
 
   public function init() {
+    Log::debug('Snappy Search live index updater hooks registered.');
+
     add_action('save_post', array($this, 'update_index'), 10, 3);
     add_action('delete_post', array($this, 'remove_from_index'));
     add_action('transition_post_status', array($this, 'handle_status_transition'), 10, 3);
@@ -69,6 +72,8 @@ class Index_Updater {
     try {
       $this->tnt->selectIndex($index_name);
     } catch (\TeamTNT\TNTSearch\Exceptions\IndexNotFoundException $e) {
+      Log::debug(sprintf('Index missing for post_type %s; creating %s.', $post_type, $index_name));
+
       $this->tnt->createIndex($index_name);
       $this->tnt->selectIndex($index_name);
     }
@@ -84,6 +89,7 @@ class Index_Updater {
       'id'      => intval($post_id),
       'title'   => $title,
       'content' => $content,
+      'author'  => Utils::get_index_author_text($post_id),
     );
 
     $data = Utils::add_taxonomy_terms_to_document($post_id, $data);
@@ -96,8 +102,14 @@ class Index_Updater {
       $data                   = Utils::add_product_custom_fields_to_document($post_id, $data, $product);
     }
 
+    $data = Utils::apply_index_field_settings_to_document($post_type, $data);
     $data = Utils::sanitize_index_document($data, 255);
-    $index->insert($data);
+
+    try {
+      $index->insert($data);
+    } catch (\Throwable $e) {
+      Log::error(sprintf('Index insert failed for post_id %d: %s', $post_id, $e->getMessage()));
+    }
   }
 
   /**
@@ -134,13 +146,19 @@ class Index_Updater {
     try {
       $this->tnt->selectIndex($index_name);
     } catch (\TeamTNT\TNTSearch\Exceptions\IndexNotFoundException $e) {
+      Log::debug(sprintf('remove_from_index: index missing for post_type %s; skip delete.', $post_type));
+
       return;
     }
 
     $index = $this->tnt->getIndex();
     $index->disableOutput = true;
 
-    $index->delete($post_id);
+    try {
+      $index->delete($post_id);
+    } catch (\Throwable $e) {
+      Log::error(sprintf('Index delete failed for post_id %d: %s', $post_id, $e->getMessage()));
+    }
   }
 
   /**
@@ -220,6 +238,8 @@ class Index_Updater {
     try {
       $this->tnt->selectIndex($index_name);
     } catch (\TeamTNT\TNTSearch\Exceptions\IndexNotFoundException $e) {
+      Log::debug(sprintf('Orders index missing; creating %s.', $index_name));
+
       $this->tnt->createIndex($index_name);
       $this->tnt->selectIndex($index_name);
     }
@@ -245,7 +265,12 @@ class Index_Updater {
     );
 
     $args = Utils::sanitize_index_document($args, 255);
-    $index->insert($args);
+
+    try {
+      $index->insert($args);
+    } catch (\Throwable $e) {
+      Log::error(sprintf('Orders index insert failed for order_id %d: %s', $order_id, $e->getMessage()));
+    }
   }
 
 }

@@ -3,12 +3,14 @@
 namespace PolyPlugins\Speedy_Search;
 
 use PolyPlugins\Speedy_Search\Backend\Admin;
+use PolyPlugins\Speedy_Search\Backend\Admin\Product_Excluded_Terms;
 use PolyPlugins\Speedy_Search\Backend\Admin\Settings;
 use PolyPlugins\Speedy_Search\Backend\API;
 use PolyPlugins\Speedy_Search\Backend\Background_Worker;
 use PolyPlugins\Speedy_Search\Backend\Cache;
 use PolyPlugins\Speedy_Search\Backend\Enqueue;
 use PolyPlugins\Speedy_Search\Backend\Index_Updater;
+use PolyPlugins\Speedy_Search\Backend\CLI;
 use PolyPlugins\Speedy_Search\Backend\Notices;
 use PolyPlugins\Speedy_Search\Backend\Reindexer;
 
@@ -54,14 +56,27 @@ class Backend_Loader {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search backend modules loading.');
+
     $this->load_enqueue();
     $this->load_settings();
+    $this->load_product_excluded_terms();
     $this->load_api();
     $this->load_cache();
     $this->load_background_worker();
     $this->load_index_updater();
     $this->load_reindexer();
     $this->load_notices();
+    $this->load_cli();
+  }
+
+  /**
+   * Load WP-CLI commands when available.
+   *
+   * @return void
+   */
+  public function load_cli() {
+    CLI::register();
   }
   
   /**
@@ -82,6 +97,16 @@ class Backend_Loader {
   public function load_settings() {
     $settings = new Settings($this->plugin, $this->version, $this->plugin_dir_url);
     $settings->init();
+  }
+
+  /**
+   * Load product-level excluded search terms field.
+   *
+   * @return void
+   */
+  public function load_product_excluded_terms() {
+    $product_excluded_terms = new Product_Excluded_Terms($this->plugin, $this->version, $this->plugin_dir_url);
+    $product_excluded_terms->init();
   }
   
   /**

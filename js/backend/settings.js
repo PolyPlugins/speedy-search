@@ -11,6 +11,7 @@ jQuery(document).ready(function ($) {
   initRangeSlider();
   initMediaUploader();
   initSynonyms();
+  initExclusions();
   initSubmit();
 
   function initTabs() {
@@ -247,6 +248,42 @@ jQuery(document).ready(function ($) {
     });
   }
 
+  function initExclusions() {
+    $(document).on('click', '.snappy-exclusion-add', function() {
+      let $wrapper = $(this).closest('.snappy-exclusions-wrapper');
+      let nextIndex = parseInt($wrapper.attr('data-next-index'), 10);
+
+      if (isNaN(nextIndex)) {
+        nextIndex = $wrapper.find('.snappy-exclusion-row').length;
+      }
+
+      let row = '' +
+        '<div class="snappy-exclusion-row">' +
+          '<p class="snappy-exclusion-label"><strong>' + __('When search contains', 'speedy-search') + '</strong></p>' +
+          '<input type="text" name="speedy_search_settings_polyplugins[exclusions][' + nextIndex + '][when]" value="" />' +
+          '<p class="snappy-exclusion-label"><strong>' + __('Exclude results containing (comma separated)', 'speedy-search') + '</strong></p>' +
+          '<textarea rows="3" name="speedy_search_settings_polyplugins[exclusions][' + nextIndex + '][exclude]"></textarea>' +
+          '<button type="button" class="button button-secondary snappy-exclusion-remove">' + __('Remove', 'speedy-search') + '</button>' +
+        '</div>';
+
+      $wrapper.find('.snappy-exclusions-rows').append(row);
+      $wrapper.attr('data-next-index', nextIndex + 1);
+    });
+
+    $(document).on('click', '.snappy-exclusion-remove', function() {
+      let $wrapper = $(this).closest('.snappy-exclusions-wrapper');
+      let $rows = $wrapper.find('.snappy-exclusion-row');
+
+      if ($rows.length <= 1) {
+        $rows.find('input[type="text"]').val('');
+        $rows.find('textarea').val('');
+        return;
+      }
+
+      $(this).closest('.snappy-exclusion-row').remove();
+    });
+  }
+
   function initValidation() {
     $tracking_delay = $("#tracking_delay").val();
     $typing_delay   = $("#typing_delay").val();
@@ -282,10 +319,25 @@ jQuery(document).ready(function ($) {
         return false;
       }
     }
+    if ($(".snappy-indexing-source").length && $(".snappy-indexing-source:checked").length === 0) {
+      Swal.fire({
+        title: __("Error", 'speedy-search'),
+        text: __("Keep at least one indexing source enabled.", 'speedy-search'),
+        icon: "error",
+        confirmButtonColor: "#46BEA4",
+      });
+
+      $(".snappy-indexing-source").addClass("validation");
+
+      return false;
+    }
+
     $("#tracking_delay").removeClass("validation");
     $("#typing_delay").removeClass("validation");
 
     $(".advanced-enabled-types").removeClass("validation");
+
+    $(".snappy-indexing-source").removeClass("validation");
 
     return true;
   }

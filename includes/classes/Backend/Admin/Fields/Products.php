@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend\Admin\Fields;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -46,6 +47,8 @@ class Products {
    * @return void
    */
   public function init() {
+    Log::debug(sprintf('Snappy Search settings fields: %s', __CLASS__));
+
 		$this->add_section();
     $this->add_settings();
   }
@@ -82,6 +85,46 @@ class Products {
 			'products_tab_enabled',
 			__('Tab Enabled?', 'speedy-search'),
 			array($this, 'products_tab_enabled_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
+			'products_title_only_search',
+			__('Title Only Search?', 'speedy-search'),
+			array($this, 'products_title_only_search_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
+			'products_boolean_search',
+			__('Boolean Search?', 'speedy-search'),
+			array($this, 'products_boolean_search_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
+			'products_featured_first',
+			__('Featured Products First?', 'speedy-search'),
+			array($this, 'products_featured_first_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
+			'products_top_sellers_first',
+			__('Top Sellers First?', 'speedy-search'),
+			array($this, 'products_top_sellers_first_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
+			'products_sort_by_rating',
+			__('Sort By Rating?', 'speedy-search'),
+			array($this, 'products_sort_by_rating_render'),
 			'speedy_search_products_polyplugins',
 			'speedy_search_products_section_polyplugins'
 		);
@@ -144,6 +187,54 @@ class Products {
 	}
 
   /**
+	 * Render Title Only Search Field
+	 *
+	 * @return void
+	 */
+	public function products_title_only_search_render() {
+		$options = Utils::get_option('products');
+    $option  = isset($options['title_only_search']) ? $options['title_only_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][title_only_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Only return product results where the product title contains each search term (every word in the query). The title check uses what you type, so misspellings usually will not match.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Boolean Search Field
+	 *
+	 * @return void
+	 */
+	public function products_boolean_search_render() {
+		$options = Utils::get_option('products');
+    $option  = isset($options['boolean_search']) ? $options['boolean_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][boolean_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('When the visitor types multiple words, require every word to match (AND).', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Featured ordering and badge in product results.
+	 *
+	 * @return void
+	 */
+	public function products_featured_first_render() {
+		$options = Utils::get_option('products');
+    $option  = array_key_exists('featured_first', $options) ? !empty($options['featured_first']) : true;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][featured_first]" class="form-check-input" role="switch" <?php checked(true, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('List featured products first and show the featured badge in results. When off, featured items are not prioritized and the badge is hidden.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
 	 * Render Products Batch Field
 	 *
 	 * @return void
@@ -169,6 +260,38 @@ class Products {
     <input type="number" name="speedy_search_settings_polyplugins[products][result_limit]" value="<?php echo esc_html($option); ?>">
     <p><strong><?php esc_html_e('How many products would you like to show?', 'speedy-search'); ?></strong></p>
 	  <?php
+	}
+
+  /**
+	 * Sort by total units sold (highest first) after featured and title match.
+	 *
+	 * @return void
+	 */
+	public function products_top_sellers_first_render() {
+		$options = Utils::get_option('products');
+    $option  = isset($options['top_sellers_first']) ? $options['top_sellers_first'] : false;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][top_sellers_first]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Sort by each product\'s total units sold. Higher sales counts are listed first.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Sort by average rating (highest first) after sales when both apply.
+	 *
+	 * @return void
+	 */
+	public function products_sort_by_rating_render() {
+		$options = Utils::get_option('products');
+    $option  = array_key_exists('sort_by_rating', $options) ? !empty($options['sort_by_rating']) : true;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][sort_by_rating]" class="form-check-input" role="switch" <?php checked(true, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Sort by average star rating. Higher ratings are listed first.', 'speedy-search'); ?></strong></p>
+		<?php
 	}
 
   /**

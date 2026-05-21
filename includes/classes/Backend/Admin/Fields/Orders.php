@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend\Admin\Fields;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -46,6 +47,8 @@ class Orders {
    * @return void
    */
   public function init() {
+    Log::debug(sprintf('Snappy Search settings fields: %s', __CLASS__));
+
 		$this->add_section();
     $this->add_settings();
   }
@@ -93,6 +96,14 @@ class Orders {
 			'speedy_search_orders_polyplugins',
 			'speedy_search_orders_section_polyplugins'
 		);
+
+		add_settings_field(
+			'orders_boolean_search',
+			__('Boolean Search?', 'speedy-search'),
+			array($this, 'orders_boolean_search_render'),
+			'speedy_search_orders_polyplugins',
+			'speedy_search_orders_section_polyplugins'
+		);
   }
 
   /**
@@ -136,6 +147,22 @@ class Orders {
     ?>
     <input type="number" name="speedy_search_settings_polyplugins[orders][result_limit]" value="<?php echo esc_html($option); ?>">
     <p><strong><?php esc_html_e('How many orders would you like to show?', 'speedy-search'); ?></strong></p>
+	  <?php
+	}
+
+  /**
+	 * Render Boolean Search Field
+	 *
+	 * @return void
+	 */
+	public function orders_boolean_search_render() {
+		$options = Utils::get_option('orders');
+    $option  = isset($options['boolean_search']) ? $options['boolean_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[orders][boolean_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('When searching multiple words in admin, require every word to match (AND).', 'speedy-search'); ?></strong></p>
 	  <?php
 	}
 

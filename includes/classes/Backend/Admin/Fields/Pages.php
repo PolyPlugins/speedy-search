@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend\Admin\Fields;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -46,6 +47,8 @@ class Pages {
    * @return void
    */
   public function init() {
+    Log::debug(sprintf('Snappy Search settings fields: %s', __CLASS__));
+
 		$this->add_section();
     $this->add_settings();
   }
@@ -82,6 +85,22 @@ class Pages {
 			'pages_tab_enabled',
 			__('Tab Enabled?', 'speedy-search'),
 			array($this, 'pages_tab_enabled_render'),
+			'speedy_search_pages_polyplugins',
+			'speedy_search_pages_section_polyplugins'
+		);
+
+		add_settings_field(
+			'pages_title_only_search',
+			__('Title Only Search?', 'speedy-search'),
+			array($this, 'pages_title_only_search_render'),
+			'speedy_search_pages_polyplugins',
+			'speedy_search_pages_section_polyplugins'
+		);
+
+		add_settings_field(
+			'pages_boolean_search',
+			__('Boolean Search?', 'speedy-search'),
+			array($this, 'pages_boolean_search_render'),
 			'speedy_search_pages_polyplugins',
 			'speedy_search_pages_section_polyplugins'
 		);
@@ -132,6 +151,38 @@ class Pages {
       <input type="checkbox" name="speedy_search_settings_polyplugins[pages][tab_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Show the pages tab on non advanced search.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Title Only Search Field
+	 *
+	 * @return void
+	 */
+	public function pages_title_only_search_render() {
+		$options = Utils::get_option('pages');
+    $option  = isset($options['title_only_search']) ? $options['title_only_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[pages][title_only_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Only return page results where the page title contains each search term (every word in the query). The title check uses what you type, so misspellings usually will not match.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Boolean Search Field
+	 *
+	 * @return void
+	 */
+	public function pages_boolean_search_render() {
+		$options = Utils::get_option('pages');
+    $option  = isset($options['boolean_search']) ? $options['boolean_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[pages][boolean_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('When the visitor types multiple words, require every word to match (AND).', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

@@ -3,6 +3,7 @@
 namespace PolyPlugins\Speedy_Search\Frontend;
 
 use PolyPlugins\Speedy_Search\Backend\DB;
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -71,6 +72,8 @@ class Enqueue {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search frontend asset hooks registered.');
+
     add_action('wp_enqueue_scripts', array($this, 'enqueue'));
   }
   
@@ -102,17 +105,55 @@ class Enqueue {
     $selector         = isset($this->options['selector']) ? $this->options['selector'] : '';
     $advanced_enabled = isset($this->advanced_options['enabled']) ? $this->advanced_options['enabled'] : '';
 
+    // Advanced template pages use their own script/input; loading selector/shortcode breaks the header widget on those URLs.
+    if ($this->is_current_page_advanced_search_template()) {
+      $this->enqueue_advanced_search();
+
+      return;
+    }
+
     if ($selector) {
       $this->enqueue_selector_search();
     } else {
       $this->enqueue_shortcode_search();
     }
-    
+
     if ($advanced_enabled) {
       $this->enqueue_advanced_search();
     }
   }
+
+  /**
+   * Whether the main query is a Page using the Advanced Snappy Search template.
+   *
+   * @return bool
+   */
+  private function is_current_page_advanced_search_template() {
+    if (!is_singular('page')) {
+      return false;
+    }
+
+    $slug = (string) get_page_template_slug();
+
+    return $slug === 'snappy-search-advanced-search-form.php'
+      || $slug === 'snappy-search-advanced-search-form-stacked.php';
+  }
   
+  /**
+   * Options passed to frontend scripts (includes ordered filter keys for UI).
+   *
+   * @return array
+   */
+  private function get_script_options() {
+    return array_merge(
+      $this->options,
+      array(
+        'filters_attributes_ordered_keys'   => Utils::get_filters_attributes_allowed_keys(),
+        'filters_custom_fields_ordered_keys' => Utils::get_filters_custom_fields_ordered_keys(),
+      )
+    );
+  }
+
   /**
    * Enqueue selector search
    *
@@ -126,7 +167,7 @@ class Enqueue {
         'snappy-search-selector',
         'snappy_search_object',
         array(
-          'options'  => $this->options,
+          'options'  => $this->get_script_options(),
           'popular'  => DB::get_top_terms_last_x_days(),
           'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
           'endpoints' => Utils::get_api_endpoints(),
@@ -153,7 +194,7 @@ class Enqueue {
         'snappy-search-shortcode',
         'snappy_search_object',
         array(
-          'options'  => $this->options,
+          'options'  => $this->get_script_options(),
           'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
           'endpoints' => Utils::get_api_endpoints(),
         )
@@ -183,7 +224,7 @@ class Enqueue {
           'snappy-search-advanced-stacked',
           'snappy_search_object',
           array(
-            'options'  => $this->options,
+            'options'  => $this->get_script_options(),
             'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
             'endpoints' => Utils::get_api_endpoints(),
           )
@@ -195,7 +236,7 @@ class Enqueue {
           'snappy-search-advanced',
           'snappy_search_object',
           array(
-            'options'  => $this->options,
+            'options'  => $this->get_script_options(),
             'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
             'endpoints' => Utils::get_api_endpoints(),
           )

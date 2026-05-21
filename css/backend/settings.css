@@ -44,7 +44,7 @@ input[type=checkbox]:checked {
   background-color: #46BEA4!important;
 }
 
-input[type=checkbox]:checked::before {
+input[type=checkbox]:checked:not(.form-check-input)::before {
   content: unset!important;
 }
 
@@ -79,22 +79,78 @@ input[type=checkbox]:checked::before {
   font-size: 22px!important;
 }
 
-.notice, div.error, div.updated  {
+/* Core Settings API notices (same column width as .tab content / danger banner) */
+.bootstrap-wrapper .tabs > .notice {
+  width: 100%;
+  max-width: none;
+  box-sizing: border-box;
+  margin: 0 0 16px;
+  padding: 12px 46px 12px 14px;
+  border-radius: 6px;
+  border: 1px solid #c3c4c7;
+  border-left-width: 4px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  display: block;
+  text-align: left;
+  line-height: 1.5;
+  text-transform: none;
+}
+
+.bootstrap-wrapper .tabs > .notice.notice-success {
+  position: relative;
+  background-color: #00a22b;
+  border: 1px solid #00a22b;
+  border-left-width: 4px;
+  border-left-color: #00a22b;
+  color: #fff;
+  box-shadow: none;
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.bootstrap-wrapper .tabs > .notice.notice-success p,
+.bootstrap-wrapper .tabs > .notice.notice-success strong {
+  color: #fff;
+}
+
+.bootstrap-wrapper .tabs > .notice.notice-success .notice-dismiss {
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
+  margin-top: 0;
+}
+
+.bootstrap-wrapper .tabs > .notice.notice-success .notice-dismiss::before {
+  color: #fff;
+}
+
+.bootstrap-wrapper .tabs > .notice.notice-success .notice-dismiss:active::before,
+.bootstrap-wrapper .tabs > .notice.notice-success .notice-dismiss:focus::before {
+  color: #fff;
+}
+
+.bootstrap-wrapper .tabs > .notice p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* Scoped so WordPress core notices (e.g. settings_updated) keep default layout */
+.notice.speedy-search {
   margin-top: 20px;
-  margin-bottom: -25px;
+  margin-bottom: 15px;
   margin-left: auto;
   margin-right: auto;
+  max-width: 100%;
   transition: opacity 0.5s ease-in;
   animation: fadeIn 0.5s forwards;
 }
 
-.notice-dismiss {
+.notice.speedy-search .notice-dismiss {
   color: #46BEA4 !important;
   transition: opacity 0.5s ease-out;
 }
 
-.notice-success, 
-div.updated {
+.notice.speedy-search.notice-success {
   display: flex;
   flex-direction: row;
   align-items: center;
@@ -103,7 +159,7 @@ div.updated {
   border-left-color: #46BEA4 !important;
   border: 2px solid #46BEA4;
   border-radius: 5px;
-  line-height: 0;
+  line-height: 1.5;
   border-left-width: 8px;
   text-transform: uppercase;
 }
@@ -419,4 +475,90 @@ a.btn.btn-dark {
   background-color: #DC3545 !important;
   border-color: #DC3545 !important;
   color: #fff !important;
+}
+
+.snappy-exclusions-wrapper .snappy-exclusion-row {
+  border: 1px solid #F0F0F1;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.snappy-exclusions-wrapper .snappy-exclusion-label {
+  margin: 0 0 6px;
+}
+
+.snappy-exclusions-wrapper input[type="text"] {
+  margin-bottom: 12px;
+}
+
+.snappy-exclusions-wrapper .snappy-exclusion-remove {
+  margin-top: 10px;
+}
+
+.snappy-exclusions-wrapper .snappy-exclusion-add {
+  margin-top: 5px;
+  margin-bottom: 12px;
+}
+
+.snappy-exclusions-wrapper > p {
+  margin-top: 0;
+}
+
+.snappy-exclusions-wrapper .button-primary {
+  background-color: #46BEA4 !important;
+  border-color: #46BEA4 !important;
+}
+
+.snappy-exclusions-wrapper .button-secondary {
+  background-color: #DC3545 !important;
+  border-color: #DC3545 !important;
+  color: #fff !important;
+}
+
+/* Keep generic checkbox tweaks off Bootstrap switches */
+.bootstrap-wrapper input[type="checkbox"]:not(.form-check-input) {
+  border-radius: 5px !important;
+  background-color: #ccc !important;
+}
+
+/* Render switch toggles with one custom thumb only */
+.bootstrap-wrapper .form-switch .form-check-input {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: none !important;
+  width: 2em;
+  height: 1em;
+  border-radius: 2em !important;
+  border: 1px solid #ccc !important;
+  background-color: #ccc !important;
+  position: relative;
+  margin-top: 2px !important;
+  vertical-align: middle;
+}
+
+.bootstrap-wrapper .form-switch .form-check-input::before {
+  content: none !important;
+}
+
+.bootstrap-wrapper .form-switch .form-check-input::after {
+  content: '' !important;
+  position: absolute;
+  top: 50%;
+  left: 1px;
+  width: calc(1em - 2px);
+  height: calc(1em - 2px);
+  border-radius: 50%;
+  background-color: #fff;
+  transform: translateY(-50%);
+  transition: transform .15s ease-in-out;
+}
+
+.bootstrap-wrapper .form-switch .form-check-input:checked {
+  background-color: #46BEA4 !important;
+  border-color: #46BEA4 !important;
+}
+
+.bootstrap-wrapper .form-switch .form-check-input:checked::after {
+  transform: translate(1em, -50%);
 }

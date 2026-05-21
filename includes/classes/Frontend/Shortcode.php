@@ -3,6 +3,7 @@
 namespace PolyPlugins\Speedy_Search\Frontend;
 
 use PolyPlugins\Speedy_Search\Backend\DB;
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -47,6 +48,8 @@ class Shortcode {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search shortcodes registered.');
+
     add_shortcode('speedy_search_polyplugins', array($this, 'snappy_search_shortcode_render'));
     add_shortcode('snappy_search_polyplugins', array($this, 'snappy_search_shortcode_render'));
     add_shortcode('snappy_search_mobile_polyplugins', array($this, 'snappy_search_mobile_shortcode_render'));

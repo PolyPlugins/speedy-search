@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend\Admin\Fields;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -46,6 +47,8 @@ class Downloads {
    * @return void
    */
   public function init() {
+    Log::debug(sprintf('Snappy Search settings fields: %s', __CLASS__));
+
 		$this->add_section();
     $this->add_settings();
   }
@@ -82,6 +85,22 @@ class Downloads {
 			'downloads_tab_enabled',
 			__('Tab Enabled?', 'speedy-search'),
 			array($this, 'downloads_tab_enabled_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
+		);
+
+		add_settings_field(
+			'downloads_title_only_search',
+			__('Title Only Search?', 'speedy-search'),
+			array($this, 'downloads_title_only_search_render'),
+			'speedy_search_downloads_polyplugins',
+			'speedy_search_downloads_section_polyplugins'
+		);
+
+		add_settings_field(
+			'downloads_boolean_search',
+			__('Boolean Search?', 'speedy-search'),
+			array($this, 'downloads_boolean_search_render'),
 			'speedy_search_downloads_polyplugins',
 			'speedy_search_downloads_section_polyplugins'
 		);
@@ -132,6 +151,38 @@ class Downloads {
       <input type="checkbox" name="speedy_search_settings_polyplugins[dowloads][tab_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Show the dowloads tab on non advanced search.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Title Only Search Field
+	 *
+	 * @return void
+	 */
+	public function downloads_title_only_search_render() {
+		$options = Utils::get_option('downloads');
+    $option  = isset($options['title_only_search']) ? $options['title_only_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[downloads][title_only_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Only return download results where the download title contains each search term (every word in the query). The title check uses what you type, so misspellings usually will not match.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render Boolean Search Field
+	 *
+	 * @return void
+	 */
+	public function downloads_boolean_search_render() {
+		$options = Utils::get_option('downloads');
+    $option  = isset($options['boolean_search']) ? $options['boolean_search'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[downloads][boolean_search]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('When the visitor types multiple words, require every word to match (AND).', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

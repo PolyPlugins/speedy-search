@@ -3,6 +3,7 @@
 namespace PolyPlugins\Speedy_Search\Frontend;
 
 use PolyPlugins\Speedy_Search\Backend\DB;
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -20,6 +21,8 @@ class Analytics {
   }
 
   public function init() {
+    Log::debug('Snappy Search popularity analytics handler registered.');
+
     add_action('wp_ajax_speedy_search_query', array($this, 'track_query'));
   }
 

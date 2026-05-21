@@ -93,6 +93,8 @@ class Utils {
     );
 
     if ($result === false) {
+      Log::error('Snappy Search failed to persist version option.');
+
       return false;
     }
 
@@ -266,6 +268,8 @@ class Utils {
     try {
       $tnt->selectIndex($index_name);
     } catch (\Exception $e) {
+      Log::debug(sprintf('delete_db_index: could not select index %s (%s)', $index_name, $e->getMessage()));
+
       return;
     }
 
@@ -328,6 +332,8 @@ class Utils {
   public static function send_error($message, $code = 400) {
     $message = $message ? sanitize_text_field($message) : __('Error', 'speedy-search');
     $code    = is_numeric($code) ? (int) $code : 400;
+
+    Log::error(sprintf('Snappy Search request error (%d): %s', $code, $message));
 
     wp_send_json_error(array(
       'message' => sanitize_text_field($message),
@@ -557,6 +563,520 @@ class Utils {
   }
 
   /**
+   * Text to index for the post author (display name, slug, login).
+   * Only blog posts (`post`); pages, products, and other types return empty.
+   *
+   * @param int $post_id
+   * @return string
+   */
+  public static function get_index_author_text($post_id) {
+    $post_id = (int) $post_id;
+
+    if ($post_id < 1) {
+      return '';
+    }
+
+    $post = get_post($post_id);
+
+    if (!$post) {
+      return '';
+    }
+
+    if ($post->post_type !== 'post') {
+      return '';
+    }
+
+    $author_id = (int) $post->post_author;
+
+    if ($author_id < 1) {
+      return '';
+    }
+
+    $user = get_userdata($author_id);
+
+    if (!$user) {
+      return '';
+    }
+
+    $raw = array(
+      sanitize_text_field((string) $user->display_name),
+      sanitize_text_field((string) $user->user_nicename),
+      sanitize_text_field((string) $user->user_login),
+    );
+
+    $parts = array();
+
+    foreach ($raw as $part) {
+      if ($part === '') {
+        continue;
+      }
+
+      // Skip bare emails (privacy / noise); keep non-email parts only.
+      if (false !== is_email($part)) {
+        continue;
+      }
+
+      $parts[] = $part;
+    }
+
+    $parts = array_unique($parts);
+
+    return sanitize_text_field(implode(' ', $parts));
+  }
+
+  /**
+   * WooCommerce product categories for client-side filter UI.
+   *
+   * @param int $product_id
+   * @return array
+   */
+  public static function get_product_categories_for_filter($product_id) {
+    $product_id = (int) $product_id;
+
+    if ($product_id < 1 || !function_exists('taxonomy_exists') || !taxonomy_exists('product_cat')) {
+      return array();
+    }
+
+    $terms = get_the_terms($product_id, 'product_cat');
+
+    if (empty($terms) || is_wp_error($terms)) {
+      return array();
+    }
+
+    $out = array();
+
+    foreach ($terms as $term) {
+      $out[] = array(
+        'id'   => (int) $term->term_id,
+        'name' => sanitize_text_field($term->name),
+        'slug' => sanitize_title($term->slug),
+      );
+    }
+
+    return $out;
+  }
+
+  /**
+   * Normalize one Filters-tab attribute token to storage key (pa_*, attr_*).
+   *
+   * @param string $token
+   * @return string
+   */
+  public static function normalize_filters_attribute_token($token) {
+    $token = trim((string) $token);
+
+    if ($token === '') {
+      return '';
+    }
+
+    $lower = strtolower($token);
+
+    if (strpos($lower, 'pa_') === 0) {
+      return sanitize_key($lower);
+    }
+
+    if (strpos($lower, 'attr_') === 0) {
+      return sanitize_key($lower);
+    }
+
+    $base = sanitize_title($token);
+
+    if ($base === '') {
+      return '';
+    }
+
+    if (function_exists('wc_attribute_taxonomy_name')) {
+      return wc_attribute_taxonomy_name($base);
+    }
+
+    return 'pa_' . $base;
+  }
+
+  /**
+   * Parsed attribute keys from filters_attributes option (comma-separated).
+   *
+   * @return array
+   */
+  public static function get_filters_attributes_allowed_keys() {
+    $raw = self::get_option('filters_attributes');
+
+    if (!is_string($raw) || trim($raw) === '') {
+      return array();
+    }
+
+    $parts = array_filter(array_map('trim', explode(',', $raw)));
+    $keys  = array();
+
+    foreach ($parts as $p) {
+      $k = self::normalize_filters_attribute_token($p);
+
+      if ($k !== '') {
+        $keys[] = $k;
+      }
+    }
+
+    return array_values(array_unique($keys));
+  }
+
+  /**
+   * Custom field meta keys from filters_custom_fields option in comma order (for filter UI ordering).
+   *
+   * @return array
+   */
+  public static function get_filters_custom_fields_ordered_keys() {
+    $raw = self::get_option('filters_custom_fields');
+
+    if (!is_string($raw) || trim($raw) === '') {
+      return array();
+    }
+
+    $parts = array_filter(array_map('trim', explode(',', $raw)));
+    $keys  = array();
+
+    foreach ($parts as $p) {
+      $k = sanitize_key($p);
+
+      if ($k !== '') {
+        $keys[] = $k;
+      }
+    }
+
+    return array_values(array_unique($keys));
+  }
+
+  /**
+   * WooCommerce product attributes for client-side filter UI (global taxonomies, local attributes, variations).
+   *
+   * @param int              $product_id
+   * @param array            $allowed_keys Attribute keys from settings; empty array returns no attributes.
+   * @param \WC_Product|null $wc_product   Optional product instance for this ID (avoids a duplicate wc_get_product).
+   * @return array Attribute key => array with keys label, values (each value: slug, name).
+   */
+  public static function get_product_attributes_for_filter($product_id, $allowed_keys = array(), $wc_product = null) {
+    $product_id = (int) $product_id;
+
+    if ($product_id < 1 || !function_exists('wc_get_product')) {
+      return array();
+    }
+
+    if (!is_array($allowed_keys) || empty($allowed_keys)) {
+      return array();
+    }
+
+    $allowed_lookup = array_flip($allowed_keys);
+
+    if (!$wc_product instanceof \WC_Product || (int) $wc_product->get_id() !== $product_id) {
+      $wc_product = wc_get_product($product_id);
+    }
+
+    if (!$wc_product) {
+      return array();
+    }
+
+    $slugmap = array();
+
+    $ensure_key = function ($key, $label) use (&$slugmap) {
+      if (!isset($slugmap[$key])) {
+        $slugmap[$key] = array(
+          'label' => $label,
+          'terms' => array(),
+        );
+      }
+    };
+
+    $add_term = function ($key, $label, $slug, $name) use (&$slugmap, $ensure_key, $allowed_lookup) {
+      if (!isset($allowed_lookup[$key])) {
+        return;
+      }
+
+      $slug = sanitize_title((string) $slug);
+      $name = sanitize_text_field((string) $name);
+
+      if ($slug === '' || $name === '') {
+        return;
+      }
+
+      $ensure_key($key, $label);
+      $slugmap[$key]['terms'][$slug] = $name;
+    };
+
+    foreach ($wc_product->get_attributes() as $attr) {
+      if (!$attr instanceof \WC_Product_Attribute) {
+        continue;
+      }
+
+      $tax_name = $attr->get_name();
+      $label    = wc_attribute_label($tax_name);
+
+      if ($attr->is_taxonomy()) {
+        foreach ((array) $attr->get_options() as $term_id) {
+          $term = get_term((int) $term_id);
+
+          if ($term && !is_wp_error($term)) {
+            $add_term($tax_name, $label, $term->slug, $term->name);
+          }
+        }
+      } else {
+        $key = 'attr_' . sanitize_title($tax_name);
+
+        foreach ((array) $attr->get_options() as $opt) {
+          $opt = sanitize_text_field((string) $opt);
+
+          if ($opt === '') {
+            continue;
+          }
+
+          $add_term($key, $label, sanitize_title($opt), $opt);
+        }
+      }
+    }
+
+    if ($wc_product->is_type('variable')) {
+      foreach ($wc_product->get_children() as $child_id) {
+        $child = wc_get_product($child_id);
+
+        if (!$child) {
+          continue;
+        }
+
+        $va = $child->get_variation_attributes();
+
+        if (empty($va) || !is_array($va)) {
+          continue;
+        }
+
+        foreach ($va as $meta_key => $slug) {
+          $slug = is_string($slug) ? trim($slug) : '';
+
+          if ($slug === '') {
+            continue;
+          }
+
+          $tax_name = str_replace('attribute_', '', (string) $meta_key);
+
+          if (taxonomy_exists($tax_name)) {
+            if (!isset($allowed_lookup[$tax_name])) {
+              continue;
+            }
+
+            $term = get_term_by('slug', $slug, $tax_name);
+            $nm   = ($term && !is_wp_error($term)) ? sanitize_text_field($term->name) : $slug;
+
+            $add_term($tax_name, wc_attribute_label($tax_name), $slug, $nm);
+          } else {
+            $key = 'attr_' . sanitize_title($tax_name);
+
+            if (!isset($allowed_lookup[$key])) {
+              continue;
+            }
+
+            $nm = sanitize_text_field($slug);
+
+            $add_term($key, sanitize_text_field(wc_clean($tax_name)), sanitize_title($slug), $nm);
+          }
+        }
+      }
+    }
+
+    $needs_pa_terms_scan = false;
+
+    foreach ($allowed_keys as $ak) {
+      if (strpos((string) $ak, 'pa_') === 0) {
+        $needs_pa_terms_scan = true;
+        break;
+      }
+    }
+
+    if ($needs_pa_terms_scan && function_exists('wc_get_attribute_taxonomies') && function_exists('wc_attribute_taxonomy_name') && function_exists('wc_get_product_terms')) {
+      foreach (wc_get_attribute_taxonomies() as $tax_row) {
+        $tax_name = wc_attribute_taxonomy_name($tax_row->attribute_name);
+
+        if (!isset($allowed_lookup[$tax_name])) {
+          continue;
+        }
+
+        $terms = wc_get_product_terms($product_id, $tax_name, array('fields' => 'all'));
+
+        if (empty($terms) || is_wp_error($terms)) {
+          continue;
+        }
+
+        $label = !empty($tax_row->attribute_label) ? sanitize_text_field($tax_row->attribute_label) : wc_attribute_label($tax_name);
+
+        foreach ($terms as $term) {
+          if (!isset($term->slug)) {
+            continue;
+          }
+
+          $add_term($tax_name, $label, $term->slug, $term->name);
+        }
+      }
+    }
+
+    $out = array();
+
+    foreach ($slugmap as $key => $data) {
+      if (empty($data['terms'])) {
+        continue;
+      }
+
+      $vals = array();
+
+      foreach ($data['terms'] as $sl => $nm) {
+        $vals[] = array(
+          'slug' => $sl,
+          'name' => $nm,
+        );
+      }
+
+      usort($vals, function ($a, $b) {
+        return strcmp($a['name'], $b['name']);
+      });
+
+      $out[$key] = array(
+        'label'  => $data['label'],
+        'values' => $vals,
+      );
+    }
+
+    $filtered = array();
+
+    foreach ($allowed_keys as $k) {
+      if (isset($out[$k])) {
+        $filtered[$k] = $out[$k];
+      }
+    }
+
+    return $filtered;
+  }
+
+  /**
+   * Saved indexing toggles merged with defaults (all on when unset).
+   *
+   * @return array
+   */
+  public static function get_indexing_field_options() {
+    $defaults = array(
+      'title'                 => true,
+      'content'               => true,
+      'categories'            => true,
+      'tags'                  => true,
+      'author'                => true,
+      'product_sku'           => true,
+      'product_custom_fields' => true,
+    );
+
+    $stored = self::get_option('indexing');
+
+    if (!is_array($stored)) {
+      return $defaults;
+    }
+
+    foreach ($defaults as $key => $default_on) {
+      if (!array_key_exists($key, $stored)) {
+        continue;
+      }
+
+      $defaults[$key] = !empty($stored[$key]);
+    }
+
+    return $defaults;
+  }
+
+  /**
+   * How many indexing sources are enabled (used to enforce “at least one” in settings).
+   *
+   * @param array $idx Keys: title, content, categories, tags, optional product_* when WooCommerce is active.
+   * @return int
+   */
+  public static function count_enabled_indexing_sources($idx) {
+    if (!is_array($idx)) {
+      return 0;
+    }
+
+    $n = 0;
+
+    foreach (array('title', 'content', 'categories', 'tags', 'author') as $k) {
+      if (!empty($idx[$k])) {
+        $n++;
+      }
+    }
+
+    if (class_exists('WooCommerce')) {
+      foreach (array('product_sku', 'product_custom_fields') as $k) {
+        if (!empty($idx[$k])) {
+          $n++;
+        }
+      }
+    }
+
+    return $n;
+  }
+
+  /**
+   * Remove document fields the admin turned off under Indexing settings.
+   *
+   * @param string $post_type
+   * @param array  $document
+   * @return array
+   */
+  public static function apply_index_field_settings_to_document($post_type, $document) {
+    if (!is_array($document)) {
+      return $document;
+    }
+
+    $opts = self::get_indexing_field_options();
+
+    if (empty($opts['title'])) {
+      $document['title'] = '';
+    }
+
+    if (empty($opts['content'])) {
+      $document['content'] = '';
+    }
+
+    if (empty($opts['categories'])) {
+      $document['category']    = '';
+      $document['product_cat'] = '';
+    }
+
+    if (empty($opts['tags'])) {
+      $document['post_tag']    = '';
+      $document['product_tag'] = '';
+    }
+
+    if (empty($opts['author'])) {
+      $document['author'] = '';
+    }
+
+    if ($post_type === 'product') {
+      if (empty($opts['product_sku'])) {
+        $document['sku']              = '';
+        $document['sku_normalized'] = '';
+      }
+
+      if (empty($opts['product_custom_fields'])) {
+        $custom_fields_raw = self::get_option('filters_custom_fields');
+        $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+
+        foreach ($custom_fields as $custom_field) {
+          $meta_key = sanitize_key($custom_field);
+
+          if ($meta_key === '') {
+            continue;
+          }
+
+          if (isset($document[$meta_key])) {
+            unset($document[$meta_key]);
+          }
+        }
+      }
+    }
+
+    return $document;
+  }
+
+  /**
    * Add taxonomy term names into the index document.
    *
    * @param int   $post_id
@@ -724,7 +1244,7 @@ class Utils {
    * @return array
    */
   public static function get_api_endpoints() {
-    $version            = '1.0.0';
+    $version            = self::get_current_version();
     $custom_search_file = ABSPATH . 'search.php';
     $has_custom_file    = file_exists($custom_search_file);
 
@@ -761,6 +1281,313 @@ class Utils {
       'downloads'       => home_url('/wp-json/speedy-search/v1/downloads/'),
       'orders'          => home_url('/wp-json/speedy-search-search/v1/orders'),
     );
+  }
+
+  /**
+   * Cache key fragment that changes when exclusion rules change.
+   *
+   * @return string
+   */
+  public static function get_exclusions_cache_signature() {
+    $normalized = self::get_normalized_exclusion_rules();
+
+    if ($normalized === array()) {
+      return '0';
+    }
+
+    return md5(wp_json_encode($normalized));
+  }
+
+  /**
+   * Drop search rows whose text matches active exclusion terms for this query.
+   *
+   * @param string $search_query Raw user query (same as request param).
+   * @param array  $results      List of associative arrays (API / standalone rows).
+   * @return array
+   */
+  public static function filter_search_results_by_exclusions($search_query, $results) {
+    if (!is_array($results) || $results === array()) {
+      return $results;
+    }
+
+    $terms = self::get_active_exclusion_terms_for_query($search_query);
+
+    if ($terms === array()) {
+      return $results;
+    }
+
+    $filtered = array();
+
+    foreach ($results as $row) {
+      if (!is_array($row)) {
+        continue;
+      }
+
+      $haystack = self::flatten_search_result_for_exclusion_check($row);
+      $drop     = false;
+
+      foreach ($terms as $term) {
+        if (self::exclusion_term_matches_haystack($haystack, $term)) {
+          $drop = true;
+          break;
+        }
+      }
+
+      if (!$drop) {
+        $filtered[] = $row;
+      }
+    }
+
+    return $filtered;
+  }
+
+  /**
+   * Product meta key used for per-product excluded search terms.
+   *
+   * @return string
+   */
+  public static function get_product_excluded_search_terms_meta_key() {
+    return '_snappy_search_excluded_terms';
+  }
+
+  /**
+   * Whether a product should be excluded for the current search query.
+   *
+   * @param int    $product_id
+   * @param string $search_query
+   * @return bool
+   */
+  public static function is_product_excluded_for_search_query($product_id, $search_query) {
+    $product_id = (int) $product_id;
+
+    if ($product_id < 1) {
+      return false;
+    }
+
+    $search_query = strtolower(trim(sanitize_text_field((string) $search_query)));
+
+    if ($search_query === '') {
+      return false;
+    }
+
+    $search_query = preg_replace('/\s+/', ' ', $search_query);
+    $meta_key     = self::get_product_excluded_search_terms_meta_key();
+    $raw_terms    = get_post_meta($product_id, $meta_key, true);
+    $terms        = self::parse_comma_separated_terms($raw_terms);
+
+    if ($terms === array()) {
+      return false;
+    }
+
+    foreach ($terms as $term) {
+      if ($term === '') {
+        continue;
+      }
+
+      if (strpos($term, ' ') !== false) {
+        if (strpos($search_query, $term) !== false) {
+          return true;
+        }
+
+        continue;
+      }
+
+      if (preg_match('/\b' . preg_quote($term, '/') . '\b/u', $search_query)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Normalize comma-separated terms to a canonical string for storage.
+   *
+   * @param mixed $value
+   * @return string
+   */
+  public static function normalize_comma_separated_terms($value) {
+    $terms = self::parse_comma_separated_terms($value);
+
+    if ($terms === array()) {
+      return '';
+    }
+
+    return implode(', ', $terms);
+  }
+
+  /**
+   * @return array
+   */
+  private static function get_normalized_exclusion_rules() {
+    $rows = self::get_option('exclusions');
+
+    if (!is_array($rows)) {
+      return array();
+    }
+
+    $out = array();
+
+    foreach ($rows as $row) {
+      if (!is_array($row)) {
+        continue;
+      }
+
+      $when_raw    = isset($row['when']) ? $row['when'] : '';
+      $exclude_raw = isset($row['exclude']) ? $row['exclude'] : '';
+      $when        = strtolower(trim(sanitize_text_field((string) $when_raw)));
+      $when        = preg_replace('/\s+/', ' ', $when);
+      $exclude_parts = array_filter(array_map('trim', explode(',', (string) $exclude_raw)));
+      $exclude_parts = array_unique(array_map('sanitize_text_field', $exclude_parts));
+      $exclude_lower = array();
+
+      foreach ($exclude_parts as $part) {
+        $part = strtolower(trim($part));
+
+        if ($part !== '') {
+          $exclude_lower[] = $part;
+        }
+      }
+
+      $exclude_lower = array_values(array_unique($exclude_lower));
+
+      if ($when === '' || $exclude_lower === array()) {
+        continue;
+      }
+
+      $out[] = array(
+        'when'    => $when,
+        'exclude' => $exclude_lower,
+      );
+    }
+
+    usort($out, function($a, $b) {
+      return strcmp($a['when'], $b['when']);
+    });
+
+    return $out;
+  }
+
+  /**
+   * Parse a comma-separated list to lowercase unique terms.
+   *
+   * @param mixed $value
+   * @return array
+   */
+  private static function parse_comma_separated_terms($value) {
+    $parts = array_filter(array_map('trim', explode(',', (string) $value)));
+    $parts = array_unique(array_map('sanitize_text_field', $parts));
+    $terms = array();
+
+    foreach ($parts as $part) {
+      $part = strtolower(trim((string) $part));
+      $part = preg_replace('/\s+/', ' ', $part);
+
+      if ($part !== '') {
+        $terms[] = $part;
+      }
+    }
+
+    return array_values(array_unique($terms));
+  }
+
+  /**
+   * Union of exclusion terms from every rule whose "when" substring matches the query.
+   *
+   * @param string $search_query
+   * @return array
+   */
+  private static function get_active_exclusion_terms_for_query($search_query) {
+    $search_query = strtolower(trim(sanitize_text_field((string) $search_query)));
+
+    if ($search_query === '') {
+      return array();
+    }
+
+    $normalized_query = preg_replace('/\s+/', ' ', $search_query);
+    $terms            = array();
+
+    foreach (self::get_normalized_exclusion_rules() as $rule) {
+      if ($rule['when'] === '') {
+        continue;
+      }
+
+      if (strpos($normalized_query, $rule['when']) === false) {
+        continue;
+      }
+
+      foreach ($rule['exclude'] as $ex) {
+        $terms[$ex] = true;
+      }
+    }
+
+    return array_keys($terms);
+  }
+
+  /**
+   * @param array $row
+   * @return string
+   */
+  private static function flatten_search_result_for_exclusion_check($row) {
+    $parts = array();
+
+    self::collect_strings_for_exclusion_check($row, $parts);
+
+    return strtolower(implode("\n", $parts));
+  }
+
+  /**
+   * @param mixed $data
+   * @param array $parts
+   * @return void
+   */
+  private static function collect_strings_for_exclusion_check($data, &$parts) {
+    if (is_string($data)) {
+      $parts[] = wp_strip_all_tags($data);
+
+      return;
+    }
+
+    if (is_int($data) || is_float($data)) {
+      $parts[] = (string) $data;
+
+      return;
+    }
+
+    if (is_bool($data)) {
+      return;
+    }
+
+    if (!is_array($data)) {
+      return;
+    }
+
+    foreach ($data as $v) {
+      self::collect_strings_for_exclusion_check($v, $parts);
+    }
+  }
+
+  /**
+   * Single-word terms use word boundaries; phrases use substring match.
+   *
+   * @param string $haystack Lowercase flattened result text.
+   * @param string $term     Lowercase exclusion term.
+   * @return bool            True when this term should remove the row.
+   */
+  private static function exclusion_term_matches_haystack($haystack, $term) {
+    $term = trim((string) $term);
+
+    if ($term === '' || $haystack === '') {
+      return false;
+    }
+
+    $term_l = strtolower($term);
+
+    if (strpos($term_l, ' ') !== false) {
+      return strpos($haystack, $term_l) !== false;
+    }
+
+    return (bool) preg_match('/\b' . preg_quote($term_l, '/') . '\b/u', $haystack);
   }
 
 }

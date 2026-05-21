@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend\Admin;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -53,6 +54,8 @@ class Settings {
    * @return void
    */
   public function init() {
+    Log::debug('Snappy Search settings admin initialized.');
+
 		add_action('admin_menu', array($this, 'add_admin_menu'));
 		add_action('admin_init', array($this, 'register_settings'));
 		add_action('admin_init', array($this, 'load_setting_fields'));
@@ -78,6 +81,7 @@ class Settings {
     add_submenu_page('speedy-search', __('General', 'speedy-search'), __('General', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
     add_submenu_page('speedy-search', __('Popular', 'speedy-search'), __('Popular', 'speedy-search'), 'manage_options', 'speedy-search-popular', array($this, 'redirect_to_popular_tab'));
     add_submenu_page('speedy-search', __('Synonyms', 'speedy-search'), __('Synonyms', 'speedy-search'), 'manage_options', 'speedy-search-synonyms', array($this, 'redirect_to_synonyms_tab'));
+    add_submenu_page('speedy-search', __('Exclusions', 'speedy-search'), __('Exclusions', 'speedy-search'), 'manage_options', 'speedy-search-exclusions', array($this, 'redirect_to_exclusions_tab'));
     add_submenu_page('speedy-search', __('Posts', 'speedy-search'), __('Posts', 'speedy-search'), 'manage_options', 'speedy-search-posts', array($this, 'redirect_to_posts_tab'));
     add_submenu_page('speedy-search', __('Pages', 'speedy-search'), __('Pages', 'speedy-search'), 'manage_options', 'speedy-search-pages', array($this, 'redirect_to_pages_tab'));
     
@@ -91,6 +95,7 @@ class Settings {
       add_submenu_page('speedy-search', __('Downloads', 'speedy-search'), __('Downloads', 'speedy-search'), 'manage_options', 'speedy-search-downloads', array($this, 'redirect_to_downloads_tab'));
     }
 
+    add_submenu_page('speedy-search', __('Indexing', 'speedy-search'), __('Indexing', 'speedy-search'), 'manage_options', 'speedy-search-indexing', array($this, 'redirect_to_indexing_tab'));
     add_submenu_page('speedy-search', __('Advanced', 'speedy-search'), __('Advanced', 'speedy-search'), 'manage_options', 'speedy-search-advanced', array($this, 'redirect_to_advanced_tab'));
     // add_submenu_page('speedy-search', __('Repo', 'speedy-search'), __('Repo', 'speedy-search'), 'manage_options', 'speedy-search-repo', array($this, 'redirect_to_repo_tab'));
 	}
@@ -210,8 +215,10 @@ class Settings {
     $field_classes = array(
       'advanced'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Advanced',
       'downloads' => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Downloads',
+      'exclusions' => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Exclusions',
       'filters'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Filters',
       'general'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\General',
+      'indexing'  => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Indexing',
       'pages'     => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Pages',
       'popular'   => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Popular',
       'orders'    => '\PolyPlugins\Speedy_Search\Backend\Admin\Fields\Orders',
@@ -265,8 +272,14 @@ class Settings {
                 </li>
                 <li>
                   <a href="javascript:void(0);" data-section="synonyms">
-                    <i class="bi bi-chat-left-text-fill"></i>
+                    <i class="bi bi-arrow-left-right"></i>
                     <?php esc_html_e('Synonyms', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <li>
+                  <a href="javascript:void(0);" data-section="exclusions">
+                    <i class="bi bi-slash-circle"></i>
+                    <?php esc_html_e('Exclusions', 'speedy-search'); ?>
                   </a>
                 </li>
                 <li>
@@ -294,6 +307,14 @@ class Settings {
                       <?php esc_html_e('Orders', 'speedy-search'); ?>
                     </a>
                   </li>
+                <?php endif; ?>
+                <li>
+                  <a href="javascript:void(0);" data-section="indexing">
+                    <i class="bi bi-ui-checks-grid"></i>
+                    <?php esc_html_e('Indexing', 'speedy-search'); ?>
+                  </a>
+                </li>
+                <?php if (class_exists('WooCommerce')) : ?>
                   <li>
                     <a href="javascript:void(0);" data-section="filters">
                       <i class="bi bi-funnel-fill"></i>
@@ -332,6 +353,7 @@ class Settings {
               </ul>
             </div>
             <div class="tabs col-12 col-md-6 col-xl-6">
+              <?php settings_errors(); ?>
               <div class="tab general">
                 <?php if (!wp_using_ext_object_cache()) : ?>
                   <div class="danger">
@@ -352,6 +374,12 @@ class Settings {
               <div class="tab synonyms" style="display: none;">
                 <?php
                 do_settings_sections('speedy_search_synonyms_polyplugins');
+                ?>
+              </div>
+
+              <div class="tab exclusions" style="display: none;">
+                <?php
+                do_settings_sections('speedy_search_exclusions_polyplugins');
                 ?>
               </div>
 
@@ -378,6 +406,19 @@ class Settings {
                   do_settings_sections('speedy_search_orders_polyplugins');
                   ?>
                 </div>
+              <?php endif; ?>
+
+              <div class="tab indexing" style="display: none;">
+                
+                <div class="warning">
+                  <?php esc_html_e('Choose which parts of posts, pages, products, and downloads are written into the search index. At least one option must stay enabled. After changing these settings, the index is rebuilt automatically.', 'speedy-search'); ?>
+                </div>
+                <?php
+                do_settings_sections('speedy_search_indexing_polyplugins');
+                ?>
+              </div>
+
+              <?php if (class_exists('WooCommerce')) : ?>
                 <div class="tab filters" style="display: none;">
                   <?php
                   do_settings_sections('speedy_search_filters_polyplugins');
@@ -449,7 +490,13 @@ class Settings {
 
   public function redirect_to_filters_tab() {
     wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=filters'));
-    
+
+    exit;
+  }
+
+  public function redirect_to_indexing_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=indexing'));
+
     exit;
   }
 
@@ -467,6 +514,12 @@ class Settings {
 
   public function redirect_to_synonyms_tab() {
     wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=synonyms'));
+
+    exit;
+  }
+
+  public function redirect_to_exclusions_tab() {
+    wp_safe_redirect(admin_url('admin.php?page=speedy-search&tab=exclusions'));
 
     exit;
   }
@@ -504,6 +557,12 @@ class Settings {
       $sanitary_values['enabled'] = $input['enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['enabled'] = false;
+    }
+
+    if (isset($input['debug']['enabled']) && $input['debug']['enabled']) {
+      $sanitary_values['debug']['enabled'] = $input['debug']['enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['debug']['enabled'] = false;
     }
 
     if (isset($input['default_result_type']) && $input['default_result_type']) {
@@ -562,6 +621,10 @@ class Settings {
 			$sanitary_values['filters_custom_fields'] = sanitize_text_field($input['filters_custom_fields']);
 		}
 
+    if (isset($input['filters_attributes']) && $input['filters_attributes']) {
+      $sanitary_values['filters_attributes'] = sanitize_text_field($input['filters_attributes']);
+    }
+
     if (isset($input['filters_rating_enabled']) && $input['filters_rating_enabled']) {
       $sanitary_values['filters_rating_enabled'] = $input['filters_rating_enabled'] === 'on' ? true : false;
     } else {
@@ -572,6 +635,12 @@ class Settings {
       $sanitary_values['filters_price_range_enabled'] = $input['filters_price_range_enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['filters_price_range_enabled'] = false;
+    }
+
+    if (isset($input['filters_category_enabled']) && $input['filters_category_enabled']) {
+      $sanitary_values['filters_category_enabled'] = $input['filters_category_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['filters_category_enabled'] = false;
     }
 
     if (isset($input['popular']['enabled']) && $input['popular']['enabled']) {
@@ -628,6 +697,32 @@ class Settings {
       }
     }
 
+    $sanitary_values['exclusions'] = array();
+
+    if (isset($input['exclusions']) && is_array($input['exclusions'])) {
+      foreach ($input['exclusions'] as $row) {
+        if (!is_array($row)) {
+          continue;
+        }
+
+        $when_raw      = isset($row['when']) ? sanitize_text_field($row['when']) : '';
+        $when          = preg_replace('/\s+/', ' ', trim($when_raw));
+        $exclude_raw   = isset($row['exclude']) ? sanitize_text_field($row['exclude']) : '';
+        $exclude_items = array_filter(array_map('trim', explode(',', $exclude_raw)));
+        $exclude_items = array_unique(array_map('sanitize_text_field', $exclude_items));
+
+        if ($when === '' || empty($exclude_items)) {
+          continue;
+        }
+
+        $sanitary_values['exclusions'][] = array(
+          'when'    => $when,
+          // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude -- Settings key name, not a WP_Query parameter.
+          'exclude' => implode(', ', $exclude_items),
+        );
+      }
+    }
+
     if (isset($input['posts']['enabled']) && $input['posts']['enabled']) {
       $sanitary_values['posts']['enabled'] = $input['posts']['enabled'] === 'on' ? true : false;
     } else {
@@ -638,6 +733,18 @@ class Settings {
       $sanitary_values['posts']['tab_enabled'] = $input['posts']['tab_enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['posts']['tab_enabled'] = false;
+    }
+
+    if (isset($input['posts']['title_only_search']) && $input['posts']['title_only_search']) {
+      $sanitary_values['posts']['title_only_search'] = $input['posts']['title_only_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['posts']['title_only_search'] = false;
+    }
+
+    if (isset($input['posts']['boolean_search']) && $input['posts']['boolean_search']) {
+      $sanitary_values['posts']['boolean_search'] = $input['posts']['boolean_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['posts']['boolean_search'] = false;
     }
 
     if (isset($input['posts']['batch']) && is_numeric($input['posts']['batch'])) {
@@ -660,6 +767,18 @@ class Settings {
       $sanitary_values['pages']['tab_enabled'] = false;
     }
 
+    if (isset($input['pages']['title_only_search']) && $input['pages']['title_only_search']) {
+      $sanitary_values['pages']['title_only_search'] = $input['pages']['title_only_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['pages']['title_only_search'] = false;
+    }
+
+    if (isset($input['pages']['boolean_search']) && $input['pages']['boolean_search']) {
+      $sanitary_values['pages']['boolean_search'] = $input['pages']['boolean_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['pages']['boolean_search'] = false;
+    }
+
     if (isset($input['pages']['batch']) && is_numeric($input['pages']['batch'])) {
 			$sanitary_values['pages']['batch'] = sanitize_text_field($input['pages']['batch']);
 		}
@@ -680,6 +799,18 @@ class Settings {
       $sanitary_values['products']['tab_enabled'] = false;
     }
 
+    if (isset($input['products']['title_only_search']) && $input['products']['title_only_search']) {
+      $sanitary_values['products']['title_only_search'] = $input['products']['title_only_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['title_only_search'] = false;
+    }
+
+    if (isset($input['products']['boolean_search']) && $input['products']['boolean_search']) {
+      $sanitary_values['products']['boolean_search'] = $input['products']['boolean_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['boolean_search'] = false;
+    }
+
     if (isset($input['products']['batch']) && is_numeric($input['products']['batch'])) {
 			$sanitary_values['products']['batch'] = sanitize_text_field($input['products']['batch']);
 		}
@@ -692,6 +823,24 @@ class Settings {
       $sanitary_values['products']['out_of_stock_last'] = $input['products']['out_of_stock_last'] === 'on' ? true : false;
     } else {
       $sanitary_values['products']['out_of_stock_last'] = false;
+    }
+
+    if (isset($input['products']['top_sellers_first']) && $input['products']['top_sellers_first']) {
+      $sanitary_values['products']['top_sellers_first'] = $input['products']['top_sellers_first'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['top_sellers_first'] = false;
+    }
+
+    if (isset($input['products']['sort_by_rating']) && $input['products']['sort_by_rating']) {
+      $sanitary_values['products']['sort_by_rating'] = $input['products']['sort_by_rating'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['sort_by_rating'] = false;
+    }
+
+    if (isset($input['products']['featured_first']) && $input['products']['featured_first']) {
+      $sanitary_values['products']['featured_first'] = $input['products']['featured_first'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['featured_first'] = false;
     }
 
     if (isset($input['orders']['enabled']) && $input['orders']['enabled']) {
@@ -708,6 +857,12 @@ class Settings {
 			$sanitary_values['orders']['result_limit'] = sanitize_text_field($input['orders']['result_limit']);
 		}
 
+    if (isset($input['orders']['boolean_search']) && $input['orders']['boolean_search']) {
+      $sanitary_values['orders']['boolean_search'] = $input['orders']['boolean_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['orders']['boolean_search'] = false;
+    }
+
     if (isset($input['downloads']['enabled']) && $input['downloads']['enabled']) {
       $sanitary_values['downloads']['enabled'] = $input['downloads']['enabled'] === 'on' ? true : false;
     } else {
@@ -718,6 +873,18 @@ class Settings {
       $sanitary_values['downloads']['tab_enabled'] = $input['downloads']['tab_enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['downloads']['tab_enabled'] = false;
+    }
+
+    if (isset($input['downloads']['title_only_search']) && $input['downloads']['title_only_search']) {
+      $sanitary_values['downloads']['title_only_search'] = $input['downloads']['title_only_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['downloads']['title_only_search'] = false;
+    }
+
+    if (isset($input['downloads']['boolean_search']) && $input['downloads']['boolean_search']) {
+      $sanitary_values['downloads']['boolean_search'] = $input['downloads']['boolean_search'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['downloads']['boolean_search'] = false;
     }
 
     if (isset($input['downloads']['batch']) && is_numeric($input['downloads']['batch'])) {
@@ -767,6 +934,83 @@ class Settings {
       $sanitary_values['repo_enabled'] = $input['repo_enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['repo_enabled'] = false;
+    }
+
+    $prev_opts = Utils::get_options();
+
+    if (!is_array($prev_opts)) {
+      $prev_opts = array();
+    }
+
+    $prev_indexing = isset($prev_opts['indexing']) && is_array($prev_opts['indexing']) ? $prev_opts['indexing'] : array();
+
+    $indexing_input = isset($input['indexing']) && is_array($input['indexing']) ? $input['indexing'] : array();
+
+    $idx_defaults = array(
+      'title'                 => true,
+      'content'               => true,
+      'categories'            => true,
+      'tags'                  => true,
+      'author'                => true,
+      'product_sku'           => true,
+      'product_custom_fields' => true,
+    );
+
+    $sanitary_idx = array(
+      'title'      => isset($indexing_input['title']) && $indexing_input['title'] === 'on',
+      'content'    => isset($indexing_input['content']) && $indexing_input['content'] === 'on',
+      'categories' => isset($indexing_input['categories']) && $indexing_input['categories'] === 'on',
+      'tags'       => isset($indexing_input['tags']) && $indexing_input['tags'] === 'on',
+      'author'     => isset($indexing_input['author']) && $indexing_input['author'] === 'on',
+    );
+
+    if (class_exists('WooCommerce')) {
+      $sanitary_idx['product_sku']           = isset($indexing_input['product_sku']) && $indexing_input['product_sku'] === 'on';
+      $sanitary_idx['product_custom_fields'] = isset($indexing_input['product_custom_fields']) && $indexing_input['product_custom_fields'] === 'on';
+    } else {
+      $sanitary_idx['product_sku']           = array_key_exists('product_sku', $prev_indexing) ? (bool) $prev_indexing['product_sku'] : true;
+      $sanitary_idx['product_custom_fields'] = array_key_exists('product_custom_fields', $prev_indexing) ? (bool) $prev_indexing['product_custom_fields'] : true;
+    }
+
+    $n = Utils::count_enabled_indexing_sources($sanitary_idx);
+
+    if ($n === 0) {
+      add_settings_error('speedy_search_messages', 'speedy_indexing_none', __('Keep at least one source enabled for indexing.', 'speedy-search'), 'error');
+
+      Log::warning('Indexing settings save rejected: all sources were disabled; restored defaults or previous values.');
+
+      $restore = array();
+
+      foreach ($idx_defaults as $k => $def) {
+        $restore[$k] = array_key_exists($k, $prev_indexing) ? (bool) $prev_indexing[$k] : $def;
+      }
+
+      if (Utils::count_enabled_indexing_sources($restore) === 0) {
+        $sanitary_values['indexing'] = $idx_defaults;
+      } else {
+        $sanitary_values['indexing'] = $restore;
+      }
+    } else {
+      $sanitary_values['indexing'] = $sanitary_idx;
+
+      $old_flat = array();
+
+      foreach ($idx_defaults as $k => $def) {
+        $old_flat[$k] = array_key_exists($k, $prev_indexing) ? (bool) $prev_indexing[$k] : $def;
+      }
+
+      $changed = false;
+
+      foreach ($idx_defaults as $k => $_) {
+        if ($old_flat[$k] !== $sanitary_idx[$k]) {
+          $changed = true;
+          break;
+        }
+      }
+
+      if ($changed) {
+        Utils::reindex();
+      }
     }
 
     return $sanitary_values;

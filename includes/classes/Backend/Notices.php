@@ -2,6 +2,7 @@
 
 namespace PolyPlugins\Speedy_Search\Backend;
 
+use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
@@ -20,6 +21,8 @@ class Notices {
   }
 
   public function init() {
+    Log::debug('Snappy Search admin notices initialized.');
+
     add_action('admin_notices', array($this, 'maybe_show_notice'));
     add_action('wp_ajax_speedy_search_dismiss_notice_nonce', array($this, 'dismiss_notice'));
   }
@@ -57,6 +60,9 @@ class Notices {
       }
       if ($this->version == '1.6.0') {
         $this->notice_160();
+      }
+      if ($this->version == '1.7.0') {
+        $this->notice_170();
       }
     }
 
@@ -174,6 +180,16 @@ class Notices {
     ?>
     <div class="notice notice-warning is-dismissible speedy-search">
       <p><?php echo wp_kses_post(__('Snappy Search has been updated to index categories, tags, and custom fields. Please Re-index if you would like to take advantage of it.<br /><br /><a href="https://wordpress.org/plugins/speedy-search/#developers" target="_blank">Changelog</a>', 'speedy-search')); ?></p>
+    </div>
+    <?php
+  }
+
+  public function notice_170() {
+    ?>
+    <div class="notice notice-success is-dismissible speedy-search" style="padding-bottom: 10px;">
+      <p><?php echo esc_html__('Snappy Search has been updated.', 'speedy-search'); ?></p>
+      
+      <a href="https://wordpress.org/plugins/speedy-search/#developers" target="_blank"><?php echo esc_html__('View Changelog', 'speedy-search'); ?></a>
     </div>
     <?php
   }
