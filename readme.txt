@@ -1,7 +1,7 @@
 === Snappy Search ===
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
-Tested up to: 6.9
+Tested up to: 7.0
 Stable tag: 1.7.0
 Requires PHP: 7.4
 License: GPLv3

@@ -360,6 +360,7 @@ class CLI {
 
       if (empty($orders)) {
         Utils::update_index($type, 'complete', true);
+        /* translators: %d is the final processed order position. */
         \WP_CLI::log(sprintf(__('Orders: complete (finished at position %d).', 'speedy-search'), max(0, $progress - 1)));
 
         break;
@@ -400,8 +401,9 @@ class CLI {
 
       $rows_this_batch = $progress - $progress_before_batch;
 
+      /* translators: 1: number of orders processed in this batch, 2: total number of orders indexed so far. */
       \WP_CLI::log(sprintf(
-        __('Orders: processed %d orders this batch — %d indexed so far.', 'speedy-search'),
+        __('Orders: processed %1$d orders this batch — %2$d indexed so far.', 'speedy-search'),
         $rows_this_batch,
         max(0, $progress - 1)
       ));
