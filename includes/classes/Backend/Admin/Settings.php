@@ -717,6 +717,7 @@ class Settings {
 
         $sanitary_values['exclusions'][] = array(
           'when'    => $when,
+          // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude -- Settings key name, not a WP_Query parameter.
           'exclude' => implode(', ', $exclude_items),
         );
       }

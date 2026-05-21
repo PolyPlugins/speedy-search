@@ -94,6 +94,7 @@ class Exclusions {
       $rows = array(
         array(
           'when'    => '',
+          // phpcs:ignore WordPressVIPMinimum.Performance.WPQueryParams.PostNotIn_exclude -- Settings key name, not a WP_Query parameter.
           'exclude' => '',
         ),
       );

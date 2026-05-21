@@ -1244,7 +1244,7 @@ class Utils {
    * @return array
    */
   public static function get_api_endpoints() {
-    $version            = '1.0.0';
+    $version            = self::get_current_version();
     $custom_search_file = ABSPATH . 'search.php';
     $has_custom_file    = file_exists($custom_search_file);
 

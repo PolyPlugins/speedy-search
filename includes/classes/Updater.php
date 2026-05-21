@@ -121,6 +121,14 @@ class Updater {
       Utils::update_current_version($stored_version);
     }
 
+    if (version_compare($stored_version, '1.7.0', '<')) {
+      $stored_version = '1.7.0';
+
+      $this->update_to_170();
+
+      Utils::update_current_version($stored_version);
+    }
+
     $version_after = Utils::get_current_version();
 
     if ($version_before !== $version_after && $version_after !== false) {
@@ -206,6 +214,10 @@ class Updater {
   }
 
   private function update_to_160() {
+    update_option('speedy_search_notice_dismissed_polyplugins', false);
+  }
+
+  private function update_to_170() {
     update_option('speedy_search_notice_dismissed_polyplugins', false);
   }
 
