@@ -399,7 +399,7 @@ class API {
     $index_name = Utils::get_index_name('post');
 
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
     $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
@@ -488,7 +488,7 @@ class API {
     $index_name = Utils::get_index_name('page');
 
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
     $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
@@ -584,7 +584,7 @@ class API {
     $index_name = Utils::get_index_name('product');
     
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
     $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
@@ -615,6 +615,14 @@ class API {
 
         if ($title_only_search && !$this->title_contains_search_terms($title, $search_query)) {
           continue;
+        }
+
+        try {
+          if (Utils::is_product_excluded_for_search_query($post->ID, $search_query)) {
+            continue;
+          }
+        } catch (\Throwable $e) {
+          Log::error(sprintf('Product exclusion check failed for product %d: %s', (int) $post->ID, $e->getMessage()));
         }
 
         $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
@@ -752,7 +760,7 @@ class API {
     $index_name = Utils::get_index_name('download');
 
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
     $results = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);
@@ -842,7 +850,7 @@ class API {
     $index_name = Utils::get_index_name('shop_order');
     
     $tnt->selectIndex($index_name);
-    $tnt->fuzziness = true;
+    $tnt->fuzziness(true);
 
     // Perform the search
     $results    = $this->perform_tnt_search($tnt, $expanded_query, $result_limit, $boolean_search, $search_query);

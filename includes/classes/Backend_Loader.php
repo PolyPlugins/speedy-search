@@ -3,6 +3,7 @@
 namespace PolyPlugins\Speedy_Search;
 
 use PolyPlugins\Speedy_Search\Backend\Admin;
+use PolyPlugins\Speedy_Search\Backend\Admin\Product_Excluded_Terms;
 use PolyPlugins\Speedy_Search\Backend\Admin\Settings;
 use PolyPlugins\Speedy_Search\Backend\API;
 use PolyPlugins\Speedy_Search\Backend\Background_Worker;
@@ -59,6 +60,7 @@ class Backend_Loader {
 
     $this->load_enqueue();
     $this->load_settings();
+    $this->load_product_excluded_terms();
     $this->load_api();
     $this->load_cache();
     $this->load_background_worker();
@@ -95,6 +97,16 @@ class Backend_Loader {
   public function load_settings() {
     $settings = new Settings($this->plugin, $this->version, $this->plugin_dir_url);
     $settings->init();
+  }
+
+  /**
+   * Load product-level excluded search terms field.
+   *
+   * @return void
+   */
+  public function load_product_excluded_terms() {
+    $product_excluded_terms = new Product_Excluded_Terms($this->plugin, $this->version, $this->plugin_dir_url);
+    $product_excluded_terms->init();
   }
   
   /**

@@ -1342,6 +1342,81 @@ class Utils {
   }
 
   /**
+   * Product meta key used for per-product excluded search terms.
+   *
+   * @return string
+   */
+  public static function get_product_excluded_search_terms_meta_key() {
+    return '_snappy_search_excluded_terms';
+  }
+
+  /**
+   * Whether a product should be excluded for the current search query.
+   *
+   * @param int    $product_id
+   * @param string $search_query
+   * @return bool
+   */
+  public static function is_product_excluded_for_search_query($product_id, $search_query) {
+    $product_id = (int) $product_id;
+
+    if ($product_id < 1) {
+      return false;
+    }
+
+    $search_query = strtolower(trim(sanitize_text_field((string) $search_query)));
+
+    if ($search_query === '') {
+      return false;
+    }
+
+    $search_query = preg_replace('/\s+/', ' ', $search_query);
+    $meta_key     = self::get_product_excluded_search_terms_meta_key();
+    $raw_terms    = get_post_meta($product_id, $meta_key, true);
+    $terms        = self::parse_comma_separated_terms($raw_terms);
+
+    if ($terms === array()) {
+      return false;
+    }
+
+    foreach ($terms as $term) {
+      if ($term === '') {
+        continue;
+      }
+
+      if (strpos($term, ' ') !== false) {
+        if (strpos($search_query, $term) !== false) {
+          return true;
+        }
+
+        continue;
+      }
+
+      if (preg_match('/\b' . preg_quote($term, '/') . '\b/u', $search_query)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Normalize comma-separated terms to a canonical string for storage.
+   *
+   * @param mixed $value
+   * @return string
+   */
+  public static function normalize_comma_separated_terms($value) {
+    $terms = self::parse_comma_separated_terms($value);
+
+    if ($terms === array()) {
+      return '';
+    }
+
+    return implode(', ', $terms);
+  }
+
+  /**
    * @return array
    */
   private static function get_normalized_exclusion_rules() {
@@ -1391,6 +1466,29 @@ class Utils {
     });
 
     return $out;
+  }
+
+  /**
+   * Parse a comma-separated list to lowercase unique terms.
+   *
+   * @param mixed $value
+   * @return array
+   */
+  private static function parse_comma_separated_terms($value) {
+    $parts = array_filter(array_map('trim', explode(',', (string) $value)));
+    $parts = array_unique(array_map('sanitize_text_field', $parts));
+    $terms = array();
+
+    foreach ($parts as $part) {
+      $part = strtolower(trim((string) $part));
+      $part = preg_replace('/\s+/', ' ', $part);
+
+      if ($part !== '') {
+        $terms[] = $part;
+      }
+    }
+
+    return array_values(array_unique($terms));
   }
 
   /**
