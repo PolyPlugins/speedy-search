@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-05-21T21:30:35+00:00\n"
+"POT-Creation-Date: 2026-05-21T21:32:12+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.11.0\n"
 "X-Domain: speedy-search\n"
@@ -716,6 +716,7 @@ msgstr ""
 msgid "Orders: complete (finished at position %d)."
 msgstr ""
 
+#. translators: 1: number of orders processed in this batch, 2: total number of orders indexed so far.
 #: includes/classes/Backend/CLI.php:406
 msgid "Orders: processed %1$d orders this batch — %2$d indexed so far."
 msgstr ""

@@ -401,8 +401,8 @@ class CLI {
 
       $rows_this_batch = $progress - $progress_before_batch;
 
-      /* translators: 1: number of orders processed in this batch, 2: total number of orders indexed so far. */
       \WP_CLI::log(sprintf(
+        /* translators: 1: number of orders processed in this batch, 2: total number of orders indexed so far. */
         __('Orders: processed %1$d orders this batch — %2$d indexed so far.', 'speedy-search'),
         $rows_this_batch,
         max(0, $progress - 1)
