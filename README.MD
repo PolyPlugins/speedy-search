@@ -66,12 +66,15 @@ This plugin collects and stores certain data on your server to ensure proper fun
 ![General Settings](.wordpress-org/screenshot-2.jpg)
 ![Popular Settings](.wordpress-org/screenshot-3.jpg)
 ![Synonyms Settings](.wordpress-org/screenshot-4.jpg)
-![Posts Settings](.wordpress-org/screenshot-5.jpg)
-![Pages Settings](.wordpress-org/screenshot-6.jpg)
-![Products Settings](.wordpress-org/screenshot-7.jpg)
-![Orders Settings](.wordpress-org/screenshot-8.jpg)
-![Filters Settings](.wordpress-org/screenshot-9.jpg)
-![Advanced Search Settings](.wordpress-org/screenshot-10.jpg)
+![Exclusions Settings](.wordpress-org/screenshot-5.jpg)
+![Posts Settings](.wordpress-org/screenshot-6.jpg)
+![Pages Settings](.wordpress-org/screenshot-7.jpg)
+![Products Settings](.wordpress-org/screenshot-8.jpg)
+![Orders Settings](.wordpress-org/screenshot-9.jpg)
+![Indexing Settings](.wordpress-org/screenshot-10.jpg)
+![Filters Settings](.wordpress-org/screenshot-11.jpg)
+![Advanced Search Settings](.wordpress-org/screenshot-12.jpg)
+![Product Excluded Search Terms Settings](.wordpress-org/screenshot-13.jpg)
 
 ## Installation
 
@@ -90,6 +93,24 @@ By default, it will index 10 posts per minute.
 
 ### 1.7.0
 * Added: Ability to only show results with title matches
+* Added: Boolean Search which will treat the search terms as "AND" instead of "OR"
+* Added: Indexing settings to disable various fields from being indexed
+* Added: Option to sort top selling products to the top
+* Added: Sort by rating setting
+* Added: Option to disable sorting featured to top and removing the featured badge if disabled
+* Added: Post author indexing
+* Added: Filtering by product category
+* Added: Product filters for attributes
+* Added: Logging Class
+* Added: Exclusions functionality to exclude results when a search contains certain terms.
+* Added: WooCommerce Excluded Search Terms to remove specific products under certain search terms
+* Added: CLI Reindexer
+* Updated: Ordering of Custom Product Fields to be by the order specified in settings to match attribute filter sorting.
+* Updated: Settings Saved style
+* Updated: Synonym icon
+* Updated: API to pull product pricing using the product object so filters will be able to modify it.
+* Bugfix: If advanced filter is used with existing Snappy Search (like in header) it would show both
+* Bugfix: Filters not showing on advanced search
 
 ### 1.6.0
 * Added: Handling for standalone Snappy Search API for huge speed increases

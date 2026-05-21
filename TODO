@@ -2,27 +2,36 @@
 [ ] Update Readme
 [ ] Update Screenshots
 [ ] Scan Standalone Snappy Search API
+[ ] Disable Standalone Snappy Search API to test regular API
 [ ] Plugin Scan
 [ ] Add new version to updater
+[ ] Add new version to Standalone Snappy Search API
 
-# 1.7.0
-[ ] Add search to backend product search
-[ ] Maybe add category badge to search results
-[ ] Add support for indexing categories, tags, and custom fields (ACF)
+# Demo
+[ ] Setup a demo with 10,000 products
+[ ] Maybe add a footer in search to indicate how fast it loaded
+
+# 1.8.0
+[ ] Show sale price (also add handling for overrides)
+[ ] Add search to admin product search in admin
+[ ] Add support for indexing custom fields (ACF)
 [ ] Add utils for version and plugin_dir_url using static property to cache
-[ ] Add analytics for 0 search items and top searches
-[ ] Add logging class from our other plugins
 [ ] Add options to disable various parts of search result like star rating, price, excerpt, etc.
 [ ] When a product has variations have a popup list all the options to choose from
-[ ] Add filtering by category
-[ ] Maybe add a footer in search to indicate how fast it loaded
+[ ] Add analytics for 0 search items and top searches
+[ ] Setting to adjust position (sorting) of filters
+[ ] Maybe add category badge to search results
+[ ] Maybe Add title based mispelling checker
 [ ] Update Readme
 [ ] Update Screenshots
 [ ] Scan Standalone Snappy Search API
+[ ] Disable Standalone Snappy Search API to test regular API
 [ ] Plugin Scan
 [ ] Add new version to updater
+[ ] Add new version to Standalone Snappy Search API
 
 # General
+[ ] Add an option to allow TNTSearch to connect to a separate database for those that want to optimize for even more performance
 [ ] Add scroll to load more results
 [ ] Add additional ordering like by top seller for products
 [ ] Add autocomplete functionality
@@ -32,12 +41,30 @@
 [ ] Add option for private API
 [ ] Maybe bring Repo Advanced Search back if there is interest
 [ ] Check if prioritizing columns is added as a feature to TNTSearch yet
+[ ] Maybe add custom field to bump up results.
 
 # Brainstorm
 [ ] We want to add integration with our Admin Instant Search plugin, but we need to consider just adding the functionality into Snappy Search to reduce the overhead of managing another plugin.
 
 # 1.7.0
+[X] Add option to exclude terms from search
+[X] Add option to products exclude search terms
+[X] Add ability to filter by attributes
+[X] Add option to filter by product category
+[X] Add support for indexing categories and tags
+[X] Add Author name to post index
+[X] Add option to disable sorting featured to top and removing featured badge
+[X] Add option to sort top selling products to the top
+[X] Add sort by rating setting
+[X] Add option to disable certain fields from being indexed
+[X] Boolean search
 [X] Title only search
+[X] CLI integration
+[X] CLI Order only reindex
+[X] Style Settings Saved notice
+[X] Add logging class from our other plugins
+[X] Add version check to Standalone Snappy Search API
+[X] Updated: Admin style to be compatible with WP 7.0
 
 # 1.6.0
 [X] Add support for indexing categories, tags, and custom fields (Meta)
