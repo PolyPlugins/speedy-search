@@ -2,7 +2,7 @@
 Contributors: polyplugins
 Tags: instant search, search, wp, snappy search, woocommerce
 Tested up to: 7.0
-Stable tag: 1.7.0
+Stable tag: 1.7.1
 Requires PHP: 7.4
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
@@ -110,6 +110,9 @@ By default it will index 10 posts per minute.
 
 
 == Changelog ==
+
+= 1.7.1 =
+* Bugfix: Unable to save after fresh install
 
 = 1.7.0 =
 * Added: Ability to only show results with title matches

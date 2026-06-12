@@ -155,12 +155,21 @@ class Products {
   }
 
   /**
+   * @return array
+   */
+  private function get_products_options() {
+    $opts = Utils::get_option('products');
+
+    return is_array($opts) ? $opts : array();
+  }
+
+  /**
 	 * Render Enabled Field
 	 *
 	 * @return void
 	 */
 	public function products_enabled_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = isset($options['enabled']) ? $options['enabled'] : 0;
     ?>
     <div class="form-check form-switch">
@@ -176,7 +185,7 @@ class Products {
 	 * @return void
 	 */
 	public function products_tab_enabled_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = isset($options['tab_enabled']) ? $options['tab_enabled'] : 1;
     ?>
     <div class="form-check form-switch">
@@ -192,7 +201,7 @@ class Products {
 	 * @return void
 	 */
 	public function products_title_only_search_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = isset($options['title_only_search']) ? $options['title_only_search'] : 0;
     ?>
     <div class="form-check form-switch">
@@ -208,7 +217,7 @@ class Products {
 	 * @return void
 	 */
 	public function products_boolean_search_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = isset($options['boolean_search']) ? $options['boolean_search'] : 0;
     ?>
     <div class="form-check form-switch">
@@ -224,7 +233,7 @@ class Products {
 	 * @return void
 	 */
 	public function products_featured_first_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = array_key_exists('featured_first', $options) ? !empty($options['featured_first']) : true;
     ?>
     <div class="form-check form-switch">
@@ -240,7 +249,7 @@ class Products {
 	 * @return void
 	 */
 	public function products_batch_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = isset($options['batch']) ? $options['batch'] : 20;
     ?>
     <input type="number" name="speedy_search_settings_polyplugins[products][batch]" value="<?php echo esc_html($option); ?>">
@@ -254,7 +263,7 @@ class Products {
 	 * @return void
 	 */
 	public function products_result_limit_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = isset($options['result_limit']) ? $options['result_limit'] : 10;
     ?>
     <input type="number" name="speedy_search_settings_polyplugins[products][result_limit]" value="<?php echo esc_html($option); ?>">
@@ -268,7 +277,7 @@ class Products {
 	 * @return void
 	 */
 	public function products_top_sellers_first_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = isset($options['top_sellers_first']) ? $options['top_sellers_first'] : false;
     ?>
     <div class="form-check form-switch">
@@ -284,7 +293,7 @@ class Products {
 	 * @return void
 	 */
 	public function products_sort_by_rating_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = array_key_exists('sort_by_rating', $options) ? !empty($options['sort_by_rating']) : true;
     ?>
     <div class="form-check form-switch">
@@ -300,7 +309,7 @@ class Products {
 	 * @return void
 	 */
 	public function products_out_of_stock_last_render() {
-		$options = Utils::get_option('products');
+		$options = $this->get_products_options();
     $option  = isset($options['out_of_stock_last']) ? $options['out_of_stock_last'] : false;
     ?>
     <div class="form-check form-switch">

@@ -91,6 +91,9 @@ By default, it will index 10 posts per minute.
 
 ## Changelog
 
+### 1.7.1
+* Bugfix: Unable to save after fresh install
+
 ### 1.7.0
 * Added: Ability to only show results with title matches
 * Added: Boolean Search which will treat the search terms as "AND" instead of "OR"
