@@ -12,6 +12,10 @@
 [ ] Maybe add a footer in search to indicate how fast it loaded
 
 # 1.8.0
+[ ] Bulk edit negative terms for products
+[ ] Make when search contains exclusions where you can do comma separate
+[ ] Add option to automatically remove spaces from synonyms and exlusions make it enable or disable
+
 [ ] Show sale price (also add handling for overrides)
 [ ] Add search to admin product search in admin
 [ ] Add support for indexing custom fields (ACF)

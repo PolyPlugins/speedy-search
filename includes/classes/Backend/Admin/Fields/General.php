@@ -188,7 +188,7 @@ class General
 	public function default_result_type_render()
 	{
 		$allowed_types = Utils::get_allowed_post_types();
-		$option = Utils::get_option('default_result_type') ?: array(key($allowed_types));
+		$option = Utils::get_option('default_result_type') ?: key($allowed_types);
 		?>
 		<select name="speedy_search_settings_polyplugins[default_result_type]">
 			<?php foreach ($allowed_types as $key => $label) : ?>
