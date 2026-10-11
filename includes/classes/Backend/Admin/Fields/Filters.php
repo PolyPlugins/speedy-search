@@ -136,6 +136,14 @@ class Filters {
 			'speedy_search_filters_polyplugins',
 			'speedy_search_filters_section_polyplugins'
 		);
+
+		add_settings_field(
+			'filters_acf_fields',
+			__('ACF Fields', 'speedy-search'),
+			array($this, 'filters_acf_fields_render'),
+			'speedy_search_filters_polyplugins',
+			'speedy_search_filters_section_polyplugins'
+		);
   }
 
   /**
@@ -235,6 +243,17 @@ class Filters {
     ?>
     <input type="text" name="speedy_search_settings_polyplugins[filters_attributes]" value="<?php echo esc_attr($option); ?>" />
     <p><strong><?php esc_html_e('WooCommerce attribute keys to show as filters, comma-separated. Use global attributes as pa_color or color; local attributes as attr_key. Example: pa_color, pa_size', 'speedy-search'); ?></strong></p>
+    <?php
+  }
+
+  /**
+   * @return void
+   */
+  public function filters_acf_fields_render() {
+    $option = Utils::get_option('filters_acf_fields');
+    ?>
+    <input type="text" name="speedy_search_settings_polyplugins[filters_acf_fields]" value="<?php echo esc_attr($option); ?>" />
+    <p><strong><?php esc_html_e('Add ACF field names separated by commas to show as filters. Example: material,warranty_length', 'speedy-search'); ?></strong></p>
     <?php
   }
 

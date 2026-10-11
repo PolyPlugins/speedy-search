@@ -150,6 +150,7 @@ class Enqueue {
       array(
         'filters_attributes_ordered_keys'   => Utils::get_filters_attributes_allowed_keys(),
         'filters_custom_fields_ordered_keys' => Utils::get_filters_custom_fields_ordered_keys(),
+        'filters_acf_fields_ordered_keys' => Utils::get_filters_acf_fields_ordered_keys(),
       )
     );
   }

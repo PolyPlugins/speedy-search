@@ -338,9 +338,10 @@ class API {
    * @return WP_REST_Response
    */
   public function get_latest(WP_REST_Request $request) {
-    $products_opts    = Utils::get_option('products');
-    $featured_latest  = !isset($products_opts['featured_first']) || !empty($products_opts['featured_first']);
-    $cache_key        = 'speedy_search_latest_v4_' . (int) $featured_latest;
+    $products_opts         = Utils::get_option('products');
+    $featured_latest       = !isset($products_opts['featured_first']) || !empty($products_opts['featured_first']);
+    $out_of_stock_fallback = is_array($products_opts) && !empty($products_opts['out_of_stock_fallback']);
+    $cache_key             = 'speedy_search_latest_v4_' . (int) $featured_latest . '_' . (int) $out_of_stock_fallback;
     $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
@@ -550,6 +551,8 @@ class API {
     $boolean_search    = $this->is_boolean_search_enabled('products');
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+    $acf_fields_raw    = Utils::get_option('filters_acf_fields');
+    $acf_fields        = $acf_fields_raw ? array_filter(array_map('trim', explode(',', $acf_fields_raw))) : array();
     $filters_attributes_allowed = Utils::get_filters_attributes_allowed_keys();
     $get_search_query = $request->get_param('search');
     $search_query     = $get_search_query ? sanitize_text_field($get_search_query) : '';
@@ -631,6 +634,7 @@ class API {
         $is_in_stock = $product ? $product->is_in_stock() : true;
         $add_to_cart_url = $product ? $product->add_to_cart_url() : get_permalink($post->ID);
         $product_custom_fields = array();
+        $product_acf_fields    = array();
 
         $tags = array(
           'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
@@ -642,6 +646,14 @@ class API {
             $meta_key   = sanitize_key($custom_field);
             $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
             $product_custom_fields[$meta_key] = $meta_values;
+          }
+        }
+
+        if (!empty($acf_fields)) {
+          foreach ($acf_fields as $acf_field) {
+            $meta_key   = sanitize_key($acf_field);
+            $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
+            $product_acf_fields[$meta_key] = $meta_values;
           }
         }
         
@@ -659,6 +671,7 @@ class API {
           'add_to_cart_url' => esc_url_raw($add_to_cart_url),
           'permalink'      => get_permalink($post->ID),
           'custom_fields'  => $product_custom_fields,
+          'acf_fields'     => $product_acf_fields,
           'categories'     => Utils::get_product_categories_for_filter($post->ID),
           'attributes'     => Utils::get_product_attributes_for_filter($post->ID, $filters_attributes_allowed, $product),
           'title_match'      => $this->title_contains_search_terms(get_the_title($post->ID), $search_query),
@@ -1179,6 +1192,8 @@ class API {
     $query_limit      = 48;
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
+    $acf_fields_raw    = Utils::get_option('filters_acf_fields');
+    $acf_fields        = $acf_fields_raw ? array_filter(array_map('trim', explode(',', $acf_fields_raw))) : array();
     $filters_attributes_allowed = Utils::get_filters_attributes_allowed_keys();
     $posts      = get_posts(array(
       'post_type'      => 'product',
@@ -1205,12 +1220,21 @@ class API {
       $is_variable    = $product->is_type('variable');
       $add_to_cart_url = $product->add_to_cart_url();
       $product_custom_fields = array();
+      $product_acf_fields    = array();
 
       if (!empty($custom_fields)) {
         foreach ($custom_fields as $custom_field) {
           $meta_key   = sanitize_key($custom_field);
           $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
           $product_custom_fields[$meta_key] = $meta_values;
+        }
+      }
+
+      if (!empty($acf_fields)) {
+        foreach ($acf_fields as $acf_field) {
+          $meta_key   = sanitize_key($acf_field);
+          $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
+          $product_acf_fields[$meta_key] = $meta_values;
         }
       }
 
@@ -1228,6 +1252,7 @@ class API {
         'add_to_cart_url' => esc_url_raw($add_to_cart_url),
         'permalink'       => get_permalink($post->ID),
         'custom_fields'   => $product_custom_fields,
+        'acf_fields'      => $product_acf_fields,
         'categories'      => Utils::get_product_categories_for_filter($post->ID),
         'attributes'      => Utils::get_product_attributes_for_filter($post->ID, $filters_attributes_allowed, $product),
       );
@@ -1238,7 +1263,17 @@ class API {
     }
 
     if (empty($posts_data)) {
-      return $posts_data;
+      $allow_fallback = !empty($options['out_of_stock_fallback']);
+
+      if (!$allow_fallback || $this->has_visible_in_stock_product()) {
+        return $posts_data;
+      }
+
+      $posts_data = $this->get_latest_out_of_stock_products($options, $safe_limit, $custom_fields, $acf_fields, $filters_attributes_allowed, $tags);
+
+      if (empty($posts_data)) {
+        return $posts_data;
+      }
     }
 
     if (!$featured_first) {
@@ -1257,6 +1292,194 @@ class API {
     }
 
     return array_merge($featured_posts, $regular_posts);
+  }
+
+  /**
+   * True when a published, non-hidden, in-stock product exists.
+   * On backorder counts as in stock. Hidden means both catalog and search are excluded.
+   *
+   * @return bool
+   */
+  private function has_visible_in_stock_product() {
+    global $wpdb;
+
+    $sql = "SELECT p.ID
+      FROM %i p
+      WHERE p.post_type = %s
+      AND p.post_status = 'publish'
+      AND NOT EXISTS (
+        SELECT 1 FROM %i stock
+        WHERE stock.post_id = p.ID
+        AND stock.meta_key = %s
+        AND stock.meta_value = %s
+      )
+      AND NOT (
+        EXISTS (
+          SELECT 1
+          FROM %i tr
+          INNER JOIN %i tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+          INNER JOIN %i t ON tt.term_id = t.term_id
+          WHERE tr.object_id = p.ID
+          AND tt.taxonomy = %s
+          AND t.slug = %s
+        )
+        AND EXISTS (
+          SELECT 1
+          FROM %i tr2
+          INNER JOIN %i tt2 ON tr2.term_taxonomy_id = tt2.term_taxonomy_id
+          INNER JOIN %i t2 ON tt2.term_id = t2.term_id
+          WHERE tr2.object_id = p.ID
+          AND tt2.taxonomy = %s
+          AND t2.slug = %s
+        )
+      )
+      LIMIT 1";
+
+    $product_id = $wpdb->get_var($wpdb->prepare(
+      $sql,
+      $wpdb->posts,
+      'product',
+      $wpdb->postmeta,
+      '_stock_status',
+      'outofstock',
+      $wpdb->term_relationships,
+      $wpdb->term_taxonomy,
+      $wpdb->terms,
+      'product_visibility',
+      'exclude-from-catalog',
+      $wpdb->term_relationships,
+      $wpdb->term_taxonomy,
+      $wpdb->terms,
+      'product_visibility',
+      'exclude-from-search'
+    ));
+
+    return !empty($product_id);
+  }
+
+  /**
+   * Newest out of stock products for the opening list when nothing is in stock.
+   *
+   * @param array $options
+   * @param int   $safe_limit
+   * @param array $custom_fields
+   * @param array $acf_fields
+   * @param array $filters_attributes_allowed
+   * @param array $tags
+   * @return array
+   */
+  private function get_latest_out_of_stock_products($options, $safe_limit, $custom_fields, $acf_fields, $filters_attributes_allowed, $tags) {
+    global $wpdb;
+
+    $featured_first = !isset($options['featured_first']) || !empty($options['featured_first']);
+    $sql            = "SELECT DISTINCT p.ID, p.post_date
+      FROM %i p
+      INNER JOIN %i stock ON p.ID = stock.post_id AND stock.meta_key = %s AND stock.meta_value = %s
+      WHERE p.post_type = %s
+      AND p.post_status = 'publish'
+      AND NOT (
+        EXISTS (
+          SELECT 1
+          FROM %i tr
+          INNER JOIN %i tt ON tr.term_taxonomy_id = tt.term_taxonomy_id
+          INNER JOIN %i t ON tt.term_id = t.term_id
+          WHERE tr.object_id = p.ID
+          AND tt.taxonomy = %s
+          AND t.slug = %s
+        )
+        AND EXISTS (
+          SELECT 1
+          FROM %i tr2
+          INNER JOIN %i tt2 ON tr2.term_taxonomy_id = tt2.term_taxonomy_id
+          INNER JOIN %i t2 ON tt2.term_id = t2.term_id
+          WHERE tr2.object_id = p.ID
+          AND tt2.taxonomy = %s
+          AND t2.slug = %s
+        )
+      )
+      ORDER BY p.post_date DESC
+      LIMIT %d";
+    $product_ids = $wpdb->get_col($wpdb->prepare(
+      $sql,
+      $wpdb->posts,
+      $wpdb->postmeta,
+      '_stock_status',
+      'outofstock',
+      'product',
+      $wpdb->term_relationships,
+      $wpdb->term_taxonomy,
+      $wpdb->terms,
+      'product_visibility',
+      'exclude-from-catalog',
+      $wpdb->term_relationships,
+      $wpdb->term_taxonomy,
+      $wpdb->terms,
+      'product_visibility',
+      'exclude-from-search',
+      $safe_limit
+    ));
+    $posts_data = array();
+
+    if (!is_array($product_ids)) {
+      return $posts_data;
+    }
+
+    foreach ($product_ids as $product_id) {
+      $post    = get_post((int) $product_id);
+      $product = wc_get_product((int) $product_id);
+
+      if (!$post || !$product || $product->get_catalog_visibility() === 'hidden' || $product->is_in_stock()) {
+        continue;
+      }
+
+      $average_rating = get_post_meta($post->ID, '_wc_average_rating', true) ?: 0;
+      $is_featured    = $featured_first && $product->is_featured();
+      $is_variable    = $product->is_type('variable');
+      $add_to_cart_url = $product->add_to_cart_url();
+      $product_custom_fields = array();
+      $product_acf_fields    = array();
+
+      if (!empty($custom_fields)) {
+        foreach ($custom_fields as $custom_field) {
+          $meta_key   = sanitize_key($custom_field);
+          $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
+          $product_custom_fields[$meta_key] = $meta_values;
+        }
+      }
+
+      if (!empty($acf_fields)) {
+        foreach ($acf_fields as $acf_field) {
+          $meta_key   = sanitize_key($acf_field);
+          $meta_values = $this->get_product_custom_field_values($post->ID, $meta_key, $product);
+          $product_acf_fields[$meta_key] = $meta_values;
+        }
+      }
+
+      $posts_data[] = array(
+        'id'              => $post->ID,
+        'title'           => get_the_title($post->ID),
+        'price'           => $product ? $product->get_price() : '',
+        'thumbnail'       => get_the_post_thumbnail_url($post->ID, 'medium'),
+        'excerpt'         => $this->get_excerpt($post->post_content),
+        'average_rating'  => $average_rating ? (float) $average_rating : 0,
+        'rating'          => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
+        'is_featured'     => (bool) $is_featured,
+        'is_variable'     => (bool) $is_variable,
+        'is_in_stock'     => false,
+        'add_to_cart_url' => esc_url_raw($add_to_cart_url),
+        'permalink'       => get_permalink($post->ID),
+        'custom_fields'   => $product_custom_fields,
+        'acf_fields'      => $product_acf_fields,
+        'categories'      => Utils::get_product_categories_for_filter($post->ID),
+        'attributes'      => Utils::get_product_attributes_for_filter($post->ID, $filters_attributes_allowed, $product),
+      );
+
+      if (count($posts_data) >= $safe_limit) {
+        break;
+      }
+    }
+
+    return $posts_data;
   }
 
   /**

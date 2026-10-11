@@ -625,6 +625,10 @@ class Settings {
       $sanitary_values['filters_attributes'] = sanitize_text_field($input['filters_attributes']);
     }
 
+    if (isset($input['filters_acf_fields']) && $input['filters_acf_fields']) {
+      $sanitary_values['filters_acf_fields'] = sanitize_text_field($input['filters_acf_fields']);
+    }
+
     if (isset($input['filters_rating_enabled']) && $input['filters_rating_enabled']) {
       $sanitary_values['filters_rating_enabled'] = $input['filters_rating_enabled'] === 'on' ? true : false;
     } else {
@@ -823,6 +827,12 @@ class Settings {
       $sanitary_values['products']['out_of_stock_last'] = $input['products']['out_of_stock_last'] === 'on' ? true : false;
     } else {
       $sanitary_values['products']['out_of_stock_last'] = false;
+    }
+
+    if (isset($input['products']['out_of_stock_fallback']) && $input['products']['out_of_stock_fallback']) {
+      $sanitary_values['products']['out_of_stock_fallback'] = $input['products']['out_of_stock_fallback'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['out_of_stock_fallback'] = false;
     }
 
     if (isset($input['products']['top_sellers_first']) && $input['products']['top_sellers_first']) {

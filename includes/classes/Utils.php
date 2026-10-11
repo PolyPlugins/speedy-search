@@ -745,6 +745,32 @@ class Utils {
   }
 
   /**
+   * ACF field names from filters_acf_fields option in comma order (for filter UI ordering).
+   *
+   * @return array
+   */
+  public static function get_filters_acf_fields_ordered_keys() {
+    $raw = self::get_option('filters_acf_fields');
+
+    if (!is_string($raw) || trim($raw) === '') {
+      return array();
+    }
+
+    $parts = array_filter(array_map('trim', explode(',', $raw)));
+    $keys  = array();
+
+    foreach ($parts as $p) {
+      $k = sanitize_key($p);
+
+      if ($k !== '') {
+        $keys[] = $k;
+      }
+    }
+
+    return array_values(array_unique($keys));
+  }
+
+  /**
    * WooCommerce product attributes for client-side filter UI (global taxonomies, local attributes, variations).
    *
    * @param int              $product_id

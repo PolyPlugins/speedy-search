@@ -138,6 +138,14 @@ class Products {
 		);
 
 		add_settings_field(
+			'products_out_of_stock_fallback',
+			__('Show Out Of Stock When None In Stock?', 'speedy-search'),
+			array($this, 'products_out_of_stock_fallback_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
 			'products_batch',
 		  __('Batch', 'speedy-search'),
 			array($this, 'products_batch_render'),
@@ -316,6 +324,22 @@ class Products {
       <input type="checkbox" name="speedy_search_settings_polyplugins[products][out_of_stock_last]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Move out of stock products to the end of results.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Show out of stock products on the opening list when none are in stock.
+	 *
+	 * @return void
+	 */
+	public function products_out_of_stock_fallback_render() {
+		$options = $this->get_products_options();
+    $option  = isset($options['out_of_stock_fallback']) ? $options['out_of_stock_fallback'] : false;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][out_of_stock_fallback]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('On the opening product list, if no in stock products are available, show out of stock products and keep the out of stock badge.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

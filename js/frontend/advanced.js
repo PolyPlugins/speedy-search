@@ -21,7 +21,8 @@ jQuery(document).ready(function ($) {
   let custom_field_filter_enabled = String(snappy_search_object.options?.filters_custom_fields ?? '').trim().length > 0;
   let category_filter_enabled = snappy_search_object.options?.filters_category_enabled ?? false;
   let attribute_filter_enabled = String(snappy_search_object.options?.filters_attributes ?? '').trim().length > 0;
-  let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled || category_filter_enabled || attribute_filter_enabled;
+  let acf_field_filter_enabled = String(snappy_search_object.options?.filters_acf_fields ?? '').trim().length > 0;
+  let has_active_product_filters = rating_filter_enabled || price_range_filter_enabled || custom_field_filter_enabled || category_filter_enabled || attribute_filter_enabled || acf_field_filter_enabled;
   let search_endpoint      = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
   let latest_endpoint      = snappy_search_object.endpoints?.latest ?? snappy_search_object.endpoints?.preload ?? "/wp-json/speedy-search/v1/latest/";
   let use_search_php       = snappy_search_object.endpoints?.has_custom_file ?? false;
@@ -385,6 +386,10 @@ jQuery(document).ready(function ($) {
     if (custom_field_filter_enabled) {
       populateCustomFieldFilters($filters, products);
     }
+
+    if (acf_field_filter_enabled) {
+      populateAcfFieldFilters($filters, products);
+    }
   }
 
   function getFilteredProducts($container, products) {
@@ -409,8 +414,9 @@ jQuery(document).ready(function ($) {
       let customFieldsMatch = custom_field_filter_enabled ? matchCustomFieldFilters($filters, item) : true;
       let categoryMatch = category_filter_enabled ? matchCategoryFilter($filters, item) : true;
       let attributeMatch = attribute_filter_enabled ? matchProductAttributeFilters($filters, item) : true;
+      let acfFieldsMatch = acf_field_filter_enabled ? matchAcfFieldFilters($filters, item) : true;
 
-      return rating >= minRating && price >= minPrice && price <= maxPrice && customFieldsMatch && categoryMatch && attributeMatch;
+      return rating >= minRating && price >= minPrice && price <= maxPrice && customFieldsMatch && categoryMatch && attributeMatch && acfFieldsMatch;
     });
   }
 
@@ -800,6 +806,110 @@ jQuery(document).ready(function ($) {
     return isMatch;
   }
 
+  function populateAcfFieldFilters($filters, products) {
+    let fieldValues = {};
+    let selectedValues = {};
+    let $container = $filters.find('.acf-field-filters');
+
+    if (!$container.length) {
+      return;
+    }
+
+    $container.find('.filter-acf-field').each(function () {
+      selectedValues[$(this).data('field-key')] = $(this).val();
+    });
+
+    $.each(products, function (_, item) {
+      if (!item.acf_fields || typeof item.acf_fields !== 'object') {
+        return;
+      }
+
+      $.each(item.acf_fields, function (rawKey, rawValue) {
+        let key = normalizeCustomFieldKey(rawKey);
+        let values = normalizeCustomFieldValues(rawValue);
+
+        if (!key || !values.length) {
+          return;
+        }
+
+        if (!fieldValues[key]) {
+          fieldValues[key] = {};
+        }
+
+        $.each(values, function (_, value) {
+          fieldValues[key][value] = true;
+        });
+      });
+    });
+
+    $container.empty();
+
+    let orderedAcfKeys = Array.isArray(snappy_search_object.options?.filters_acf_fields_ordered_keys)
+      ? snappy_search_object.options.filters_acf_fields_ordered_keys
+      : [];
+    let fieldsToRender = [];
+    let acfSeen = {};
+
+    $.each(orderedAcfKeys, function (_, k) {
+      let key = normalizeCustomFieldKey(k);
+
+      if (fieldValues[key] && Object.keys(fieldValues[key]).length && !acfSeen[key]) {
+        fieldsToRender.push(key);
+        acfSeen[key] = true;
+      }
+    });
+
+    $.each(Object.keys(fieldValues).sort(), function (_, fieldKey) {
+      if (!acfSeen[fieldKey] && fieldValues[fieldKey] && Object.keys(fieldValues[fieldKey]).length) {
+        fieldsToRender.push(fieldKey);
+        acfSeen[fieldKey] = true;
+      }
+    });
+
+    $.each(fieldsToRender, function (_, fieldKey) {
+      let values = fieldValues[fieldKey];
+      let valueKeys = Object.keys(values).sort();
+
+      if (!valueKeys.length) {
+        return;
+      }
+
+      let label = normalizeCustomFieldLabel(fieldKey);
+      let selected = selectedValues[fieldKey] || '';
+      let options = '<option value="">' + __('All', 'speedy-search') + '</option>';
+
+      $.each(valueKeys, function (_, value) {
+        let selectedAttr = selected === value ? ' selected' : '';
+        options += '<option value="' + value + '"' + selectedAttr + '>' + value + '</option>';
+      });
+
+      $container.append(
+        '<label>' + label + '</label>' +
+        '<select class="filter-acf-field" data-field-key="' + fieldKey + '">' +
+          options +
+        '</select>'
+      );
+    });
+  }
+
+  function matchAcfFieldFilters($filters, item) {
+    let isMatch = true;
+    let productAcfFields = item.acf_fields && typeof item.acf_fields === 'object' ? item.acf_fields : {};
+
+    $filters.find('.filter-acf-field').each(function () {
+      let selected = String($(this).val() || '').trim();
+      let fieldKey = normalizeCustomFieldKey($(this).data('field-key'));
+      let itemValues = normalizeCustomFieldValues(productAcfFields[fieldKey]);
+
+      if (selected && $.inArray(selected, itemValues) === -1) {
+        isMatch = false;
+        return false;
+      }
+    });
+
+    return isMatch;
+  }
+
   function toggleProductFiltersVisibility($container) {
     if (!filters_enabled || !products_enabled || !has_active_product_filters) {
       return;
@@ -905,6 +1015,7 @@ jQuery(document).ready(function ($) {
           </select>` : ''}
           ${attribute_filter_enabled ? '<div class="product-attribute-filters"></div>' : ''}
           ${custom_field_filter_enabled ? '<div class="custom-field-filters"></div>' : ''}
+          ${acf_field_filter_enabled ? '<div class="acf-field-filters"></div>' : ''}
           </div>
         </div>
       `;
