@@ -1303,7 +1303,8 @@ class API {
   private function has_visible_in_stock_product() {
     global $wpdb;
 
-    $sql = "SELECT p.ID
+    $product_id = $wpdb->get_var($wpdb->prepare(
+      "SELECT p.ID
       FROM %i p
       WHERE p.post_type = %s
       AND p.post_status = 'publish'
@@ -1333,10 +1334,7 @@ class API {
           AND t2.slug = %s
         )
       )
-      LIMIT 1";
-
-    $product_id = $wpdb->get_var($wpdb->prepare(
-      $sql,
+      LIMIT 1",
       $wpdb->posts,
       'product',
       $wpdb->postmeta,
@@ -1372,7 +1370,8 @@ class API {
     global $wpdb;
 
     $featured_first = !isset($options['featured_first']) || !empty($options['featured_first']);
-    $sql            = "SELECT DISTINCT p.ID, p.post_date
+    $product_ids    = $wpdb->get_col($wpdb->prepare(
+      "SELECT DISTINCT p.ID, p.post_date
       FROM %i p
       INNER JOIN %i stock ON p.ID = stock.post_id AND stock.meta_key = %s AND stock.meta_value = %s
       WHERE p.post_type = %s
@@ -1398,9 +1397,7 @@ class API {
         )
       )
       ORDER BY p.post_date DESC
-      LIMIT %d";
-    $product_ids = $wpdb->get_col($wpdb->prepare(
-      $sql,
+      LIMIT %d",
       $wpdb->posts,
       $wpdb->postmeta,
       '_stock_status',

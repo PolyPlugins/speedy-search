@@ -3,6 +3,7 @@
 namespace PolyPlugins\Speedy_Search\Backend\Admin;
 
 use PolyPlugins\Speedy_Search\Log;
+use PolyPlugins\Speedy_Search\Utils;
 
 if (!defined('ABSPATH')) exit;
 
@@ -27,6 +28,8 @@ class Product_Excluded_Terms {
     add_action('woocommerce_product_data_panels', array($this, 'render_panel'));
     add_action('admin_head', array($this, 'output_tab_icon_css'));
     add_action('woocommerce_process_product_meta', array($this, 'save_field'));
+    add_action('woocommerce_product_bulk_edit_end', array($this, 'render_bulk_edit'));
+    add_action('woocommerce_product_bulk_edit_save', array($this, 'save_bulk_edit'));
   }
 
   /**
@@ -155,6 +158,86 @@ class Product_Excluded_Terms {
     }
 
     return implode(', ', array_values(array_unique($terms)));
+  }
+
+  /**
+   * Excluded terms row on the products list bulk editor.
+   *
+   * @return void
+   */
+  public function render_bulk_edit() {
+    $meta_key = self::META_KEY;
+    ?>
+    <div class="inline-edit-group">
+      <label class="alignleft">
+        <span class="title"><?php esc_html_e('Excluded search terms', 'speedy-search'); ?></span>
+        <span class="input-text-wrap">
+          <select class="change_to" name="<?php echo esc_attr($meta_key); ?>_change">
+            <option value=""><?php esc_html_e('— No change —', 'speedy-search'); ?></option>
+            <option value="1"><?php esc_html_e('Change to:', 'speedy-search'); ?></option>
+            <option value="2"><?php esc_html_e('Add to existing:', 'speedy-search'); ?></option>
+          </select>
+        </span>
+      </label>
+      <label class="change-input">
+        <input type="text" name="<?php echo esc_attr($meta_key); ?>" class="text" placeholder="<?php esc_attr_e('Comma-separated terms', 'speedy-search'); ?>" value="" />
+      </label>
+    </div>
+    <?php
+  }
+
+  /**
+   * Apply bulk excluded terms. Empty "Change to" clears the meta.
+   *
+   * @param \WC_Product $product
+   * @return void
+   */
+  public function save_bulk_edit($product) {
+    if (!is_object($product) || !method_exists($product, 'get_id')) {
+      return;
+    }
+
+    $product_id = absint($product->get_id());
+
+    if ($product_id < 1 || !current_user_can('edit_post', $product_id)) {
+      return;
+    }
+
+    if (!isset($_REQUEST['woocommerce_quick_edit_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_REQUEST['woocommerce_quick_edit_nonce'])), 'woocommerce_quick_edit_nonce')) {
+      return;
+    }
+
+    $change_key = self::META_KEY . '_change';
+
+    if (!isset($_REQUEST[$change_key])) {
+      return;
+    }
+
+    $change = sanitize_text_field(wp_unslash($_REQUEST[$change_key]));
+
+    if ($change !== '1' && $change !== '2') {
+      return;
+    }
+
+    $raw = '';
+
+    if (isset($_REQUEST[self::META_KEY])) {
+      $raw = sanitize_text_field(wp_unslash($_REQUEST[self::META_KEY]));
+    }
+
+    $incoming = Utils::normalize_comma_separated_terms($raw);
+
+    if ($change === '2') {
+      $current  = get_post_meta($product_id, self::META_KEY, true);
+      $incoming = Utils::normalize_comma_separated_terms($current . ', ' . $incoming);
+    }
+
+    if ($incoming === '') {
+      delete_post_meta($product_id, self::META_KEY);
+      return;
+    }
+
+    update_post_meta($product_id, self::META_KEY, $incoming);
   }
 
 }
