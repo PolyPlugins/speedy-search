@@ -70,6 +70,8 @@ class Analytics {
       DB::insert_term_log($term, $type, $result_count);
     }
 
+    DB::record_tracked_term($term);
+
     Utils::send_success('Success');
   }
 

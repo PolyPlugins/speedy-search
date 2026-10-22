@@ -373,9 +373,19 @@
   color: #555;
 }
 
+.instant-search-results .snappy-fetch-time {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: #555;
+}
+
 /**
  * Popular
  */
+.popular-searches {
+  margin-bottom: 10px;
+}
+
 .popular-searches .popular {
   margin: 5px 0 0 0;
   font-weight: 700;
@@ -395,6 +405,10 @@
 .popular-searches a.search-term:hover {
   background-color: #737373;
   color: #fff;
+}
+
+.instant-search-wrapper .popular-searches {
+  margin-top: 10px;
 }
 
 /**

@@ -22,7 +22,6 @@ jQuery(document).ready(function ($) {
   let products_tab_enabled  = snappy_search_object.options?.products?.tab_enabled ?? true;
   let downloads_enabled     = snappy_search_object.options?.downloads?.enabled ?? false;
   let downloads_tab_enabled = snappy_search_object.options?.downloads?.tab_enabled ?? true;
-  let popular_terms         = snappy_search_object.popular ?? false;
   let currency              = snappy_search_object.currency ?? '$';
   let filters_enabled       = snappy_search_object.options?.selector_filters_enabled ?? false;
   let rating_filter_enabled = snappy_search_object.options?.filters_rating_enabled ?? false;
@@ -36,6 +35,9 @@ jQuery(document).ready(function ($) {
   let latest_endpoint       = snappy_search_object.endpoints?.latest ?? snappy_search_object.endpoints?.preload ?? "/wp-json/speedy-search/v1/latest/";
   let use_search_php        = snappy_search_object.endpoints?.has_custom_file ?? false;
   let latest_results        = {};
+  let catalog_enabled       = !!snappy_search_object.options?.filters_catalog_enabled;
+  let catalog_facets        = null;
+  let browse_results        = {};
 
   const $searchInput        = $(selector);
   const $searchForm         = $searchInput.closest("form");
@@ -59,6 +61,7 @@ jQuery(document).ready(function ($) {
     if (!$searchInput.length || !$searchForm.length) return;
 
     $searchForm.after(initialSearchForm);
+    placeUnderInputPopular($searchForm);
     initMobileFilterToggle();
     bindFilterEvents();
     toggleProductFiltersVisibility();
@@ -71,8 +74,11 @@ jQuery(document).ready(function ($) {
         typingTimer = setTimeout(function () {
           performSearch(query);
         }, typingDelay);
-      } else {
-        // Change text to type more characters
+      } else if (catalogReady() && catalogFiltersActive($('.snappy-product-filters'))) {
+        fetchCatalogProducts();
+      } else if (browse_results && Object.keys(browse_results).length) {
+        latest_results = browse_results;
+        showLatestResults();
       }
     });
 
@@ -115,11 +121,10 @@ jQuery(document).ready(function ($) {
   }
 
   function popular() {
-    $(document).on("click", ".speedy-search-container .search-term", function(e) {
+    $(document).on("click", ".search-term", function() {
       let $popular = $(this).text();
 
-      $(".snappy-search-form .snappy-search-input").val($popular);
-      $(".snappy-search-form .snappy-search-input").val($popular).trigger("input");
+      $searchInput.val($popular).trigger("input");
     });
   }
 
@@ -135,16 +140,22 @@ jQuery(document).ready(function ($) {
   }
 
   function fetchResults(query) {
+    let started = Date.now();
+
     $.ajax({
       url: search_endpoint,
       data: { search: query },
       dataType: "json",
       success: function (data) {
+        if (data && typeof data === 'object') {
+          data.fetch_ms = Date.now() - started;
+        }
+
         latest_results = data;
         if (use_search_php) {
           crossfadeResults(data);
         } else {
-          setupProductFilters(data.products || []);
+          applySearchFilters(data.products || []);
           renderSections(data);
         }
       },
@@ -162,11 +173,17 @@ jQuery(document).ready(function ($) {
   }
 
   function preloadLatestResults() {
+    let started = Date.now();
+
     $.ajax({
       url: latest_endpoint,
       dataType: "json",
       success: function (data) {
-        latest_results = data || {};
+        data = data || {};
+        data.fetch_ms = Date.now() - started;
+        rememberFacets(data);
+        browse_results = data;
+        latest_results = browse_results;
       },
     });
   }
@@ -176,7 +193,7 @@ jQuery(document).ready(function ($) {
       return;
     }
 
-    setupProductFilters(latest_results.products || []);
+    applyBrowseFilters();
     renderSections(latest_results);
 
     $('.instant-search-wrapper').show();
@@ -185,7 +202,7 @@ jQuery(document).ready(function ($) {
   function crossfadeResults(data) {
     let $results = $('.instant-search-results');
 
-    setupProductFilters(data.products || []);
+    applySearchFilters(data.products || []);
 
     if (!$results.length) {
       renderSections(data);
@@ -210,7 +227,11 @@ jQuery(document).ready(function ($) {
       $(this).empty();
 
       if (!items.length) {
-        $(this).append("<p>" + __("No results found.", "speedy-search") + "</p>");
+        if ($(this).data('type') === 'product') {
+          $(this).append(productEmptyHtml());
+        } else {
+          $(this).append("<p>" + __("No results found.", "speedy-search") + "</p>");
+        }
         return;
       }
 
@@ -289,8 +310,30 @@ jQuery(document).ready(function ($) {
     });
 
     if (!hasResults && $('.instant-search-section').length) {
-      $('.instant-search-section').first().html("<p>" + __("No results found.", "speedy-search") + "</p>");
+      let $first = $('.instant-search-section').first();
+
+      if ($first.data('type') === 'product') {
+        $first.html(productEmptyHtml());
+      } else {
+        $first.html("<p>" + __("No results found.", "speedy-search") + "</p>");
+      }
     }
+
+    updateFetchTime($('.instant-search-results'), data);
+  }
+
+  function updateFetchTime($results, data) {
+    if (!$results || !$results.length) {
+      return;
+    }
+
+    $results.children('.snappy-fetch-time').remove();
+
+    if (!snappy_search_object.options?.show_fetch_time || !data || typeof data.fetch_ms !== 'number') {
+      return;
+    }
+
+    $results.append('<p class="snappy-fetch-time">' + __('Fetched in', 'speedy-search') + ' ' + data.fetch_ms + ' ms</p>');
   }
 
   function parsePrice(value) {
@@ -310,14 +353,24 @@ jQuery(document).ready(function ($) {
     return currentUrl.toString();
   }
 
-  function setupProductFilters(products) {
+  function setupProductFilters(products, mode) {
     if (!filters_enabled || !products_enabled || !has_active_product_filters) {
       return;
     }
 
     let $filters = $('.snappy-product-filters');
+    let fromFacets = mode === 'facets' && catalogReady();
+    let shrink = mode === 'shrink' && catalogReady();
+    let remembered = rememberFilterSelections($filters);
 
-    if (price_range_filter_enabled) {
+    if (fromFacets) {
+      products = facetsToProducts(catalog_facets);
+    }
+
+    if (price_range_filter_enabled && !shrink) {
+      if (fromFacets) {
+        applyCatalogPriceBounds($filters, catalog_facets.price || {});
+      } else {
       let prices = $.map(products, function (item) {
         return parsePrice(item.price);
       }).filter(function (price) {
@@ -338,6 +391,7 @@ jQuery(document).ready(function ($) {
         $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
         updatePriceRangeTrack($filters, minPrice, maxPrice, minPrice, maxPrice);
       }
+      }
     }
 
     if (category_filter_enabled) {
@@ -355,6 +409,392 @@ jQuery(document).ready(function ($) {
     if (acf_field_filter_enabled) {
       populateAcfFieldFilters($filters, products);
     }
+
+    if (shrink || fromFacets) {
+      restoreFilterSelections($filters, remembered);
+    }
+  }
+
+  function catalogReady() {
+    return catalog_enabled && !!catalog_facets;
+  }
+
+  function rememberFacets(data) {
+    if (data && data.product_facets) {
+      catalog_facets = data.product_facets;
+    }
+  }
+
+  function facetsToProducts(facets) {
+    return [{
+      price: 0,
+      categories: facets.categories || [],
+      attributes: facets.attributes || {},
+      custom_fields: facets.custom_fields || {},
+      acf_fields: facets.acf_fields || {}
+    }];
+  }
+
+  function applyBrowseFilters() {
+    if (catalogReady()) {
+      setupProductFilters([], 'facets');
+      return;
+    }
+
+    setupProductFilters((browse_results.products || latest_results.products || []));
+  }
+
+  function applySearchFilters(products) {
+    if (catalogReady()) {
+      setupProductFilters(products, 'shrink');
+      return;
+    }
+
+    setupProductFilters(products);
+  }
+
+  function applyCatalogPriceBounds($filters, price) {
+    let minPrice = Math.floor(parsePrice(price.min));
+    let maxPrice = Math.ceil(parsePrice(price.max));
+
+    if (minPrice > maxPrice) {
+      let swap = minPrice;
+      minPrice = maxPrice;
+      maxPrice = swap;
+    }
+
+    let $min = $filters.find('.filter-price-min');
+    let $max = $filters.find('.filter-price-max');
+    let ready = !!$filters.data('catalog-price-ready');
+
+    $min.attr('min', minPrice).attr('max', maxPrice);
+    $max.attr('min', minPrice).attr('max', maxPrice);
+
+    if (!ready) {
+      $min.val(minPrice);
+      $max.val(maxPrice);
+      $filters.data('catalog-price-ready', 1);
+    }
+
+    $filters.data('min-price', minPrice);
+    $filters.data('max-price', maxPrice);
+    $filters.find('.filter-price-min-label').text(parsePrice($min.val()).toFixed(2));
+    $filters.find('.filter-price-max-label').text(parsePrice($max.val()).toFixed(2));
+    updatePriceRangeTrack($filters, parsePrice($min.val()), parsePrice($max.val()), minPrice, maxPrice);
+  }
+
+  function collectCatalogFilters($filters) {
+    let filters = {};
+    let category = String($filters.find('.filter-product-category').val() || '').trim();
+
+    if (category) {
+      filters.category = category;
+    }
+
+    let rating = parseFloat($filters.find('.filter-rating').val() || '0');
+
+    if (rating > 0) {
+      filters.rating = rating;
+    }
+
+    $filters.find('.filter-product-attribute').each(function () {
+      let selected = String($(this).val() || '').trim();
+      let key = String($(this).data('attribute-key') || '');
+
+      if (!selected || key === '') {
+        return;
+      }
+
+      if (!filters.attributes) {
+        filters.attributes = {};
+      }
+
+      filters.attributes[key] = selected;
+    });
+
+    $filters.find('.filter-custom-field').each(function () {
+      let selected = String($(this).val() || '').trim();
+      let key = normalizeCustomFieldKey($(this).data('field-key'));
+
+      if (!selected || key === '') {
+        return;
+      }
+
+      if (!filters.custom_fields) {
+        filters.custom_fields = {};
+      }
+
+      filters.custom_fields[key] = selected;
+    });
+
+    $filters.find('.filter-acf-field').each(function () {
+      let selected = String($(this).val() || '').trim();
+      let key = normalizeCustomFieldKey($(this).data('field-key'));
+
+      if (!selected || key === '') {
+        return;
+      }
+
+      if (!filters.acf_fields) {
+        filters.acf_fields = {};
+      }
+
+      filters.acf_fields[key] = selected;
+    });
+
+    if (price_range_filter_enabled && $filters.data('catalog-price-ready')) {
+      let minBound = parsePrice($filters.data('min-price'));
+      let maxBound = parsePrice($filters.data('max-price'));
+      let minPrice = parsePrice($filters.find('.filter-price-min').val());
+      let maxPrice = parsePrice($filters.find('.filter-price-max').val());
+
+      if (minPrice !== minBound || maxPrice !== maxBound) {
+        filters.min_price = minPrice;
+        filters.max_price = maxPrice;
+      }
+    }
+
+    return filters;
+  }
+
+  function catalogFiltersActive($filters) {
+    return Object.keys(collectCatalogFilters($filters)).length > 0;
+  }
+
+  function fetchCatalogProducts() {
+    let $filters = $('.snappy-product-filters');
+    let started = Date.now();
+
+    $.ajax({
+      url: latest_endpoint,
+      data: { catalog_filters: JSON.stringify(collectCatalogFilters($filters)) },
+      dataType: 'json',
+      success: function (data) {
+        data = data || {};
+        data.fetch_ms = Date.now() - started;
+        rememberFacets(data);
+        browse_results = data;
+        latest_results = browse_results;
+        applyBrowseFilters();
+        renderSections(latest_results);
+        $('.instant-search-wrapper').show();
+        $('.snappy-search-close').show();
+      }
+    });
+  }
+
+  function escapeFilterText(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function activeFilterLabels($filters) {
+    let labels = [];
+    let filters = collectCatalogFilters($filters);
+
+    if (filters.category) {
+      labels.push(__('Category', 'speedy-search') + ': ' + $filters.find('.filter-product-category option:selected').text());
+    }
+
+    if (filters.rating) {
+      labels.push(__('Rating', 'speedy-search') + ': ' + $filters.find('.filter-rating option:selected').text());
+    }
+
+    if (filters.attributes) {
+      $filters.find('.filter-product-attribute').each(function () {
+        let selected = String($(this).val() || '').trim();
+
+        if (!selected) {
+          return;
+        }
+
+        let label = $(this).prev('label').text();
+        labels.push(label + ': ' + $(this).find('option:selected').text());
+      });
+    }
+
+    if (filters.custom_fields) {
+      $filters.find('.filter-custom-field').each(function () {
+        let selected = String($(this).val() || '').trim();
+
+        if (!selected) {
+          return;
+        }
+
+        labels.push($(this).prev('label').text() + ': ' + $(this).find('option:selected').text());
+      });
+    }
+
+    if (filters.acf_fields) {
+      $filters.find('.filter-acf-field').each(function () {
+        let selected = String($(this).val() || '').trim();
+
+        if (!selected) {
+          return;
+        }
+
+        labels.push($(this).prev('label').text() + ': ' + $(this).find('option:selected').text());
+      });
+    }
+
+    if (filters.min_price != null || filters.max_price != null) {
+      labels.push(__('Price', 'speedy-search') + ': ' + $filters.find('.filter-price-min-label').text() + ' - ' + $filters.find('.filter-price-max-label').text());
+    }
+
+    return labels;
+  }
+
+  function clearProductFilters($filters) {
+    $filters.find('select').val('');
+    $filters.find('.filter-rating').val('0');
+
+    if (!price_range_filter_enabled || !$filters.data('catalog-price-ready')) {
+      return;
+    }
+
+    let minPrice = parsePrice($filters.data('min-price'));
+    let maxPrice = parsePrice($filters.data('max-price'));
+    $filters.find('.filter-price-min').val(minPrice);
+    $filters.find('.filter-price-max').val(maxPrice);
+    $filters.find('.filter-price-min-label').text(minPrice.toFixed(2));
+    $filters.find('.filter-price-max-label').text(maxPrice.toFixed(2));
+    updatePriceRangeTrack($filters, minPrice, maxPrice, minPrice, maxPrice);
+  }
+
+  function productEmptyHtml() {
+    let query = $.trim($(selector).val());
+    let $filters = $('.snappy-product-filters');
+    let labels = activeFilterLabels($filters);
+
+    if (catalogReady() && query.length >= characters && labels.length) {
+      return '<p><a href="#" class="snappy-clear-search-filter">' + escapeFilterText(__('Clear search to filter all products by ', 'speedy-search') + labels.join(', ')) + '</a></p>';
+    }
+
+    if (catalogReady() && query.length < characters && labels.length) {
+      return '<p>' + __('No products match these filters.', 'speedy-search') + ' <a href="#" class="snappy-clear-filters">' + __('Clear filters', 'speedy-search') + '</a></p>';
+    }
+
+    return '<p>' + __('No results found.', 'speedy-search') + '</p>';
+  }
+
+  function rememberFilterSelections($filters) {
+    let remembered = {
+      category: selectionOf($filters.find('.filter-product-category')),
+      rating: selectionOf($filters.find('.filter-rating')),
+      attributes: {},
+      custom: {},
+      acf: {}
+    };
+
+    $filters.find('.filter-product-attribute').each(function () {
+      let key = String($(this).data('attribute-key') || '');
+
+      if (key) {
+        remembered.attributes[key] = selectionOf($(this));
+      }
+    });
+
+    $filters.find('.filter-custom-field').each(function () {
+      let key = normalizeCustomFieldKey($(this).data('field-key'));
+
+      if (key) {
+        remembered.custom[key] = selectionOf($(this));
+      }
+    });
+
+    $filters.find('.filter-acf-field').each(function () {
+      let key = normalizeCustomFieldKey($(this).data('field-key'));
+
+      if (key) {
+        remembered.acf[key] = selectionOf($(this));
+      }
+    });
+
+    return remembered;
+  }
+
+  function selectionOf($select) {
+    if (!$select.length) {
+      return { value: '', text: '' };
+    }
+
+    return {
+      value: String($select.val() || ''),
+      text: $select.find('option:selected').text()
+    };
+  }
+
+  function restoreFilterSelections($filters, remembered) {
+    restoreSelect($filters.find('.filter-product-category'), remembered.category);
+    restoreSelect($filters.find('.filter-rating'), remembered.rating);
+
+    $.each(remembered.attributes, function (key, item) {
+      let $select = $filters.find('.filter-product-attribute').filter(function () {
+        return String($(this).data('attribute-key')) === String(key);
+      });
+
+      if (!$select.length && item.value) {
+        $filters.find('.product-attribute-filters').append(
+          '<label>' + escapeFilterText(key) + '</label>' +
+          '<select class="filter-product-attribute" data-attribute-key="' + escapeFilterText(key) + '"></select>'
+        );
+        $select = $filters.find('.filter-product-attribute').filter(function () {
+          return String($(this).data('attribute-key')) === String(key);
+        });
+      }
+
+      restoreSelect($select, item);
+    });
+
+    $.each(remembered.custom, function (key, item) {
+      restoreKeyedSelect($filters.find('.custom-field-filters'), '.filter-custom-field', key, item);
+    });
+
+    $.each(remembered.acf, function (key, item) {
+      restoreKeyedSelect($filters.find('.acf-field-filters'), '.filter-acf-field', key, item);
+    });
+  }
+
+  function restoreKeyedSelect($bucket, selectorClass, key, item) {
+    let $select = $bucket.find(selectorClass).filter(function () {
+      return normalizeCustomFieldKey($(this).data('field-key')) === key;
+    });
+
+    if (!$select.length && item.value) {
+      $bucket.append(
+        '<label>' + escapeFilterText(normalizeCustomFieldLabel(key)) + '</label>' +
+        '<select class="' + selectorClass.replace('.', '') + '" data-field-key="' + escapeFilterText(key) + '"></select>'
+      );
+      $select = $bucket.find(selectorClass).filter(function () {
+        return normalizeCustomFieldKey($(this).data('field-key')) === key;
+      });
+    }
+
+    restoreSelect($select, item);
+  }
+
+  function restoreSelect($select, item) {
+    if (!$select || !$select.length || !item || !item.value) {
+      return;
+    }
+
+    let exists = false;
+
+    $select.find('option').each(function () {
+      if (String($(this).val()) === String(item.value)) {
+        exists = true;
+        return false;
+      }
+    });
+
+    if (!exists) {
+      $select.append($('<option>').val(item.value).text(item.text || item.value));
+    }
+
+    $select.val(item.value);
   }
 
   function getFilteredProducts(products) {
@@ -391,7 +831,7 @@ jQuery(document).ready(function ($) {
     }
 
     $(document).off('change.snappyFilters input.snappyFilters', '.snappy-product-filters input, .snappy-product-filters select');
-    $(document).on('change.snappyFilters input.snappyFilters', '.snappy-product-filters input, .snappy-product-filters select', function () {
+    $(document).on('change.snappyFilters input.snappyFilters', '.snappy-product-filters input, .snappy-product-filters select', function (event) {
       let $filters = $('.snappy-product-filters');
       if (price_range_filter_enabled) {
         let minPrice = parsePrice($filters.find('.filter-price-min').val());
@@ -414,7 +854,46 @@ jQuery(document).ready(function ($) {
         updatePriceRangeTrack($filters, minPrice, maxPrice, minBound, maxBound);
       }
 
+      let query = $.trim($(selector).val());
+      let isPrice = $(this).hasClass('filter-price-min') || $(this).hasClass('filter-price-max');
+
+      if (catalogReady() && query.length < characters) {
+        if (isPrice && event.type === 'input') {
+          return;
+        }
+
+        if (catalogFiltersActive($filters)) {
+          fetchCatalogProducts();
+        } else if (browse_results && Object.keys(browse_results).length) {
+          latest_results = browse_results;
+          applyBrowseFilters();
+          renderSections(latest_results);
+        }
+
+        return;
+      }
+
       renderSections(latest_results);
+    });
+
+    $(document).off('click.snappyClearFilters', '.snappy-clear-filters');
+    $(document).on('click.snappyClearFilters', '.snappy-clear-filters', function (e) {
+      e.preventDefault();
+      clearProductFilters($('.snappy-product-filters'));
+      fetchCatalogProducts();
+    });
+
+    $(document).off('click.snappyClearSearch', '.snappy-clear-search-filter');
+    $(document).on('click.snappyClearSearch', '.snappy-clear-search-filter', function (e) {
+      e.preventDefault();
+      $(selector).val('');
+
+      if (catalogFiltersActive($('.snappy-product-filters'))) {
+        fetchCatalogProducts();
+      } else if (browse_results && Object.keys(browse_results).length) {
+        latest_results = browse_results;
+        showLatestResults();
+      }
     });
   }
 
@@ -903,6 +1382,94 @@ jQuery(document).ready(function ($) {
     }
   }
 
+  function popularPosition() {
+    let position = snappy_search_object.options?.popular?.position || 'under_input';
+
+    if (position !== 'above_tabs' && position !== 'below_tabs' && position !== 'below_results') {
+      return 'under_input';
+    }
+
+    return position;
+  }
+
+  function popularHeadingHtml(popular) {
+    let heading = Object.prototype.hasOwnProperty.call(popular, 'heading')
+      ? popular.heading
+      : __('Popular Searches', 'speedy-search');
+
+    if (!heading) {
+      return '';
+    }
+
+    return '<p class="popular">' + escapeFilterText(String(heading)) + '</p>';
+  }
+
+  function popularMarkup() {
+    let popular = snappy_search_object.options?.popular || {};
+
+    if (!popular.enabled) {
+      return '';
+    }
+
+    let terms = snappy_search_object.popular;
+
+    if (!Array.isArray(terms) || !terms.length) {
+      return '';
+    }
+
+    let links = '';
+
+    $.each(terms, function (_, term) {
+      if (!term || !term.term) {
+        return;
+      }
+
+      links += '<a href="javascript:void(0);" class="search-term">' + escapeFilterText(String(term.term)) + '</a>';
+    });
+
+    if (!links) {
+      return '';
+    }
+
+    return '<div class="popular-searches">' + popularHeadingHtml(popular) + links + '</div>';
+  }
+
+  function popularSlotHtml(slot, hasTabs) {
+    let position = popularPosition();
+
+    if (position === 'under_input') {
+      return '';
+    }
+
+    if (position === 'below_tabs' && !hasTabs) {
+      position = 'above_tabs';
+    }
+
+    if (position !== slot) {
+      return '';
+    }
+
+    return popularMarkup();
+  }
+
+  function placeUnderInputPopular($form) {
+    if (popularPosition() !== 'under_input' || !$form || !$form.length) {
+      return;
+    }
+
+    if ($form.parent().children('.popular-searches').length) {
+      return;
+    }
+
+    let html = popularMarkup();
+
+    if (!html) {
+      return;
+    }
+
+    $form.after(html);
+  }
+
   function buildInitialSearchForm() {
     if (postTypes.length === 0) return ''; // nothing enabled
 
@@ -930,15 +1497,9 @@ jQuery(document).ready(function ($) {
         '</div>\n';
     });
 
-    let popularHTML = '';
-
-    if (Array.isArray(popular_terms) && popular_terms.length > 0) {
-      popularHTML = `
-        <div class="popular-searches">
-          <div class="popular-terms"></div>
-        </div>
-      `;
-    }
+    let popularAbove = popularSlotHtml('above_tabs', showTabs);
+    let popularBelowTabs = popularSlotHtml('below_tabs', showTabs);
+    let popularBelowResults = popularSlotHtml('below_results', showTabs);
 
     let filtersHTML = '';
 
@@ -987,12 +1548,14 @@ jQuery(document).ready(function ($) {
 
     let searchForm = `
       <div class="instant-search-wrapper">
-        ${popularHTML}
+        ${popularAbove}
         ${tabsHTML}
+        ${popularBelowTabs}
         <div class="instant-search-layout">
           ${filtersHTML}
           <div class="instant-search-results">
             ${sectionsHTML}
+            ${popularBelowResults}
           </div>
         </div>
       </div>

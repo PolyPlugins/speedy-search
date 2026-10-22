@@ -98,6 +98,14 @@ class Filters {
 		);
 
 		add_settings_field(
+			'filters_catalog_enabled',
+			__('Filter the full catalog?', 'speedy-search'),
+			array($this, 'filters_catalog_enabled_render'),
+			'speedy_search_filters_polyplugins',
+			'speedy_search_filters_section_polyplugins'
+		);
+
+		add_settings_field(
 			'filters_rating_enabled',
 			__('Rating Filter?', 'speedy-search'),
 			array($this, 'filters_rating_enabled_render'),
@@ -191,6 +199,21 @@ class Filters {
     <p><strong><?php esc_html_e('Enable product filters on advanced results.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
+
+  /**
+   * Render the full-catalog filter toggle.
+   *
+   * @return void
+   */
+  public function filters_catalog_enabled_render() {
+    $option = Utils::get_option('filters_catalog_enabled');
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[filters_catalog_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('When the search box is empty, filters load matching products from the whole catalog, up to the Products result limit. A typed search still filters only its hits. Re-index products after turning this on.', 'speedy-search'); ?></strong></p>
+    <?php
+  }
 
   /**
 	 * Render Rating Filter Enabled Field

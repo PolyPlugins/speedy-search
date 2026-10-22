@@ -80,6 +80,7 @@ class Activation {
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
     
     dbDelta($sql);
+    Backend\DB::ensure_status_table();
   }
 
 }

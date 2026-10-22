@@ -132,6 +132,7 @@ class Background_Worker {
 
     if (class_exists('WooCommerce')) {
       $this->maybe_index('product');
+      $this->maybe_index_admin_products();
     }
 
     if (class_exists('Easy_Digital_Downloads')) {
@@ -225,6 +226,11 @@ class Background_Worker {
           $query->the_post();
 
           $post_id = get_the_ID();
+
+          if ($post_type === 'product') {
+            Product_Facets::sync_product($post_id, false);
+          }
+
           $title   = get_the_title();
           $content = get_the_content();
 
@@ -262,6 +268,10 @@ class Background_Worker {
         }
       } else {
         Utils::update_index($type, 'complete', true);
+
+        if ($post_type === 'product') {
+          Product_Facets::finish_reindex();
+        }
       }
 
       wp_reset_postdata();
@@ -353,6 +363,82 @@ class Background_Worker {
       }
     } catch (\Throwable $e) {
       Log::error(sprintf('Background orders indexer failed: %s', $e->getMessage()));
+    }
+  }
+
+  /**
+   * Build the wp-admin product index. Stays incomplete while the switch is off.
+   *
+   * @return void
+   */
+  public function maybe_index_admin_products() {
+    if (!class_exists('WooCommerce') || !Utils::is_admin_products_enabled()) {
+      return;
+    }
+
+    $type                 = 'admin_products';
+    $index                = Utils::get_index($type);
+    $is_indexing_complete = isset($index['complete']) ? true : false;
+
+    if ($is_indexing_complete) {
+      return;
+    }
+
+    $index_name = Utils::get_index_name('admin_product');
+    $products   = Utils::get_option('products');
+    $batch      = isset($products['batch']) ? (int) $products['batch'] : 100;
+    $batch      = $batch > 0 ? $batch : 100;
+
+    try {
+      if (!$index) {
+        $this->tnt->createIndex($index_name);
+      }
+
+      $this->tnt->selectIndex($index_name);
+
+      $progress = isset($index['progress']) ? $index['progress'] : 1;
+
+      $query = new \WP_Query(array(
+        'post_type'              => 'product',
+        'post_status'            => Utils::admin_product_statuses(),
+        'posts_per_page'         => $batch,
+        'offset'                 => $progress - 1,
+        'orderby'                => 'ID',
+        'order'                  => 'ASC',
+        'fields'                 => 'ids',
+        'no_found_rows'          => true,
+        'update_post_meta_cache' => false,
+        'update_post_term_cache' => false,
+      ));
+
+      if (!empty($query->posts)) {
+        $engine = $this->tnt->getIndex();
+
+        foreach ($query->posts as $post_id) {
+          $document = Utils::admin_product_index_document($post_id);
+
+          if (!empty($document)) {
+            $document = Utils::sanitize_index_document($document, 255);
+
+            if (Utils::admin_product_document_has_text($document)) {
+              try {
+                $engine->insert($document);
+              } catch (\Throwable $e) {
+                Log::error(sprintf('Admin product index insert failed for post_id %d: %s', $post_id, $e->getMessage()));
+              }
+            }
+          }
+
+          $progress++;
+          Utils::update_index($type, 'progress', $progress);
+        }
+      } else {
+        Utils::update_index($type, 'complete', true);
+      }
+
+      wp_reset_postdata();
+    } catch (\Throwable $e) {
+      Log::error(sprintf('Background admin product indexer failed: %s', $e->getMessage()));
     }
   }
 

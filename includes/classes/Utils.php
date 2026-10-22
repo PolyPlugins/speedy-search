@@ -239,6 +239,252 @@ class Utils {
   }
 
   /**
+   * Product statuses stored in the wp-admin product index.
+   *
+   * @return array
+   */
+  public static function admin_product_statuses() {
+    return array('publish', 'draft', 'pending', 'private', 'future');
+  }
+
+  /**
+   * Whether admin product search is turned on.
+   *
+   * @return bool
+   */
+  public static function is_admin_products_enabled() {
+    if (!class_exists('WooCommerce')) {
+      return false;
+    }
+
+    $options = self::get_option('products');
+
+    return is_array($options) && !empty($options['admin_enabled']);
+  }
+
+  /**
+   * Whether the wp-admin product index has finished its initial build.
+   *
+   * @return bool
+   */
+  public static function is_admin_products_index_complete() {
+    $index = self::get_index('admin_products');
+
+    return is_array($index) && !empty($index['complete']);
+  }
+
+  /**
+   * Products list screen option, so admin search pages match the list per page.
+   *
+   * @return int
+   */
+  public static function admin_products_per_page() {
+    $per_page = 20;
+
+    if (function_exists('get_user_option')) {
+      $saved = (int) get_user_option('edit_product_per_page');
+
+      if ($saved > 0) {
+        $per_page = $saved;
+      }
+    }
+
+    if (function_exists('apply_filters')) {
+      $per_page = (int) apply_filters('edit_product_per_page', $per_page);
+    }
+
+    if ($per_page < 1) {
+      $per_page = 20;
+    }
+
+    return $per_page;
+  }
+
+  /**
+   * Document stored in the admin product index.
+   *
+   * @param int $post_id Product ID.
+   * @return array
+   */
+  public static function admin_product_index_document($post_id) {
+    $post = get_post($post_id);
+
+    if (!$post || $post->post_type !== 'product') {
+      return array();
+    }
+
+    if (!in_array($post->post_status, self::admin_product_statuses(), true)) {
+      return array();
+    }
+
+    $sku = get_post_meta($post_id, '_sku', true);
+    $sku = is_string($sku) ? $sku : '';
+
+    return array(
+      'id'             => (int) $post_id,
+      'title'          => sanitize_text_field($post->post_title),
+      'content'        => sanitize_text_field($post->post_content),
+      'sku'            => sanitize_text_field($sku),
+      'sku_normalized' => sanitize_text_field(strtolower(str_replace('-', '', $sku))),
+    );
+  }
+
+  /**
+   * TNT writes invalid SQL when a document has no terms, so blank products are skipped.
+   *
+   * @param array $document Admin product document.
+   * @return bool
+   */
+  public static function admin_product_document_has_text($document) {
+    if (!is_array($document)) {
+      return false;
+    }
+
+    foreach ($document as $key => $value) {
+      if ($key === 'id' || !is_string($value)) {
+        continue;
+      }
+
+      if (trim($value) !== '') {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Row returned to the products list search.
+   *
+   * @param int $post_id Product ID.
+   * @return array
+   */
+  public static function admin_product_search_row($post_id) {
+    $post = get_post($post_id);
+
+    if (!$post || $post->post_type !== 'product') {
+      return array();
+    }
+
+    if (!in_array($post->post_status, self::admin_product_statuses(), true)) {
+      return array();
+    }
+
+    $sku          = get_post_meta($post_id, '_sku', true);
+    $sku          = is_string($sku) ? $sku : '';
+    $price_html   = '';
+    $stock_status = (string) get_post_meta($post_id, '_stock_status', true);
+    $featured     = false;
+
+    if (function_exists('wc_get_product')) {
+      $product = wc_get_product($post_id);
+
+      if ($product) {
+        $price_html   = $product->get_price_html();
+        $stock_status = $product->get_stock_status();
+        $featured     = (bool) $product->is_featured();
+
+        if ($sku === '') {
+          $sku = (string) $product->get_sku();
+        }
+      }
+    }
+
+    if ($price_html === '') {
+      $price      = get_post_meta($post_id, '_price', true);
+      $price_html = is_scalar($price) ? (string) $price : '';
+    }
+
+    if (function_exists('wp_kses_post')) {
+      $price_html = wp_kses_post($price_html);
+    }
+
+    $categories = self::admin_product_category_names($post_id);
+    $edit_link  = '';
+
+    if (function_exists('get_edit_post_link')) {
+      $edit_link = (string) get_edit_post_link($post_id, 'raw');
+    }
+
+    $stock_labels = array(
+      'instock'     => __('In stock', 'speedy-search'),
+      'outofstock'  => __('Out of stock', 'speedy-search'),
+      'onbackorder' => __('On backorder', 'speedy-search'),
+    );
+
+    return array(
+      'id'          => (int) $post_id,
+      'status'      => $post->post_status,
+      'edit_link'   => $edit_link,
+      'title'       => $post->post_title,
+      'thumbnail'   => self::admin_product_thumbnail($post_id),
+      'sku'         => $sku,
+      'price_html'  => $price_html,
+      'stock_label' => isset($stock_labels[$stock_status]) ? $stock_labels[$stock_status] : '',
+      'categories'  => implode(', ', $categories),
+      'featured'    => $featured,
+      'date'        => $post->post_date,
+    );
+  }
+
+  /**
+   * Product category names for an admin search row.
+   *
+   * @param int $post_id Product ID.
+   * @return array
+   */
+  private static function admin_product_category_names($post_id) {
+    if (function_exists('wp_get_post_terms')) {
+      $terms = wp_get_post_terms($post_id, 'product_cat', array('fields' => 'names'));
+
+      if (is_array($terms) && !is_wp_error($terms)) {
+        return array_map('strval', $terms);
+      }
+    }
+
+    global $wpdb;
+
+    if (!isset($wpdb->term_relationships, $wpdb->term_taxonomy, $wpdb->terms)) {
+      return array();
+    }
+
+    $rows = $wpdb->get_col($wpdb->prepare(
+      "SELECT t.name FROM %i tr INNER JOIN %i tt ON tr.term_taxonomy_id = tt.term_taxonomy_id INNER JOIN %i t ON tt.term_id = t.term_id WHERE tr.object_id = %d AND tt.taxonomy = %s",
+      $wpdb->term_relationships,
+      $wpdb->term_taxonomy,
+      $wpdb->terms,
+      $post_id,
+      'product_cat'
+    ));
+
+    return is_array($rows) ? array_map('strval', $rows) : array();
+  }
+
+  /**
+   * Thumbnail URL for an admin search row.
+   *
+   * @param int $post_id Product ID.
+   * @return string
+   */
+  private static function admin_product_thumbnail($post_id) {
+    if (function_exists('get_the_post_thumbnail_url')) {
+      $url = get_the_post_thumbnail_url($post_id, 'thumbnail');
+
+      return $url ? $url : '';
+    }
+
+    $thumb_id = (int) get_post_meta($post_id, '_thumbnail_id', true);
+
+    if ($thumb_id < 1) {
+      return '';
+    }
+
+    $attachment = get_post($thumb_id);
+
+    return ($attachment && !empty($attachment->guid)) ? $attachment->guid : '';
+  }
+
+  /**
    * Delete an index file
    *
    * @param  string $index_path The path to the index file
@@ -303,6 +549,8 @@ class Utils {
 
       delete_option('speedy_search_indexes_polyplugins');
     }
+
+    \PolyPlugins\Speedy_Search\Backend\Product_Facets::begin_reindex();
   }
   
   /**
@@ -1181,6 +1429,18 @@ class Utils {
    * @param mixed  $product
    * @return array
    */
+  public static function get_product_filter_meta_values($product_id, $meta_key, $product = null) {
+    return self::get_product_custom_field_values($product_id, $meta_key, $product);
+  }
+
+  /**
+   * Get product custom field values from product and variations.
+   *
+   * @param int    $product_id
+   * @param string $meta_key
+   * @param mixed  $product
+   * @return array
+   */
   private static function get_product_custom_field_values($product_id, $meta_key, $product) {
     $values = self::normalize_custom_field_values(get_post_meta($product_id, $meta_key, true));
 
@@ -1292,6 +1552,7 @@ class Utils {
         'downloads'       => add_query_arg('endpoint', 'downloads', $base_url),
         // Orders stay on REST so existing permission callbacks remain enforced.
         'orders'          => home_url('/wp-json/speedy-search-search/v1/orders'),
+        'admin_products'  => home_url('/wp-json/speedy-search-search/v1/admin-products'),
       );
     }
 
@@ -1306,6 +1567,7 @@ class Utils {
       'products'        => home_url('/wp-json/speedy-search/v1/products/'),
       'downloads'       => home_url('/wp-json/speedy-search/v1/downloads/'),
       'orders'          => home_url('/wp-json/speedy-search-search/v1/orders'),
+      'admin_products'  => home_url('/wp-json/speedy-search-search/v1/admin-products'),
     );
   }
 

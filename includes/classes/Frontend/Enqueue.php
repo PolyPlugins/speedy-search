@@ -3,6 +3,7 @@
 namespace PolyPlugins\Speedy_Search\Frontend;
 
 use PolyPlugins\Speedy_Search\Backend\DB;
+use PolyPlugins\Speedy_Search\Backend\Product_Facets;
 use PolyPlugins\Speedy_Search\Log;
 use PolyPlugins\Speedy_Search\Utils;
 
@@ -151,6 +152,7 @@ class Enqueue {
         'filters_attributes_ordered_keys'   => Utils::get_filters_attributes_allowed_keys(),
         'filters_custom_fields_ordered_keys' => Utils::get_filters_custom_fields_ordered_keys(),
         'filters_acf_fields_ordered_keys' => Utils::get_filters_acf_fields_ordered_keys(),
+        'filters_catalog_ready' => Product_Facets::is_ready(),
       )
     );
   }
@@ -196,6 +198,7 @@ class Enqueue {
         'snappy_search_object',
         array(
           'options'  => $this->get_script_options(),
+          'popular'  => DB::get_top_terms_last_x_days(),
           'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
           'endpoints' => Utils::get_api_endpoints(),
         )
@@ -226,6 +229,7 @@ class Enqueue {
           'snappy_search_object',
           array(
             'options'  => $this->get_script_options(),
+            'popular'  => DB::get_top_terms_last_x_days(),
             'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
             'endpoints' => Utils::get_api_endpoints(),
           )
@@ -238,6 +242,7 @@ class Enqueue {
           'snappy_search_object',
           array(
             'options'  => $this->get_script_options(),
+            'popular'  => DB::get_top_terms_last_x_days(),
             'currency' => class_exists('WooCommerce') ? get_woocommerce_currency_symbol() : '',
             'endpoints' => Utils::get_api_endpoints(),
           )

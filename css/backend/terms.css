@@ -1,0 +1,100 @@
+.nav-links .snappy-popular-submenu {
+  background: transparent;
+  width: auto;
+  margin: 10px 0 0;
+  padding: 0 0 0 36px !important;
+  border-radius: 0;
+}
+
+.nav-links .snappy-popular-submenu li {
+  margin-bottom: 0 !important;
+}
+
+.nav-links .snappy-popular-submenu a {
+  font-size: 14px;
+  padding: 10px 16px;
+}
+
+.snappy-terms {
+  padding: 20px;
+}
+
+.snappy-terms > p {
+  margin-top: 0;
+}
+
+.tab.terms .snappy-terms-section h2 {
+  margin: 0 0 12px;
+  padding: 0;
+  border-bottom: 0;
+  text-align: left;
+}
+
+.snappy-terms-add {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: 860px;
+  margin: 16px 0 24px;
+}
+
+.snappy-terms-add input[type="text"] {
+  flex: 1 1 auto;
+  width: 1% !important;
+  max-width: none;
+  min-width: 0;
+}
+
+.snappy-terms-add .button,
+.snappy-terms-add .button:hover,
+.snappy-terms-add .button:focus {
+  flex: 0 0 auto;
+  background-color: #46BEA4 !important;
+  border-color: #46BEA4 !important;
+  color: #fff;
+  padding: 5px 20px;
+  border-radius: 5px !important;
+}
+
+.snappy-terms-section .snappy-terms-add {
+  max-width: none;
+  margin: 0 0 16px;
+}
+
+.snappy-terms-section {
+  max-width: 860px;
+  margin: 0 0 28px;
+}
+
+.snappy-terms-section h2 {
+  margin: 0 0 8px;
+}
+
+.snappy-terms-note {
+  margin: 0 0 12px;
+  color: #50575e;
+}
+
+.snappy-term-handle-col,
+.snappy-term-handle {
+  width: 28px;
+}
+
+.snappy-term-handle {
+  cursor: move;
+  color: #646970;
+  text-align: center;
+}
+
+.snappy-term-limit td {
+  background: #f0f0f1;
+  color: #50575e;
+  font-size: 12px;
+  text-align: center;
+  padding: 8px 12px;
+}
+
+.snappy-terms-sortable .ui-sortable-helper {
+  background: #fff;
+}

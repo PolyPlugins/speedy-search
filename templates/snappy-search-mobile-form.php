@@ -8,6 +8,8 @@ if (!defined('ABSPATH')) exit;
 $is_indexing_speedy_search        = Utils::is_indexing();
 $popular_options_speedy_search    = Utils::get_option('popular');
 $popular_enabled_speedy_search    = isset($popular_options_speedy_search['enabled']) ? $popular_options_speedy_search['enabled'] : 0;
+$popular_position_speedy_search   = isset($popular_options_speedy_search['position']) ? $popular_options_speedy_search['position'] : 'under_input';
+$popular_heading_speedy_search    = isset($popular_options_speedy_search['heading']) ? $popular_options_speedy_search['heading'] : __('Popular Searches', 'speedy-search');
 $advanced_options_speedy_search   = Utils::get_option('advanced');
 $advanced_enabled_speedy_search   = isset($advanced_options_speedy_search['enabled']) ? $advanced_options_speedy_search['enabled'] : 0;
 $advanced_page_slug_speedy_search = Utils::get_page_slug_by_template();
@@ -23,8 +25,11 @@ $name_speedy_search               = $advanced_enabled_speedy_search && $advanced
   </form>
   
   <?php if (!$is_indexing_speedy_search) : ?>
-    <?php if ($popular_enabled_speedy_search) : ?>
+    <?php if ($popular_enabled_speedy_search && ($popular_position_speedy_search === '' || $popular_position_speedy_search === 'under_input')) : ?>
       <div class="popular-searches">
+        <?php if ($popular_heading_speedy_search !== '') : ?>
+          <p class="popular"><?php echo esc_html($popular_heading_speedy_search); ?></p>
+        <?php endif; ?>
         <?php
         $popular_speedy_search = DB::get_top_terms_last_x_days();
         ?>

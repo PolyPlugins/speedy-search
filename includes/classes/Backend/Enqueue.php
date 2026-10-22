@@ -55,6 +55,7 @@ class Enqueue {
     if ($hook_suffix === 'toplevel_page_speedy-search') {
       Log::debug('Snappy Search admin assets enqueued.');
 
+      wp_enqueue_style('speedy-search-terms', plugins_url('/css/backend/terms.css', $this->plugin), array(), $this->version);
       $this->enqueue_styles();
       $this->enqueue_scripts();
       $this->enqueue_wordpress();
@@ -79,6 +80,13 @@ class Enqueue {
         $this->enqueue_order_styles();
         $this->enqueue_order_scripts();
       }
+    }
+
+    $is_products_screen = $screen && $screen->id === 'edit-product';
+
+    if ($is_products_screen && Utils::is_admin_products_enabled() && Utils::is_admin_products_index_complete()) {
+      $this->enqueue_order_styles();
+      $this->enqueue_admin_product_scripts();
     }
   }
   
@@ -118,7 +126,7 @@ class Enqueue {
    * @return void
    */
   private function enqueue_scripts() {
-    wp_enqueue_script('speedy-search-settings', plugins_url('/js/backend/settings.js', $this->plugin), array('jquery', 'wp-color-picker', 'wp-i18n'), $this->version, true);
+    wp_enqueue_script('speedy-search-settings', plugins_url('/js/backend/settings.js', $this->plugin), array('jquery', 'jquery-ui-sortable', 'wp-color-picker', 'wp-i18n'), $this->version, true);
     wp_localize_script(
       'speedy-search-settings',
       'snappy_search_object',
@@ -193,6 +201,31 @@ class Enqueue {
       )
     );
     wp_set_script_translations('speedy-search-orders', 'speedy-search', plugin_dir_path($this->plugin) . '/languages/');
+    wp_enqueue_script('sweetalert2', plugins_url('/js/backend/sweetalert2.all.min.js', $this->plugin), array('jquery'), $this->version, true);
+  }
+
+  /**
+   * Enqueue the products list search script.
+   *
+   * @return void
+   */
+  private function enqueue_admin_product_scripts() {
+    if (!class_exists('WooCommerce')) {
+      return;
+    }
+
+    $options = get_option('speedy_search_settings_polyplugins');
+
+    wp_enqueue_script('speedy-search-products-admin', plugins_url('/js/backend/products-admin.js', $this->plugin), array('jquery'), $this->version, true);
+    wp_localize_script(
+      'speedy-search-products-admin',
+      'speedy_search_object',
+      array(
+        'options'   => $options,
+        'nonce'     => wp_create_nonce('wp_rest'),
+        'endpoints' => Utils::get_api_endpoints(),
+      )
+    );
     wp_enqueue_script('sweetalert2', plugins_url('/js/backend/sweetalert2.all.min.js', $this->plugin), array('jquery'), $this->version, true);
   }
   

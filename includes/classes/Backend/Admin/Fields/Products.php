@@ -82,6 +82,14 @@ class Products {
 		);
 
 		add_settings_field(
+			'products_admin_enabled',
+			__('Admin search?', 'speedy-search'),
+			array($this, 'products_admin_enabled_render'),
+			'speedy_search_products_polyplugins',
+			'speedy_search_products_section_polyplugins'
+		);
+
+		add_settings_field(
 			'products_tab_enabled',
 			__('Tab Enabled?', 'speedy-search'),
 			array($this, 'products_tab_enabled_render'),
@@ -184,6 +192,22 @@ class Products {
       <input type="checkbox" name="speedy_search_settings_polyplugins[products][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
     </div>
     <p><strong><?php esc_html_e('Index and show products in the search?', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+  /**
+	 * Render the products list search switch.
+	 *
+	 * @return void
+	 */
+	public function products_admin_enabled_render() {
+		$options = $this->get_products_options();
+    $option  = isset($options['admin_enabled']) ? $options['admin_enabled'] : 0;
+    ?>
+    <div class="form-check form-switch">
+      <input type="checkbox" name="speedy_search_settings_polyplugins[products][admin_enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+    </div>
+    <p><strong><?php esc_html_e('Replace product search in wp-admin with Snappy Search. This uses a separate index that includes drafts and private products. The store search is unchanged.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

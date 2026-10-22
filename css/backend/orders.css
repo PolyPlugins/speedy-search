@@ -10,6 +10,57 @@
   animation: pulse 1.2s ease-in-out infinite;
 }
 
+body.post-type-product #the-list.skeleton-loading td a,
+body.post-type-product #the-list.skeleton-loading td time,
+body.post-type-product #the-list.skeleton-loading td mark,
+body.post-type-product #the-list.skeleton-loading td .amount {
+  background-color: transparent;
+  animation: none;
+}
+
+body.post-type-product #the-list.skeleton-loading .snappy-skeleton {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: middle;
+  background-color: #e0e0e0;
+  color: transparent;
+  border-radius: 4px;
+  text-decoration: none;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+body.post-type-product #the-list.skeleton-loading .snappy-skeleton * {
+  color: transparent !important;
+  text-decoration: none !important;
+  box-shadow: none !important;
+}
+
+body.post-type-product #the-list.skeleton-loading .snappy-skeleton *:not(.row-title) {
+  background-color: transparent !important;
+}
+
+body.post-type-product #the-list.skeleton-loading .snappy-skeleton *::before,
+body.post-type-product #the-list.skeleton-loading .snappy-skeleton *::after {
+  color: transparent !important;
+}
+
+body.post-type-product #the-list.skeleton-loading td.column-name > .snappy-skeleton {
+  background-color: transparent;
+  animation: none;
+}
+
+body.post-type-product #the-list.skeleton-loading .column-name .row-title {
+  display: inline-block;
+  background-color: #e0e0e0;
+  color: transparent !important;
+  border-radius: 4px;
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+body.post-type-product #the-list.skeleton-loading .snappy-skeleton img {
+  opacity: 0;
+}
+
 @keyframes pulse {
   0% {
     background-color: #e0e0e0;

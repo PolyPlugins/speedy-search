@@ -102,6 +102,7 @@ class CLI {
 
     if (class_exists('WooCommerce')) {
       $this->cli_reindex_products($tnt, $batch);
+      $this->cli_reindex_admin_products($tnt, $batch);
     }
 
     if (class_exists('Easy_Digital_Downloads')) {
@@ -239,6 +240,11 @@ class CLI {
 
       if (!$query->have_posts()) {
         Utils::update_index($type, 'complete', true);
+
+        if ($post_type === 'product') {
+          Product_Facets::finish_reindex();
+        }
+
         \WP_CLI::log(sprintf('%s: complete (finished at position %d).', $phase_label, max(0, $progress - 1)));
         wp_reset_postdata();
 
@@ -252,6 +258,11 @@ class CLI {
         $query->the_post();
 
         $post_id = get_the_ID();
+
+        if ($post_type === 'product') {
+          Product_Facets::sync_product($post_id, false);
+        }
+
         $title   = get_the_title();
         $content = get_the_content();
 
@@ -408,6 +419,126 @@ class CLI {
         max(0, $progress - 1)
       ));
     }
+  }
+
+  /**
+   * Rebuild the wp-admin product index when that search is turned on.
+   *
+   * @param object $tnt   TNT indexer instance.
+   * @param int    $limit Products per batch.
+   * @return void
+   */
+  private function cli_reindex_admin_products($tnt, $limit) {
+    if (!Utils::is_admin_products_enabled()) {
+      \WP_CLI::log(__('Admin products: skipped (disabled in settings).', 'speedy-search'));
+
+      return;
+    }
+
+    $this->cli_flush_admin_products_index();
+    $this->cli_reset_admin_products_index_option();
+
+    \WP_CLI::log(__('Admin products: starting...', 'speedy-search'));
+
+    $type       = 'admin_products';
+    $index_name = Utils::get_index_name('admin_product');
+
+    $tnt->createIndex($index_name);
+    $tnt->selectIndex($index_name);
+
+    $progress = 1;
+    $limit    = max(1, (int) $limit);
+
+    while (true) {
+      $query = new \WP_Query(array(
+        'post_type'              => 'product',
+        'post_status'            => Utils::admin_product_statuses(),
+        'posts_per_page'         => $limit,
+        'offset'                 => $progress - 1,
+        'orderby'                => 'ID',
+        'order'                  => 'ASC',
+        'fields'                 => 'ids',
+        'no_found_rows'          => true,
+        'update_post_meta_cache' => false,
+        'update_post_term_cache' => false,
+      ));
+
+      if (empty($query->posts)) {
+        Utils::update_index($type, 'complete', true);
+        \WP_CLI::log(sprintf(
+          /* translators: %d is the final processed product position. */
+          __('Admin products: complete (finished at position %d).', 'speedy-search'),
+          max(0, $progress - 1)
+        ));
+
+        break;
+      }
+
+      $index_engine          = $tnt->getIndex();
+      $progress_before_batch = $progress;
+
+      foreach ($query->posts as $post_id) {
+        $doc = Utils::admin_product_index_document($post_id);
+
+        if (!empty($doc)) {
+          $doc = Utils::sanitize_index_document($doc, 255);
+
+          if (Utils::admin_product_document_has_text($doc)) {
+            try {
+              $index_engine->insert($doc);
+            } catch (\Throwable $e) {
+              Log::error(sprintf('Admin product index insert failed for post_id %d: %s', $post_id, $e->getMessage()));
+              \WP_CLI::warning(sprintf('Admin products: skipped product %d.', $post_id));
+            }
+          }
+        }
+
+        $progress++;
+        Utils::update_index($type, 'progress', $progress);
+      }
+
+      wp_reset_postdata();
+
+      \WP_CLI::log(sprintf(
+        /* translators: 1: number of products processed in this batch, 2: total number of products indexed so far. */
+        __('Admin products: processed %1$d products this batch — %2$d indexed so far.', 'speedy-search'),
+        $progress - $progress_before_batch,
+        max(0, $progress - 1)
+      ));
+    }
+  }
+
+  /**
+   * Drop the admin product index before a rebuild.
+   *
+   * @return void
+   */
+  private function cli_flush_admin_products_index() {
+    $database_type = Utils::get_option('database_type') ?: 'mysql';
+
+    if ($database_type === 'mysql') {
+      Utils::delete_db_index('admin_product');
+    } else {
+      $index_path = TNTSearch::get_instance()->get_index_path();
+      Utils::delete_index($index_path, Utils::get_index_name('admin_product'));
+    }
+  }
+
+  /**
+   * Clear admin product progress so a rebuild starts at the first product.
+   *
+   * @return void
+   */
+  private function cli_reset_admin_products_index_option() {
+    $indexes = Utils::get_indexes();
+
+    if (!isset($indexes['admin_products'])) {
+      return;
+    }
+
+    unset($indexes['admin_products']);
+
+    update_option('speedy_search_indexes_polyplugins', $indexes);
   }
 
 }

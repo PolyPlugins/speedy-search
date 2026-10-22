@@ -96,6 +96,14 @@ class General
 		);
 
 		add_settings_field(
+			'show_fetch_time',
+			__('Show fetch time?', 'speedy-search'),
+			array($this, 'show_fetch_time_render'),
+			'speedy_search_general_polyplugins',
+			'speedy_search_general_section_polyplugins'
+		);
+
+		add_settings_field(
 			'default_result_type',
 			__('Default Result Type', 'speedy-search'),
 			array($this, 'default_result_type_render'),
@@ -177,6 +185,22 @@ class General
 			<input type="checkbox" name="speedy_search_settings_polyplugins[debug][enabled]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
 		</div>
 		<p><strong><?php esc_html_e('When enabled, Snappy Search writes debug detail to the log folder under uploads.', 'speedy-search'); ?></strong></p>
+		<?php
+	}
+
+	/**
+	 * Render the results fetch time toggle.
+	 *
+	 * @return void
+	 */
+	public function show_fetch_time_render()
+	{
+		$option = Utils::get_option('show_fetch_time') ? 1 : 0;
+		?>
+		<div class="form-check form-switch">
+			<input type="checkbox" name="speedy_search_settings_polyplugins[show_fetch_time]" class="form-check-input" role="switch" <?php checked(1, $option, true); ?> /> <?php esc_html_e('Yes', 'speedy-search'); ?>
+		</div>
+		<p><strong><?php esc_html_e('When enabled, the bottom of the results shows how long the last results request took.', 'speedy-search'); ?></strong></p>
 		<?php
 	}
 

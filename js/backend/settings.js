@@ -6,6 +6,7 @@ jQuery(document).ready(function ($) {
   let nonce    = snappy_search_object.nonce;
 
   initTabs();
+  initTermSort();
   initSelect2();
   initColorPicker();
   initRangeSlider();
@@ -15,8 +16,24 @@ jQuery(document).ready(function ($) {
   initSubmit();
 
   function initTabs() {
-    $("#toplevel_page_speedy-search .wp-submenu.wp-submenu-wrap").hide();
-    
+    let $termsPanel = $("#snappy-terms-panel");
+
+    if ($termsPanel.length) {
+      let $submit = $(".tabs p.submit");
+
+      if ($submit.length) {
+        $submit.before($termsPanel);
+      } else {
+        $(".tabs").append($termsPanel);
+      }
+
+      let $popularItem = $('.nav-links a[data-section="popular"]').parent();
+
+      if ($popularItem.length && !$popularItem.find('a[data-section="terms"]').length) {
+        $popularItem.append('<ul class="snappy-popular-submenu"><li><a href="javascript:void(0);" data-section="terms">' + __('Terms', 'speedy-search') + '</a></li></ul>');
+      }
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     let currentTab = urlParams.get('tab') || 'general';
 
@@ -340,6 +357,60 @@ jQuery(document).ready(function ($) {
     $(".snappy-indexing-source").removeClass("validation");
 
     return true;
+  }
+
+  function initTermSort() {
+    let $table = $(".snappy-terms-sortable");
+
+    if (!$table.length || !$.fn.sortable) {
+      return;
+    }
+
+    let $list = $table.find("tbody");
+
+    $list.sortable({
+      items: "> tr.snappy-term-row",
+      handle: ".snappy-term-handle",
+      axis: "y",
+      helper: function (event, row) {
+        let $cells = row.children();
+        let $helper = row.clone();
+
+        $helper.children().each(function (index) {
+          $(this).width($cells.eq(index).width());
+        });
+
+        return $helper;
+      },
+      update: function () {
+        placeTermLimit($list, $table);
+
+        let terms = [];
+
+        $list.find("tr.snappy-term-row").each(function () {
+          terms.push($(this).attr("data-term"));
+        });
+
+        $.post(snappy_search_object.ajax_url, {
+          action: "speedy_search_order_terms",
+          nonce: $table.attr("data-nonce"),
+          terms: terms
+        });
+      }
+    });
+  }
+
+  function placeTermLimit($list, $table) {
+    let limit = parseInt($table.attr("data-show-limit"), 10);
+    let $rows = $list.find("tr.snappy-term-row");
+
+    $list.find("tr.snappy-term-limit").remove();
+
+    if (!limit || $rows.length <= limit) {
+      return;
+    }
+
+    $rows.eq(limit - 1).after('<tr class="snappy-term-limit"><td colspan="4">' + __("Terms below this line are not shown.", "speedy-search") + "</td></tr>");
   }
 
 });

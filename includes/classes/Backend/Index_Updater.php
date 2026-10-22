@@ -28,9 +28,12 @@ class Index_Updater {
     Log::debug('Snappy Search live index updater hooks registered.');
 
     add_action('save_post', array($this, 'update_index'), 10, 3);
+    add_action('save_post_product', array($this, 'sync_admin_product_index'), 20, 2);
+    add_action('before_delete_post', array($this, 'remove_admin_product_from_index'));
     add_action('delete_post', array($this, 'remove_from_index'));
     add_action('transition_post_status', array($this, 'handle_status_transition'), 10, 3);
     add_action('woocommerce_thankyou', array($this, 'maybe_add_new_order_to_index'));
+    add_action('woocommerce_save_product_variation', array($this, 'sync_variation_parent_facets'), 10, 1);
   }
 
   /**
@@ -46,6 +49,11 @@ class Index_Updater {
     if ($post->post_status !== 'publish') {
       // If post is no longer published, remove from index
       $this->remove_from_index($post_id);
+
+      if ($post_type === 'product') {
+        Product_Facets::forget_product($post_id);
+      }
+
       return;
     }
 
@@ -110,6 +118,26 @@ class Index_Updater {
     } catch (\Throwable $e) {
       Log::error(sprintf('Index insert failed for post_id %d: %s', $post_id, $e->getMessage()));
     }
+
+    if ($post_type === 'product') {
+      Product_Facets::sync_product($post_id);
+    }
+  }
+
+  /**
+   * Variation edits change the parent product's filter values.
+   *
+   * @param int $variation_id
+   * @return void
+   */
+  public function sync_variation_parent_facets($variation_id) {
+    $parent_id = (int) wp_get_post_parent_id($variation_id);
+
+    if ($parent_id < 1) {
+      return;
+    }
+
+    Product_Facets::sync_product($parent_id);
   }
 
   /**
@@ -139,6 +167,10 @@ class Index_Updater {
 
     if (!$enabled) {
       return;
+    }
+
+    if ($post_type === 'product' && (doing_action('delete_post') || doing_action('wp_trash_post') || get_post_status($post_id) !== 'publish')) {
+      Product_Facets::forget_product($post_id);
     }
 
     $index_name = Utils::get_index_name($post_type);
@@ -270,6 +302,109 @@ class Index_Updater {
       $index->insert($args);
     } catch (\Throwable $e) {
       Log::error(sprintf('Orders index insert failed for order_id %d: %s', $order_id, $e->getMessage()));
+    }
+  }
+
+  /**
+   * Keep one product current in the admin index only.
+   *
+   * @param int     $post_id Product ID.
+   * @param WP_Post $post    Product post.
+   * @return void
+   */
+  public function sync_admin_product_index($post_id, $post) {
+    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
+      return;
+    }
+
+    if (!Utils::is_admin_products_enabled()) {
+      return;
+    }
+
+    if (!$post || $post->post_type !== 'product') {
+      return;
+    }
+
+    if (!in_array($post->post_status, Utils::admin_product_statuses(), true)) {
+      $this->delete_admin_product_row($post_id);
+
+      return;
+    }
+
+    $document = Utils::admin_product_index_document($post_id);
+
+    if (empty($document)) {
+      $this->delete_admin_product_row($post_id);
+
+      return;
+    }
+
+    $index_name = Utils::get_index_name('admin_product');
+
+    try {
+      $this->tnt->selectIndex($index_name);
+    } catch (\Throwable $e) {
+      $this->tnt->createIndex($index_name);
+      $this->tnt->selectIndex($index_name);
+    }
+
+    $index = $this->tnt->getIndex();
+    $document = Utils::sanitize_index_document($document, 255);
+
+    if (!Utils::admin_product_document_has_text($document)) {
+      $this->delete_admin_product_row($post_id);
+
+      return;
+    }
+
+    try {
+      $index->delete($post_id);
+    } catch (\Throwable $e) {
+      Log::debug(sprintf('Admin product index had no row to replace for post_id %d.', $post_id));
+    }
+
+    try {
+      $index->insert($document);
+    } catch (\Throwable $e) {
+      Log::error(sprintf('Admin product index insert failed for post_id %d: %s', $post_id, $e->getMessage()));
+    }
+  }
+
+  /**
+   * Drop a product from the admin index when it is deleted.
+   *
+   * @param int $post_id Post ID.
+   * @return void
+   */
+  public function remove_admin_product_from_index($post_id) {
+    if (get_post_type($post_id) !== 'product') {
+      return;
+    }
+
+    $this->delete_admin_product_row($post_id);
+  }
+
+  /**
+   * Delete one row from the admin product index.
+   *
+   * @param int $post_id Product ID.
+   * @return void
+   */
+  private function delete_admin_product_row($post_id) {
+    $index_name = Utils::get_index_name('admin_product');
+
+    try {
+      $this->tnt->selectIndex($index_name);
+    } catch (\Throwable $e) {
+      return;
+    }
+
+    $index = $this->tnt->getIndex();
+
+    try {
+      $index->delete($post_id);
+    } catch (\Throwable $e) {
+      Log::error(sprintf('Admin product index delete failed for post_id %d: %s', $post_id, $e->getMessage()));
     }
   }
 

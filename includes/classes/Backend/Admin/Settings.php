@@ -76,6 +76,7 @@ class Settings {
 	public function add_admin_menu() {
     add_action('admin_notices', array($this, 'maybe_show_indexing_notice'));
     add_action('admin_notices', array($this, 'maybe_show_orders_indexing_notice'));
+    add_action('admin_notices', array($this, 'maybe_show_admin_products_indexing_notice'));
     add_action('admin_notices', array($this, 'maybe_show_missing_extensions_notice'));
 		add_menu_page(__('Snappy Search', 'speedy-search'), __('Snappy Search', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'), 'dashicons-search');
     add_submenu_page('speedy-search', __('General', 'speedy-search'), __('General', 'speedy-search'), 'manage_options', 'speedy-search', array($this, 'options_page'));
@@ -169,6 +170,37 @@ class Settings {
     ?>
     <div class="notice notice-warning">
       <p><?php esc_html_e('Snappy Search is still building the orders search index. Standard WooCommerce order search is in use until indexing finishes.', 'speedy-search'); ?></p>
+    </div>
+    <?php
+  }
+
+  /**
+   * Notice on the products list while the admin product index is still building.
+   *
+   * @return void
+   */
+  public function maybe_show_admin_products_indexing_notice() {
+    if (!Utils::is_admin_products_enabled()) {
+      return;
+    }
+
+    if (!current_user_can('edit_products')) {
+      return;
+    }
+
+    $screen = get_current_screen();
+
+    if (!$screen || $screen->id !== 'edit-product') {
+      return;
+    }
+
+    if (Utils::is_admin_products_index_complete()) {
+      return;
+    }
+
+    ?>
+    <div class="notice notice-warning">
+      <p><?php esc_html_e('Snappy Search is still building the admin product index. Standard WordPress product search is in use until indexing finishes.', 'speedy-search'); ?></p>
     </div>
     <?php
   }
@@ -565,6 +597,12 @@ class Settings {
       $sanitary_values['debug']['enabled'] = false;
     }
 
+    if (isset($input['show_fetch_time']) && $input['show_fetch_time']) {
+      $sanitary_values['show_fetch_time'] = $input['show_fetch_time'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['show_fetch_time'] = false;
+    }
+
     if (isset($input['default_result_type']) && $input['default_result_type']) {
       if (array_key_exists($input['default_result_type'], $allowed_post_types)) {
 			  $sanitary_values['default_result_type'] = sanitize_text_field($input['default_result_type']);
@@ -647,10 +685,44 @@ class Settings {
       $sanitary_values['filters_category_enabled'] = false;
     }
 
+    if (isset($input['filters_catalog_enabled']) && $input['filters_catalog_enabled']) {
+      $sanitary_values['filters_catalog_enabled'] = $input['filters_catalog_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['filters_catalog_enabled'] = false;
+    }
+
     if (isset($input['popular']['enabled']) && $input['popular']['enabled']) {
       $sanitary_values['popular']['enabled'] = $input['popular']['enabled'] === 'on' ? true : false;
     } else {
       $sanitary_values['popular']['enabled'] = false;
+    }
+
+    $popular_positions = array('under_input', 'above_tabs', 'below_tabs', 'below_results');
+    $popular_position  = isset($input['popular']['position']) ? sanitize_key($input['popular']['position']) : 'under_input';
+
+    if (!in_array($popular_position, $popular_positions, true)) {
+      $popular_position = 'under_input';
+    }
+
+    $sanitary_values['popular']['position'] = $popular_position;
+
+    $popular_term_sources = array('manual', 'automatic', 'both');
+    $popular_term_source  = isset($input['popular']['term_source']) ? sanitize_key($input['popular']['term_source']) : 'manual';
+
+    if (!in_array($popular_term_source, $popular_term_sources, true)) {
+      $popular_term_source = 'manual';
+    }
+
+    $sanitary_values['popular']['term_source'] = $popular_term_source;
+
+    if (isset($input['popular']['heading'])) {
+      $sanitary_values['popular']['heading'] = sanitize_text_field($input['popular']['heading']);
+    }
+
+    if (isset($input['popular']['manual_enabled']) && $input['popular']['manual_enabled']) {
+      $sanitary_values['popular']['manual_enabled'] = $input['popular']['manual_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['popular']['manual_enabled'] = false;
     }
 
     if (isset($input['popular']['limit']) && is_numeric($input['popular']['limit'])) {
@@ -671,10 +743,6 @@ class Settings {
 
     if (isset($input['popular']['result_count']) && is_numeric($input['popular']['result_count'])) {
 			$sanitary_values['popular']['result_count'] = sanitize_text_field($input['popular']['result_count']);
-		}
-
-    if (isset($input['popular']['blacklist']) && $input['popular']['blacklist']) {
-			$sanitary_values['popular']['blacklist'] = sanitize_text_field($input['popular']['blacklist']);
 		}
 
     $sanitary_values['synonyms'] = array();
@@ -851,6 +919,12 @@ class Settings {
       $sanitary_values['products']['featured_first'] = $input['products']['featured_first'] === 'on' ? true : false;
     } else {
       $sanitary_values['products']['featured_first'] = false;
+    }
+
+    if (isset($input['products']['admin_enabled']) && $input['products']['admin_enabled']) {
+      $sanitary_values['products']['admin_enabled'] = $input['products']['admin_enabled'] === 'on' ? true : false;
+    } else {
+      $sanitary_values['products']['admin_enabled'] = false;
     }
 
     if (isset($input['orders']['enabled']) && $input['orders']['enabled']) {

@@ -67,6 +67,29 @@ class Notices {
     }
 
     $this->maybe_show_sqlite_notice();
+    $this->maybe_show_catalog_facets_notice();
+  }
+
+  /**
+   * Ask for a product reindex when catalog filters are on and the choice list is missing.
+   *
+   * @return void
+   */
+  public function maybe_show_catalog_facets_notice() {
+    if (!current_user_can('manage_options')) {
+      return;
+    }
+
+    if (!Product_Facets::is_enabled() || Product_Facets::is_ready()) {
+      return;
+    }
+
+    ?>
+    <div class="notice notice-warning speedy-search">
+      <p><?php echo esc_html__('Filter the full catalog is on, but the product choice list has not been built. Re-index products to use it.', 'speedy-search'); ?></p>
+      <a href="admin.php?page=speedy-search"><?php echo esc_html__('Re-index', 'speedy-search'); ?></a>
+    </div>
+    <?php
   }
 
   public function notice_110() {

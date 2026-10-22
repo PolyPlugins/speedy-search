@@ -118,6 +118,12 @@ class API {
           'methods' => 'GET',
           'callback' => array($this, 'get_latest'),
           'permission_callback' => '__return_true',
+          'args' => array(
+            'catalog_filters' => array(
+              'required' => false,
+              'type'     => 'string',
+            ),
+          ),
         )
       );
     }
@@ -133,6 +139,18 @@ class API {
           'methods' => 'GET',
           'callback' => array($this, 'get_orders'),
           'permission_callback' => array($this, 'check_permissions')
+        )
+      );
+    }
+
+    if (Utils::is_admin_products_enabled()) {
+      register_rest_route(
+        'speedy-search-search/v1',
+        '/admin-products/',
+        array(
+          'methods' => 'GET',
+          'callback' => array($this, 'get_admin_products'),
+          'permission_callback' => array($this, 'check_product_permissions')
         )
       );
     }
@@ -341,14 +359,25 @@ class API {
     $products_opts         = Utils::get_option('products');
     $featured_latest       = !isset($products_opts['featured_first']) || !empty($products_opts['featured_first']);
     $out_of_stock_fallback = is_array($products_opts) && !empty($products_opts['out_of_stock_fallback']);
-    $cache_key             = 'speedy_search_latest_v4_' . (int) $featured_latest . '_' . (int) $out_of_stock_fallback;
+    $catalog_enabled       = Product_Facets::is_enabled() ? 1 : 0;
+    $result_limit          = isset($products_opts['result_limit']) ? (int) $products_opts['result_limit'] : 10;
+    $filters               = Product_Facets::sanitize_filters($request->get_param('catalog_filters'));
+    $cache_key             = 'speedy_search_latest_v5_' . (int) $featured_latest . '_' . (int) $out_of_stock_fallback . '_' . $catalog_enabled . '_' . $result_limit . '_' . md5(wp_json_encode($filters));
     $cached_results   = Utils::get_api_cache($cache_key);
 
     if ($cached_results !== false) {
       return new WP_REST_Response($cached_results, 200);
     }
 
-    $results = $this->get_latest_enabled_results();
+    $results = $this->get_latest_enabled_results($filters);
+
+    if ($catalog_enabled) {
+      $facets = Product_Facets::public_payload();
+
+      if ($facets !== null) {
+        $results['product_facets'] = $facets;
+      }
+    }
 
     Utils::set_api_cache($cache_key, $results, 600);
 
@@ -912,6 +941,108 @@ class API {
   }
 
   /**
+   * Products list search is limited to users who can edit products.
+   *
+   * @return bool
+   */
+  public function check_product_permissions() {
+    return current_user_can('edit_products');
+  }
+
+  /**
+   * Search the admin product index for the products list.
+   *
+   * @param WP_REST_Request $request Request.
+   * @return WP_REST_Response
+   */
+  public function get_admin_products(WP_REST_Request $request) {
+    $per_page       = Utils::admin_products_per_page();
+    $page           = absint($request->get_param('page'));
+    $page           = $page > 0 ? $page : 1;
+    $boolean_search = $this->is_boolean_search_enabled('products');
+    $search_query   = sanitize_text_field((string) $request->get_param('search'));
+
+    if ($search_query === '') {
+      return new WP_REST_Response(array(
+        'error' => 'Search query is required.'
+      ), 400);
+    }
+
+    $expanded_query = $this->expand_search_query($search_query);
+    $cache_key      = 'speedy_search_admin_products_' . md5($expanded_query . '|' . (int) $boolean_search . '|' . $per_page . '|' . $page);
+    $cached_results = Utils::get_api_cache($cache_key);
+
+    if ($cached_results !== false) {
+      return new WP_REST_Response($cached_results, 200);
+    }
+
+    $payload = $this->admin_products_page($expanded_query, $search_query, $boolean_search, $per_page, $page);
+
+    Utils::set_api_cache($cache_key, $payload, 600);
+
+    return new WP_REST_Response($payload, 200);
+  }
+
+  /**
+   * One page of admin product matches, sized like the products list.
+   *
+   * @param string $expanded_query Expanded query.
+   * @param string $search_query   Raw query.
+   * @param bool   $boolean_search Whether boolean search is on.
+   * @param int    $per_page       Page size.
+   * @param int    $page           Page number.
+   * @return array
+   */
+  private function admin_products_page($expanded_query, $search_query, $boolean_search, $per_page, $page) {
+    $empty = array(
+      'products' => array(),
+      'total'    => 0,
+      'per_page' => $per_page,
+      'page'     => 1,
+    );
+
+    $tnt        = TNTSearch::get_instance()->tnt();
+    $index_name = Utils::get_index_name('admin_product');
+    $fetch      = $per_page * $page;
+
+    try {
+      $tnt->selectIndex($index_name);
+      $tnt->fuzziness(true);
+      $results = $this->perform_tnt_search($tnt, $expanded_query, $fetch, $boolean_search, $search_query);
+    } catch (\Throwable $e) {
+      Log::error(sprintf('Admin product search failed: %s', $e->getMessage()));
+
+      return $empty;
+    }
+
+    $result_ids = isset($results['ids']) ? array_map('absint', $results['ids']) : array();
+    $total      = isset($results['hits']) ? (int) $results['hits'] : count($result_ids);
+    $pages      = $total > 0 ? (int) ceil($total / $per_page) : 1;
+
+    if ($page > $pages) {
+      $page = $pages;
+    }
+
+    $offset = ($page - 1) * $per_page;
+    $rows   = array();
+
+    foreach (array_slice($result_ids, $offset, $per_page) as $product_id) {
+      $row = Utils::admin_product_search_row($product_id);
+
+      if (!empty($row)) {
+        $rows[] = $row;
+      }
+    }
+
+    return array(
+      'products' => $rows,
+      'total'    => $total,
+      'per_page' => $per_page,
+      'page'     => $page,
+    );
+  }
+
+  /**
    * Expand query with configured synonyms.
    *
    * @param string $search_query
@@ -1144,9 +1275,10 @@ class API {
   /**
    * Get latest enabled post type entries for preload/latest rendering
    *
+   * @param array $filters Catalog filters. Empty for the unfiltered latest list.
    * @return array
    */
-  private function get_latest_enabled_results() {
+  private function get_latest_enabled_results($filters = array()) {
     $posts_options     = Utils::get_option('posts');
     $pages_options     = Utils::get_option('pages');
     $products_options  = Utils::get_option('products');
@@ -1166,7 +1298,7 @@ class API {
     }
 
     if ($products_enabled) {
-      $results['products'] = $this->get_latest_products($products_options);
+      $results['products'] = $this->get_latest_products($products_options, $filters);
     }
 
     if ($downloads_enabled) {
@@ -1180,28 +1312,51 @@ class API {
    * Get latest published products for preload/latest rendering
    *
    * @param array $options
+   * @param array $filters
    * @return array
    */
-  private function get_latest_products($options) {
+  private function get_latest_products($options, $filters = array()) {
     if (!class_exists('WooCommerce')) {
       return array();
     }
 
     $featured_first   = !isset($options['featured_first']) || !empty($options['featured_first']);
-    $safe_limit       = 12;
-    $query_limit      = 48;
+    $catalog_mode     = Product_Facets::is_enabled();
+    $used_fallback    = false;
+
+    if ($catalog_mode) {
+      $result_limit = isset($options['result_limit']) ? (int) $options['result_limit'] : 10;
+      $safe_limit   = $result_limit > 0 ? $result_limit : 10;
+      $ids          = Product_Facets::query_product_ids($filters, $safe_limit, $featured_first, true);
+
+      if (empty($ids) && !empty($options['out_of_stock_fallback']) && !Product_Facets::has_visible_in_stock()) {
+        $ids           = Product_Facets::query_product_ids($filters, $safe_limit, $featured_first, false);
+        $used_fallback = true;
+      }
+
+      $posts = empty($ids) ? array() : get_posts(array(
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'post__in'       => $ids,
+        'orderby'        => 'post__in',
+        'posts_per_page' => count($ids),
+      ));
+    } else {
+      $safe_limit  = 12;
+      $query_limit = 48;
+      $posts       = get_posts(array(
+        'post_type'      => 'product',
+        'post_status'    => 'publish',
+        'orderby'        => 'date',
+        'order'          => 'DESC',
+        'posts_per_page' => $query_limit,
+      ));
+    }
     $custom_fields_raw = Utils::get_option('filters_custom_fields');
     $custom_fields     = $custom_fields_raw ? array_filter(array_map('trim', explode(',', $custom_fields_raw))) : array();
     $acf_fields_raw    = Utils::get_option('filters_acf_fields');
     $acf_fields        = $acf_fields_raw ? array_filter(array_map('trim', explode(',', $acf_fields_raw))) : array();
     $filters_attributes_allowed = Utils::get_filters_attributes_allowed_keys();
-    $posts      = get_posts(array(
-      'post_type'      => 'product',
-      'post_status'    => 'publish',
-      'orderby'        => 'date',
-      'order'          => 'DESC',
-      'posts_per_page' => $query_limit,
-    ));
     $posts_data = array();
     $tags = array(
       'div'  => array('class' => array(), 'role' => array(), 'aria-label' => array()),
@@ -1211,7 +1366,11 @@ class API {
     foreach ($posts as $post) {
       $product = wc_get_product($post->ID);
 
-      if (!$product || $product->get_catalog_visibility() === 'hidden' || !$product->is_in_stock()) {
+      if (!$product || $product->get_catalog_visibility() === 'hidden') {
+        continue;
+      }
+
+      if (!$used_fallback && !$product->is_in_stock()) {
         continue;
       }
 
@@ -1248,7 +1407,7 @@ class API {
         'rating'          => $average_rating ? wp_kses(wc_get_rating_html((float) $average_rating), $tags) : wp_kses('<div class="star-rating"><span style="width:0%">No rating</span></div>', $tags),
         'is_featured'     => (bool) $is_featured,
         'is_variable'     => (bool) $is_variable,
-        'is_in_stock'     => true,
+        'is_in_stock'     => (bool) $product->is_in_stock(),
         'add_to_cart_url' => esc_url_raw($add_to_cart_url),
         'permalink'       => get_permalink($post->ID),
         'custom_fields'   => $product_custom_fields,
@@ -1260,6 +1419,10 @@ class API {
       if (count($posts_data) >= $safe_limit) {
         break;
       }
+    }
+
+    if ($catalog_mode) {
+      return $posts_data;
     }
 
     if (empty($posts_data)) {
