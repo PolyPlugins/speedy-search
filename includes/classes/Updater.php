@@ -129,6 +129,12 @@ class Updater {
       Utils::update_current_version($stored_version);
     }
 
+    if (version_compare($stored_version, '1.8.0', '<')) {
+      $stored_version = '1.8.0';
+
+      Utils::update_current_version($stored_version);
+    }
+
     $version_after = Utils::get_current_version();
 
     if ($version_before !== $version_after && $version_after !== false) {

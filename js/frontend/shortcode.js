@@ -54,14 +54,13 @@ jQuery(document).ready(function ($) {
   }
 
   function listener() {
-    let typingTimer;
-
     if (!$searchInput.length) return;
 
     $searchInput.each(function () {
       let $input = $(this);
       let $form = $input.closest("form");
       let $container = $form.closest(".speedy-search-container");
+      let typingTimer;
 
       // Inject dynamic HTML only if tabs are being built dynamically
       if (!$container.find(".instant-search-wrapper").length) {
@@ -134,9 +133,9 @@ jQuery(document).ready(function ($) {
   function popular() {
     $(document).on("click", ".speedy-search-container .search-term", function(e) {
       let $popular = $(this).text();
+      let $input = $(this).closest(".speedy-search-container").find(".snappy-search-input");
 
-      $(".snappy-search-form .snappy-search-input").val($popular);
-      $(".snappy-search-form .snappy-search-input").val($popular).trigger("input");
+      $input.val($popular).trigger("input");
     });
   }
   
@@ -154,13 +153,13 @@ jQuery(document).ready(function ($) {
       const $sections = $container.find('.instant-search-section');
 
       $sections.each(function () {
-        let $result = $(".speedy-search-container .instant-search-result");
+        let $result = $container.find(".instant-search-result");
 
         if ($result.length) {
           $result.addClass('skeleton-loading');
         } else {
-          $(".speedy-search-container .snappy-search-close").hide();
-          $(".speedy-search-container .loader").show();
+          $container.find(".snappy-search-close").hide();
+          $container.find(".loader").show();
         }
       });
     }
