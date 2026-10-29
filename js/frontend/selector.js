@@ -39,6 +39,8 @@ jQuery(document).ready(function ($) {
   let catalog_facets        = null;
   let browse_results        = {};
   let fresh_popup           = true;
+  let latest_loading        = false;
+  let opening_pending       = false;
 
   const $searchInput        = $(selector);
   const $searchForm         = $searchInput.closest("form");
@@ -135,6 +137,8 @@ jQuery(document).ready(function ($) {
   }
 
   function performSearch(query) {
+    opening_pending = false;
+
     if (fresh_popup) {
       clearProductFilters($('.snappy-product-filters'));
       fresh_popup = false;
@@ -186,6 +190,8 @@ jQuery(document).ready(function ($) {
   function preloadLatestResults() {
     let started = Date.now();
 
+    latest_loading = true;
+
     $.ajax({
       url: latest_endpoint,
       dataType: "json",
@@ -196,18 +202,66 @@ jQuery(document).ready(function ($) {
         browse_results = data;
         latest_results = browse_results;
       },
+      complete: function () {
+        latest_loading = false;
+
+        if (!opening_pending) {
+          return;
+        }
+
+        if (latest_results && Object.keys(latest_results).length) {
+          showLatestResults();
+          return;
+        }
+
+        opening_pending = false;
+        $('.instant-search-section[data-type="product"]').first().html('<p>' + __('No results found.', 'speedy-search') + '</p>');
+      }
     });
   }
 
   function showLatestResults() {
     if (!latest_results || Object.keys(latest_results).length === 0) {
+      if (latest_loading) {
+        showOpeningSkeleton();
+      }
+
       return;
     }
 
+    opening_pending = false;
     applyBrowseFilters();
     renderSections(latest_results);
 
     $('.instant-search-wrapper').show();
+  }
+
+  function showOpeningSkeleton() {
+    opening_pending = true;
+
+    let $section = $('.instant-search-section[data-type="product"]').first();
+
+    if ($section.length && !$section.find('.skeleton-loading').length) {
+      $section.html(openingSkeletonHtml());
+    }
+
+    $('.instant-search-wrapper').show();
+    $('.snappy-search-close').show();
+  }
+
+  function openingSkeletonHtml() {
+    let card =
+      '<div class="instant-search-result skeleton-loading">' +
+        '<div class="permalink-result">' +
+          '<div class="image-wrapper"></div>' +
+          '<h2 class="title-result">&nbsp;</h2>' +
+          '<p class="price-result">&nbsp;</p>' +
+          '<p class="excerpt-result">&nbsp;</p>' +
+        '</div>' +
+        '<span class="product-action-result">&nbsp;</span>' +
+      '</div>';
+
+    return card + card + card + card;
   }
 
   function crossfadeResults(data) {

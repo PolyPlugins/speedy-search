@@ -27,6 +27,9 @@ jQuery(document).ready(function ($) {
   let catalog_facets = null;
   let browse_results = {};
   let fresh_popup = true;
+  let latest_loading = false;
+  let opening_pending = false;
+  let opening_container = null;
   let search_endpoint      = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
   let latest_endpoint      = snappy_search_object.endpoints?.latest ?? snappy_search_object.endpoints?.preload ?? "/wp-json/speedy-search/v1/latest/";
   let use_search_php       = snappy_search_object.endpoints?.has_custom_file ?? false;
@@ -171,6 +174,8 @@ jQuery(document).ready(function ($) {
   }
 
   function performSearch(query, $container) {
+    opening_pending = false;
+
     if (fresh_popup) {
       clearProductFilters($container.find('.snappy-product-filters'));
       fresh_popup = false;
@@ -233,6 +238,8 @@ jQuery(document).ready(function ($) {
   function preloadLatestResults() {
     let started = Date.now();
 
+    latest_loading = true;
+
     $.ajax({
       url: latest_endpoint,
       dataType: "json",
@@ -243,19 +250,71 @@ jQuery(document).ready(function ($) {
         browse_results = data;
         latest_results = browse_results;
       },
+      complete: function () {
+        latest_loading = false;
+
+        if (!opening_pending) {
+          return;
+        }
+
+        if (latest_results && Object.keys(latest_results).length) {
+          showLatestResults(opening_container);
+          return;
+        }
+
+        opening_pending = false;
+
+        if (opening_container && opening_container.length) {
+          opening_container.find('.instant-search-section[data-type="product"]').first().html('<p>' + __('No results found.', 'speedy-search') + '</p>');
+        }
+      }
     });
   }
 
   function showLatestResults($container) {
     if (!latest_results || Object.keys(latest_results).length === 0) {
+      if (latest_loading) {
+        showOpeningSkeleton($container);
+      }
+
       return;
     }
 
+    opening_pending = false;
     applyBrowseFilters($container);
     renderSections($container, latest_results);
 
     $container.find(".instant-search-wrapper").show();
     $container.find(".snappy-search-close").show();
+  }
+
+  function showOpeningSkeleton($container) {
+    opening_pending = true;
+    opening_container = $container;
+
+    let $section = $container.find('.instant-search-section[data-type="product"]').first();
+
+    if ($section.length && !$section.find('.skeleton-loading').length) {
+      $section.html(openingSkeletonHtml());
+    }
+
+    $container.find(".instant-search-wrapper").show();
+    $container.find(".snappy-search-close").show();
+  }
+
+  function openingSkeletonHtml() {
+    let card =
+      '<div class="instant-search-result skeleton-loading">' +
+        '<div class="permalink-result">' +
+          '<div class="image-wrapper"></div>' +
+          '<h2 class="title-result">&nbsp;</h2>' +
+          '<p class="price-result">&nbsp;</p>' +
+          '<p class="excerpt-result">&nbsp;</p>' +
+        '</div>' +
+        '<span class="product-action-result">&nbsp;</span>' +
+      '</div>';
+
+    return card + card + card + card;
   }
 
   function crossfadeResults($container, data) {
