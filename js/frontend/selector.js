@@ -38,6 +38,7 @@ jQuery(document).ready(function ($) {
   let catalog_enabled       = !!snappy_search_object.options?.filters_catalog_enabled;
   let catalog_facets        = null;
   let browse_results        = {};
+  let fresh_popup           = true;
 
   const $searchInput        = $(selector);
   const $searchForm         = $searchInput.closest("form");
@@ -74,11 +75,15 @@ jQuery(document).ready(function ($) {
         typingTimer = setTimeout(function () {
           performSearch(query);
         }, typingDelay);
-      } else if (catalogReady() && catalogFiltersActive($('.snappy-product-filters'))) {
-        fetchCatalogProducts();
-      } else if (browse_results && Object.keys(browse_results).length) {
-        latest_results = browse_results;
-        showLatestResults();
+      } else {
+        fresh_popup = true;
+
+        if (catalogReady() && catalogFiltersActive($('.snappy-product-filters'))) {
+          fetchCatalogProducts();
+        } else if (browse_results && Object.keys(browse_results).length) {
+          latest_results = browse_results;
+          showLatestResults();
+        }
       }
     });
 
@@ -89,6 +94,7 @@ jQuery(document).ready(function ($) {
         return;
       }
 
+      fresh_popup = true;
       showLatestResults();
     });
   }
@@ -129,6 +135,11 @@ jQuery(document).ready(function ($) {
   }
 
   function performSearch(query) {
+    if (fresh_popup) {
+      clearProductFilters($('.snappy-product-filters'));
+      fresh_popup = false;
+    }
+
     if (!use_search_php) {
       // Show "Searching..." in each existing section
       $('.instant-search-section').each(function () {
@@ -563,7 +574,12 @@ jQuery(document).ready(function ($) {
 
   function fetchCatalogProducts() {
     let $filters = $('.snappy-product-filters');
+    let $result = $('.instant-search-result');
     let started = Date.now();
+
+    if ($result.length) {
+      $result.addClass('skeleton-loading');
+    }
 
     $.ajax({
       url: latest_endpoint,
@@ -579,6 +595,9 @@ jQuery(document).ready(function ($) {
         renderSections(latest_results);
         $('.instant-search-wrapper').show();
         $('.snappy-search-close').show();
+      },
+      error: function () {
+        $result.removeClass('skeleton-loading');
       }
     });
   }
@@ -887,6 +906,7 @@ jQuery(document).ready(function ($) {
     $(document).on('click.snappyClearSearch', '.snappy-clear-search-filter', function (e) {
       e.preventDefault();
       $(selector).val('');
+      fresh_popup = true;
 
       if (catalogFiltersActive($('.snappy-product-filters'))) {
         fetchCatalogProducts();
@@ -1513,6 +1533,7 @@ jQuery(document).ready(function ($) {
               <i class="fas fa-chevron-up toggle-caret-up"></i>
             </span>
           </h4>
+          <button type="button" class="snappy-clear-filters snappy-clear-filters-button">${__('Clear filters', 'speedy-search')}</button>
           <div class="product-filters-body">
           ${price_range_filter_enabled ? `
           <label>${__('Price Range', 'speedy-search')}</label>

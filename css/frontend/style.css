@@ -168,6 +168,19 @@
   display: inline-block;
 }
 
+.speedy-search-container .snappy-product-filters .snappy-clear-filters-button {
+  display: block;
+  width: 100%;
+  margin: 0 0 10px;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1px solid #222;
+  color: #222;
+  font-size: 13px;
+  cursor: pointer;
+  text-align: center;
+}
+
 .speedy-search-container .snappy-product-filters label {
   font-size: 13px;
   font-weight: 700;

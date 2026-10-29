@@ -32,6 +32,7 @@ jQuery(document).ready(function ($) {
   let catalog_enabled = !!snappy_search_object.options?.filters_catalog_enabled;
   let catalog_facets = null;
   let browse_results = {};
+  let fresh_popup = true;
   let search_endpoint       = snappy_search_object.endpoints?.search ?? "/wp-json/speedy-search/v1/search/";
   let latest_endpoint       = snappy_search_object.endpoints?.latest ?? snappy_search_object.endpoints?.preload ?? "/wp-json/speedy-search/v1/latest/";
   let use_search_php        = snappy_search_object.endpoints?.has_custom_file ?? false;
@@ -81,11 +82,15 @@ jQuery(document).ready(function ($) {
             // $container.find(".instant-search-wrapper").show();
             performSearch(query, $container);
           }, typingDelay);
-        } else if (catalogReady() && catalogFiltersActive($container.find('.snappy-product-filters'))) {
-          fetchCatalogProducts($container);
-        } else if (browse_results && Object.keys(browse_results).length) {
-          latest_results = browse_results;
-          showLatestResults($container);
+        } else {
+          fresh_popup = true;
+
+          if (catalogReady() && catalogFiltersActive($container.find('.snappy-product-filters'))) {
+            fetchCatalogProducts($container);
+          } else if (browse_results && Object.keys(browse_results).length) {
+            latest_results = browse_results;
+            showLatestResults($container);
+          }
         }
       });
 
@@ -96,6 +101,7 @@ jQuery(document).ready(function ($) {
           return;
         }
 
+        fresh_popup = true;
         showLatestResults($container);
       });
     });
@@ -149,6 +155,11 @@ jQuery(document).ready(function ($) {
   }
 
   function performSearch(query, $container) {
+    if (fresh_popup) {
+      clearProductFilters($container.find('.snappy-product-filters'));
+      fresh_popup = false;
+    }
+
     if (!use_search_php) {
       const $sections = $container.find('.instant-search-section');
 
@@ -586,7 +597,12 @@ jQuery(document).ready(function ($) {
 
   function fetchCatalogProducts($container) {
     let $filters = $container.find('.snappy-product-filters');
+    let $result = $container.find('.instant-search-result');
     let started = Date.now();
+
+    if ($result.length) {
+      $result.addClass('skeleton-loading');
+    }
 
     $.ajax({
       url: latest_endpoint,
@@ -602,6 +618,9 @@ jQuery(document).ready(function ($) {
         renderSections($container, latest_results);
         $container.find('.instant-search-wrapper').show();
         $container.find('.snappy-search-close').show();
+      },
+      error: function () {
+        $result.removeClass('skeleton-loading');
       }
     });
   }
@@ -910,6 +929,7 @@ jQuery(document).ready(function ($) {
     $container.on('click.snappyClearSearch', '.snappy-clear-search-filter', function (e) {
       e.preventDefault();
       $container.find(selector).val('');
+      fresh_popup = true;
 
       if (catalogFiltersActive($container.find('.snappy-product-filters'))) {
         fetchCatalogProducts($container);
@@ -1543,6 +1563,7 @@ jQuery(document).ready(function ($) {
               <i class="fas fa-chevron-up toggle-caret-up"></i>
             </span>
           </h4>
+          <button type="button" class="snappy-clear-filters snappy-clear-filters-button">${__('Clear filters', 'speedy-search')}</button>
           <div class="product-filters-body">
           ${price_range_filter_enabled ? `
           <label>${__('Price Range', 'speedy-search')}</label>
