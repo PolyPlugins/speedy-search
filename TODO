@@ -18,7 +18,7 @@
 [X] Popular term approval / autoapproval if matches term
 [X] Add time took to fetch results (default off)
 [X] Add search to admin product search in admin
-[ ] Add clear filters to mobile and make sure it only shows active to click when filters are set
+[X] Add clear filters to mobile and make sure it only shows active to click when filters are set
 [ ] Add option for pagination
 [ ] Make when search contains exclusions where you can do comma separate
 [ ] Add option to automatically remove spaces from synonyms and exlusions make it enable or disable
