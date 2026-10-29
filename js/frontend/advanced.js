@@ -463,6 +463,8 @@ jQuery(document).ready(function ($) {
     if (shrink || fromFacets) {
       restoreFilterSelections($filters, remembered);
     }
+
+    updateResetFiltersState($filters);
   }
 
   function catalogReady() {
@@ -609,6 +611,14 @@ jQuery(document).ready(function ($) {
 
   function catalogFiltersActive($filters) {
     return Object.keys(collectCatalogFilters($filters)).length > 0;
+  }
+
+  function updateResetFiltersState($filters) {
+    if (!$filters || !$filters.length) {
+      return;
+    }
+
+    $filters.find('.snappy-clear-filters-button, .snappy-reset-filters-button').prop('disabled', !catalogFiltersActive($filters));
   }
 
   function fetchCatalogProducts($container) {
@@ -912,6 +922,8 @@ jQuery(document).ready(function ($) {
         updatePriceRangeTrack($filters, minPrice, maxPrice, minBound, maxBound);
       }
 
+      updateResetFiltersState($filters);
+
       let query = $.trim($container.find(selector).val());
       let isPrice = $(this).hasClass('filter-price-min') || $(this).hasClass('filter-price-max');
 
@@ -938,6 +950,7 @@ jQuery(document).ready(function ($) {
     $container.on('click.snappyClearFilters', '.snappy-clear-filters', function (e) {
       e.preventDefault();
       clearProductFilters($container.find('.snappy-product-filters'));
+      updateResetFiltersState($container.find('.snappy-product-filters'));
       fetchCatalogProducts($container);
     });
 
@@ -1579,7 +1592,7 @@ jQuery(document).ready(function ($) {
               <i class="fas fa-chevron-up toggle-caret-up"></i>
             </span>
           </h4>
-          <button type="button" class="snappy-clear-filters snappy-clear-filters-button">${__('Clear filters', 'speedy-search')}</button>
+          <button type="button" class="snappy-clear-filters snappy-clear-filters-button" disabled>${__('Reset Filters', 'speedy-search')}</button>
           <div class="product-filters-body">
           ${price_range_filter_enabled ? `
           <label>${__('Price Range', 'speedy-search')}</label>
@@ -1608,6 +1621,7 @@ jQuery(document).ready(function ($) {
           ${attribute_filter_enabled ? '<div class="product-attribute-filters"></div>' : ''}
           ${custom_field_filter_enabled ? '<div class="custom-field-filters"></div>' : ''}
           ${acf_field_filter_enabled ? '<div class="acf-field-filters"></div>' : ''}
+          <button type="button" class="snappy-clear-filters snappy-reset-filters-button" disabled>${__('Reset Filters', 'speedy-search')}</button>
           </div>
         </div>
       `;

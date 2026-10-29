@@ -168,7 +168,8 @@
   display: inline-block;
 }
 
-.speedy-search-container .snappy-product-filters .snappy-clear-filters-button {
+.speedy-search-container .snappy-product-filters .snappy-clear-filters-button,
+.speedy-search-container .snappy-product-filters .snappy-reset-filters-button {
   display: block;
   width: 100%;
   margin: 0 0 10px;
@@ -179,6 +180,12 @@
   font-size: 13px;
   cursor: pointer;
   text-align: center;
+}
+
+.speedy-search-container .snappy-product-filters .snappy-clear-filters-button:disabled,
+.speedy-search-container .snappy-product-filters .snappy-reset-filters-button:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .speedy-search-container .snappy-product-filters label {
@@ -455,6 +462,10 @@
 
   .speedy-search-container .snappy-product-filters h4 {
     margin-bottom: 0;
+  }
+
+  .speedy-search-container .snappy-product-filters .snappy-clear-filters-button {
+    display: none;
   }
 }
 
